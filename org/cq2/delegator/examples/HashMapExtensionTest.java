@@ -15,7 +15,7 @@ public class HashMapExtensionTest extends TestCase {
 
 	public static abstract class MyMap implements Map {
 		
-		public static MyMap create() {
+		public static MyMap create() throws Exception {
 			return (MyMap) new Delegator().createExtension(MyMap.class, HashMap.class);
 		}
 		
@@ -24,7 +24,7 @@ public class HashMapExtensionTest extends TestCase {
 		}
 	}
 
-	public void testCreateMyMap() {
+	public void testCreateMyMap() throws Exception {
 		MyMap map = MyMap.create();
 		assertNotNull(map);
 		map.put("monkey", "fish");
