@@ -248,6 +248,9 @@ public class SelfTest extends TestCase {
 			return "nr2";
 		}
 	}
+	public static interface Nr3{
+		String aMethod();
+	}
 
 	public void testRespondsTo() throws Exception {
 		Self self = new Self(Nr1.class);
@@ -269,6 +272,19 @@ public class SelfTest extends TestCase {
 			fail();
 		}
 		catch (NoSuchMethodError nsme) {}
+	}
+	
+	public void testRespondsToClass(){
+		Self self = new Self(Nr2.class);
+		assertTrue(self.respondsTo(Nr2.class));
+		assertTrue(self.respondsTo(Object.class));
+		assertFalse(self.respondsTo(String.class));
+		assertTrue(self.respondsTo(Nr1.class));
+		self = new Self(Nr1.class);
+		Nr2 nr2 = (Nr2) self.cast(Nr2.class);
+		assertTrue(((ISelf)nr2).respondsTo(Nr1.class));
+		assertFalse(((ISelf)nr2).respondsTo(Nr2.class));
+		assertTrue(((ISelf)nr2).respondsTo(Nr3.class));
 	}
 
 	public static Object mymap_key;

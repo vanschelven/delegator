@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 public class Self implements InvocationHandler, ISelf {
@@ -44,7 +43,7 @@ public class Self implements InvocationHandler, ISelf {
 		this.caller = proxy;
 		final String name = method.getName();
 		if ("equals".equals(name))
-			return new Boolean(equals(args[0]));
+			return Boolean.valueOf(equals(args[0]));
 		if ("hashCode".equals(name))
 			return new Integer(hashCode());
 		Iterator cmps = components.iterator();
@@ -79,8 +78,12 @@ public class Self implements InvocationHandler, ISelf {
 		}
 		else if ("toString".equals(name))
 			return toString();
-		else if ("respondsTo".equals(name))
-			return new Boolean(respondsTo((Method) args[0]));
+		else if ("respondsTo".equals(name)) {
+			if (args[0] instanceof Method)
+				return Boolean.valueOf(respondsTo((Method) args[0]));
+			else
+				return Boolean.valueOf(respondsTo((Class) args[0]));
+		}
 		else if ("component".equals(name))
 			return component(((Number) args[0]).intValue());
 		else if ("self".equals(name))
@@ -168,5 +171,14 @@ public class Self implements InvocationHandler, ISelf {
 
 	public boolean respondsTo(Method m) {
 		return findMethod(m) != null;
+	}
+
+	public boolean respondsTo(Class clazz) {
+		Method m[] = clazz.getMethods();
+		boolean result = true;
+		for (int i = 0; i < m.length && result; i++) {
+			result = findMethod(m[i]) != null;
+		}
+		return result;
 	}
 }

@@ -18,6 +18,7 @@ public interface ISelf {
 	// Object component(Class c);
 	// Object component();
 	Self self();
-	boolean respondsTo(Method m1);
+	boolean respondsTo(Method method);
+	boolean respondsTo(Class clazz);
 	//	 TODO idea: Self.addFirst(), Self.remove(), Self.addLast, Self.replace()
 }
