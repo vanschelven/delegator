@@ -44,12 +44,20 @@ public class Self implements InvocationHandler, ISelf {
 	 */
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		this.caller = proxy;
-		final String name = method.getName();
+		String name = method.getName();
 		if ("equals".equals(name))
 			return Boolean.valueOf(equals(args[0]));
 		if ("hashCode".equals(name))
 			return new Integer(hashCode());
 		Iterator cmps = components.iterator();
+		if(name.startsWith("__next__")) {
+			Object component = null;
+			while(component!=proxy && cmps.hasNext()){
+				component = cmps.next();
+			}
+			name = name.substring(8);
+			//if(!cmps.hasNext())throw new NoSuchMethodError
+		}
 		List argTypeList = new ArrayList();
 		argTypeList.add(InvocationHandler.class);
 		argTypeList.addAll(Arrays.asList(method.getParameterTypes()));

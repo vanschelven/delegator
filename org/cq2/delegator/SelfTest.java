@@ -372,4 +372,38 @@ public class SelfTest extends TestCase {
 		String result = r.f((R2) other.cast(R2.class));
 		assertEquals(result, "R1.f()/R2.g()/R1.h()/R2.h()", result);
 	}
+
+	public abstract static class F1 {
+		public abstract String __next__method();
+		public abstract int __next__plus(int i);
+
+		public String method() {
+			return "you're my "+__next__method();
+		}
+		public int plus(int i){
+			return 1 + __next__plus(1+i);
+		}
+	}
+	public static abstract class F2 implements ISelf {
+		public String method() {
+			return "hero!";
+		}
+		public abstract int plus(int i);
+		public int calc(){
+			return plus(4);
+		}
+	}
+	public static class F3 {
+		public int plus(int i){
+			return 3 * i;
+		}
+	}
+
+	public void testForward() {
+		F2 f = (F2) new Self(F1.class).cast(F2.class);
+		f.add(F2.class);
+		f.add(F3.class);
+		assertEquals("you're my hero!", f.method());
+		assertEquals(16,f.calc());
+	}
 }
