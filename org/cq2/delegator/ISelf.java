@@ -22,5 +22,6 @@ public interface ISelf {
 	boolean respondsTo(Method method);
 	boolean respondsTo(Class clazz);
 	//	 TODO idea: Self.addFirst(), Self.remove(), Self.addLast, Self.replace()
+	void decorate(Class decorator);
 
 }

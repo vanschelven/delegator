@@ -70,15 +70,12 @@ public class Self implements InvocationHandler, ISelf {
 				stack.push(this);
 				try {
 					return delegateMethod.invoke(component, mapArgs(args));
-				}
-				finally {
+				} finally {
 					stack.pop();
 				}
-			}
-			catch (NoSuchMethodException e) {
+			} catch (NoSuchMethodException e) {
 				continue;
-			}
-			catch (InvocationTargetException e) {
+			} catch (InvocationTargetException e) {
 				throw e.getTargetException();
 			}
 		}
@@ -92,24 +89,24 @@ public class Self implements InvocationHandler, ISelf {
 			else if (args[0] instanceof Component)
 				add((Component) args[0]);
 			return null;
-		}
-		else if ("become".equals(name)) {
+		} else if ("become".equals(name)) {
 			become((Class) args[0]);
 			return null;
-		}
-		else if ("toString".equals(name))
+		} else if ("toString".equals(name))
 			return toString();
 		else if ("respondsTo".equals(name)) {
 			if (args[0] instanceof Method)
 				return Boolean.valueOf(respondsTo((Method) args[0]));
 			return Boolean.valueOf(respondsTo((Class) args[0]));
-		}
-		else if ("component".equals(name))
+		} else if ("component".equals(name))
 			return component(((Number) args[0]).intValue());
 		else if ("self".equals(name))
 			return self();
 		else if ("insert".equals(name) && args[0] instanceof Class) {
 			insert((Class) args[0]);
+			return null;
+		} else if ("decorate".equals(name) && args[0] instanceof Class) {
+			decorate((Class) args[0]);
 			return null;
 		}
 		throw new NoSuchMethodError(method.toString());
@@ -189,8 +186,7 @@ public class Self implements InvocationHandler, ISelf {
 			try {
 				return component.getClass().getSuperclass().getMethod(m.getName(),
 						m.getParameterTypes());
-			}
-			catch (NoSuchMethodException e) {
+			} catch (NoSuchMethodException e) {
 				continue;
 			}
 		}
@@ -212,5 +208,19 @@ public class Self implements InvocationHandler, ISelf {
 
 	public static Object self(Object obj) {
 		return obj instanceof Component ? ((ISelf) obj).cast(obj.getClass().getSuperclass()) : obj;
+	}
+
+	public void decorate(Class decorator) {
+		insert(decorator);
+	}
+
+	public static void decorate(Object object, Class decorator) {
+		((ISelf) object).decorate(decorator);
+	}
+
+	public static ISelf clone(Object object) {
+		Self clone = new Self();
+		clone.add(((ISelf) object).self());
+		return (ISelf) clone.cast(object.getClass().getSuperclass());
 	}
 }

@@ -55,8 +55,7 @@ public class SelfTest extends TestCase {
 		try {
 			set.clear();
 			fail("Should throw NoSuchMethodError()");
-		}
-		catch (NoSuchMethodError e) {}
+		} catch (NoSuchMethodError e) {}
 	}
 
 	public boolean execute(String query) throws SQLException {
@@ -68,9 +67,7 @@ public class SelfTest extends TestCase {
 		try {
 			statement.execute("niks");
 			fail();
-		}
-		catch (SQLException e) {}
-		catch (Throwable e) {
+		} catch (SQLException e) {} catch (Throwable e) {
 			e.printStackTrace();
 			fail("Invalid exception!");
 		}
@@ -81,8 +78,7 @@ public class SelfTest extends TestCase {
 		try {
 			comp.compare(null, null);
 			fail();
-		}
-		catch (NoSuchMethodError e) {}
+		} catch (NoSuchMethodError e) {}
 	}
 
 	/**
@@ -97,8 +93,7 @@ public class SelfTest extends TestCase {
 		try {
 			input.readByte();
 			fail("exception types should not match");
-		}
-		catch (NoSuchMethodError e) {}
+		} catch (NoSuchMethodError e) {}
 	}
 
 	/**
@@ -113,8 +108,7 @@ public class SelfTest extends TestCase {
 		try {
 			list.add(new Object());
 			fail();
-		}
-		catch (NoSuchMethodError e) {}
+		} catch (NoSuchMethodError e) {}
 	}
 
 	public void addBatch(String query) { // should throws SQLException
@@ -129,8 +123,7 @@ public class SelfTest extends TestCase {
 		try {
 			list.hashCode();
 			fail();
-		}
-		catch (Error e) {}
+		} catch (Error e) {}
 	}
 
 	public interface I extends ISelf {}
@@ -268,8 +261,7 @@ public class SelfTest extends TestCase {
 		try {
 			nr2.method2();
 			fail();
-		}
-		catch (NoSuchMethodError nsme) {}
+		} catch (NoSuchMethodError nsme) {}
 	}
 
 	public void testRespondsToClass() {
@@ -329,13 +321,11 @@ public class SelfTest extends TestCase {
 		try {
 			te.throwException();
 			fail();
-		}
-		catch (DeclaredException de) {}
+		} catch (DeclaredException de) {}
 		try {
 			te.throwUnexpectedException();
 			fail();
-		}
-		catch (Error e) {
+		} catch (Error e) {
 			assertEquals("oops", e.getMessage());
 		}
 	}
@@ -375,26 +365,30 @@ public class SelfTest extends TestCase {
 
 	public abstract static class F1 {
 		public abstract String __next__method();
+
 		public abstract int __next__plus(int i);
 
 		public String method() {
-			return "you're my "+__next__method();
+			return "you're my " + __next__method();
 		}
-		public int plus(int i){
-			return 1 + __next__plus(1+i);
+
+		public int plus(int i) {
+			return 1 + __next__plus(1 + i);
 		}
 	}
 	public static abstract class F2 implements ISelf {
 		public String method() {
 			return "hero!";
 		}
+
 		public abstract int plus(int i);
-		public int calc(){
+
+		public int calc() {
 			return plus(4);
 		}
 	}
 	public static class F3 {
-		public int plus(int i){
+		public int plus(int i) {
 			return 3 * i;
 		}
 	}
@@ -404,6 +398,34 @@ public class SelfTest extends TestCase {
 		f.add(F2.class);
 		f.add(F3.class);
 		assertEquals("you're my hero!", f.method());
-		assertEquals(16,f.calc());
+		assertEquals(16, f.calc());
+	}
+
+	public void testDecorate() {
+		ISelf self = new Self(F2.class);
+		F2 f2 = (F2) self.cast(F2.class);
+		assertEquals("hero!", f2.method());
+		self.decorate(F1.class);
+		assertEquals("you're my hero!", f2.method());
+	}
+
+	public void testDecorateAlias() {
+		F2 f2 = (F2) new Self(F2.class).cast(F2.class);
+		assertEquals("hero!", f2.method());
+		Self.decorate(f2, F1.class);
+		assertEquals("you're my hero!", f2.method());
+	}
+
+	public void testClone() {
+		Self original = new Self(F2.class);
+		original.add(HashMap.class);
+		original.add(ArrayList.class);
+		ISelf base = (ISelf) original.cast(ArrayList.class);
+		ISelf clone = Self.clone(base);
+		assertTrue(clone instanceof ArrayList);
+		assertSame(clone.component(0), original.component(0));
+		assertSame(clone.component(1), original.component(1));
+		assertSame(clone.component(2), original.component(2));
+		assertNotSame(clone.self(), original.self());
 	}
 }
