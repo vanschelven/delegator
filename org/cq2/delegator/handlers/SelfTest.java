@@ -202,7 +202,6 @@ public class SelfTest extends TestCase {
 		assertEquals(99, objB.hashCode());
 		Object objC = newModifiedSelf(C.class).cast(Object.class);
 		assertEquals(99, objC.hashCode());
-		// TODO same for equals (See doc for java.lang.reflext.Proxy)
 	}
 	
 	public void testEqualsCannotBeRedifined(){
