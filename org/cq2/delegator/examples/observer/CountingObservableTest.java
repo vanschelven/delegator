@@ -8,7 +8,9 @@ package org.cq2.delegator.examples.observer;
 
 import junit.framework.TestCase;
 
+import org.cq2.delegator.Component;
 import org.cq2.delegator.ISelf;
+import org.cq2.delegator.Proxy;
 import org.cq2.delegator.Self;
 
 public class CountingObservableTest extends TestCase implements Observer {
@@ -40,6 +42,8 @@ public class CountingObservableTest extends TestCase implements Observer {
 		obs2.addDependent(this);
 		notifier = null;
 		obs2.increment();
+		assertFalse(notifier instanceof Component);
+		assertTrue(notifier instanceof Proxy);
 		assertSame(((ISelf) obs2).self(), ((ISelf) notifier).self());
 	}
 

@@ -339,4 +339,26 @@ public class SelfTest extends TestCase {
 			assertEquals("oops", e.getMessage());
 		}
 	}
+	
+	public static class R1 {
+		R2 other = (R2) new Self(R2.class).cast(R2.class);
+		public String f() {
+			return other.g();
+		}
+		public String g() {
+			return "R1.g()";
+		}
+		} 
+	public static class R2 {
+		public String f() {
+			return "R2.f()";
+		}
+		public String g() {
+			return g();
+		}
+	}
+	public void testCrossRefs() {
+		R1 r1 = new Self(R1.class).cast(R1.class);
+		assertNotNull(r1);
+	}
 }

@@ -8,6 +8,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import org.cq2.delegator.Self;
+
 public class ObservableImpl {
 	private Map observers = new WeakHashMap();
 
@@ -16,6 +18,7 @@ public class ObservableImpl {
 	}
 
 	void changed(Object self) {
+		self = Self.self(self);
 		// TODO: the arg to changed is the component that called 'changed(this)'
 		// Passing this component to observers is not a good idea.
 		// It is better to pass either the Composer (==Self) or the proxy

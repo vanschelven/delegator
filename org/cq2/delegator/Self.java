@@ -12,11 +12,16 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Stack;
 
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 public class Self implements InvocationHandler, ISelf {
-	public static ThreadLocal self = new ThreadLocal();
+	public static ThreadLocal self = new ThreadLocal() {
+		protected Object initialValue() {
+			return new Stack();
+		}
+	};
 	private List components;
 	private transient Object caller; // TODO threadsafe!
 
@@ -54,8 +59,14 @@ public class Self implements InvocationHandler, ISelf {
 				Method delegateMethod = component.getClass().getDeclaredMethod(name,
 						(Class[]) argTypeList.toArray(new Class[]{}));
 				delegateMethod.setAccessible(true);
-				self.set(this);
-				return delegateMethod.invoke(component, mapArgs(args));
+				Stack stack = ((Stack) self.get());
+				stack.push(this);
+				try {
+					return delegateMethod.invoke(component, mapArgs(args));
+				}
+				finally {
+					stack.pop();
+				}
 			}
 			catch (NoSuchMethodException e) {
 				continue;
@@ -183,5 +194,9 @@ public class Self implements InvocationHandler, ISelf {
 			result = findMethod(m[i]) != null;
 		}
 		return result;
+	}
+
+	public static Object self(Object obj) {
+		return obj instanceof Component ? ((ISelf)obj).cast(obj.getClass().getSuperclass()) : obj;
 	}
 }
