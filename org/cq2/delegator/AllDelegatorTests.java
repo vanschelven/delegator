@@ -11,8 +11,11 @@ import junit.textui.TestRunner;
 import org.cq2.delegator.classgenerator.ProxyGeneratorDelegateTest;
 import org.cq2.delegator.classgenerator.ProxyGeneratorSelfTest;
 import org.cq2.delegator.examples.HashMapExtensionTest;
+import org.cq2.delegator.examples.observer.ObservableWithDelegatorTest;
 import org.cq2.delegator.handlers.ComposerTest;
 import org.cq2.delegator.handlers.LinkTest;
+
+import state.StateTest;
 
 public class AllDelegatorTests {
 
@@ -30,6 +33,10 @@ public class AllDelegatorTests {
 		suite.addTestSuite(LinkTest.class);
 		suite.addTestSuite(DelegatorTest.class);
 		//$JUnit-END$
+		suite.addTestSuite(StateTest.class);
+		suite.addTestSuite(ObservableWithDelegatorTest.class);
+		
+		
 		return suite;
 	}
 }

@@ -48,6 +48,12 @@ public class DynamicBinder extends Binder {
 			Method targetMethod = (Method) methods.get(0);
 			return targetMethod.invoke(delegate, args);
 		}
+		public boolean matches(Class claz) {
+			throw new UnsupportedOperationException("TODO");
+		}
+		public Object getDelegate() {
+			throw new UnsupportedOperationException("TODO");
+		}
 	}
 
 	Binding bind(Method method, Object delegate) {

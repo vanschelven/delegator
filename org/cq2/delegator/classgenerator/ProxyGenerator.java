@@ -29,6 +29,8 @@ import org.apache.bcel.generic.Type;
 import org.cq2.delegator.util.MethodFilter;
 import org.cq2.delegator.util.Util;
 
+import state.Self;
+
 public class ProxyGenerator extends ClassLoader implements Constants {
 	private static final ObjectType CLASS = new ObjectType("java.lang.Class");
 	private final ClassGen classGen;
@@ -55,7 +57,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 				superClassName,
 				"",
 				(Modifier.isPublic(superClass.getModifiers()) ? ACC_PUBLIC : 0) | ACC_SUPER,
-				new String[] {});
+				new String[] { Self.class.getName()});
 		constPool = classGen.getConstantPool();
 		instrFact = new InstructionFactory(classGen, constPool);
 		instrList = new InstructionList();

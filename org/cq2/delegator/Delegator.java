@@ -4,7 +4,6 @@ Copyright (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2
 */
 package org.cq2.delegator;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -15,6 +14,9 @@ import org.cq2.delegator.handlers.Composer;
 import org.cq2.delegator.handlers.Link;
 import org.cq2.delegator.util.MethodFilter;
 
+import state.Self;
+
+
 /**
  * @author ejgroene
  */
@@ -24,6 +26,7 @@ public class Delegator {
 	
 	final MethodFilter methodFilter = new MethodFilter() {
 		public boolean filter(Method method) {
+			
 			return !Modifier.isFinal(method.getModifiers())
 				&& !Modifier.isPrivate(method.getModifiers());
 		}
@@ -56,17 +59,35 @@ public class Delegator {
 	public Object createExtension(Class extClass, Class protoClass) {
 		Object prototype = ProxyGenerator.newProxyInstance(classLoader, protoClass, null);
 		Object extension = ProxyGenerator.newProxyInstance(classLoader, extClass, null);
-		InvocationHandler self = new Composer(new Object[] { extension, prototype }, methodFilter);
-		setHandler(extension, self);
+		Self self = compose(new Object[] {extension, prototype});
+		self.assimilate(extension);
 		return extension;
 	}
 
-	private static void setHandler(Object prototype, InvocationHandler extHandler) {
-		Field field = ProxyGenerator.getDelegateField(prototype);
-		try {
-			field.set(prototype, extHandler);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+	public static Self extend(Class subclass, Class[] superclasses) {
+		Delegator delegator = new Delegator();
+		
+		Self extension = delegator.create(subclass);
+		Object[] prototypes = new Object[superclasses.length +1 ];
+		prototypes[0] = extension;
+		
+		for (int i = 0; i < superclasses.length; i++) {
+			Object prototype = delegator.create(superclasses[i]);
+			prototypes[i+1] = prototype;
 		}
+		
+		Self self = delegator.compose(prototypes);
+		self.assimilate(extension);
+		return self;
+}
+
+	private Self compose(Object[] prototypes) {
+		return  new Composer(prototypes, methodFilter);
+		
+	}
+
+	private Self create(Class clas) {
+		return (Self) ProxyGenerator.newProxyInstance(classLoader, clas, null);
+	
 	}
 }
