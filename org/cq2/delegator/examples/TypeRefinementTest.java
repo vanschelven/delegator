@@ -43,26 +43,5 @@ public class TypeRefinementTest extends TestCase {
 		map.put(9, 16);
 		assertEquals(16, map.get(9));
 	}
-	
-	public void test1() {
-		Map map = (Map) createMap().cast(Map.class);
-	}
-
-	public void test2() {
-	    List o = (List) createMap().cast(List.class);
-	}
-	
-	public interface SomeMethod { //als je hier geen public voor zet doet ie het niet
-	    public void method();
-	}
-
-	public void test3() {
-	    ISelf map = createMap();
-	    SomeMethod o = (SomeMethod) map.cast(SomeMethod.class);
-	}
-	
-	public void test4() {
-	    AccessibleIcon o = (AccessibleIcon) createMap().cast(AccessibleIcon.class);
-	}
-	
+		
 }
