@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jardesc>
-    <jar path="/home/ejgroene/workspace/delegator/delegator1.2.jar"/>
+    <jar path="/home/thijs/workspace/cq2-itor-branch/lib/delegator1.3.jar"/>
     <options overwrite="false" compress="true" exportErrors="false" exportWarnings="true" saveDescription="true" descriptionLocation="/delegator/delegator.jardesc" useSourceFolders="false" buildIfNeeded="true"/>
     <manifest manifestVersion="1.0" usesManifest="true" reuseManifest="false" saveManifest="false" generateManifest="true" manifestLocation="">
         <sealing sealJar="false">
@@ -8,7 +8,7 @@
             <packagesToUnSeal/>
         </sealing>
     </manifest>
-    <selectedElements exportClassFiles="true" exportJavaFiles="true">
+    <selectedElements exportClassFiles="true" exportOutputFolder="false" exportJavaFiles="true">
         <file path="/libs/lib/bcel.license"/>
         <file path="/libs/lib/junit.license"/>
         <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.examples.mixin"/>
