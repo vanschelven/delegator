@@ -25,7 +25,11 @@ public class ProxyGeneratorTest extends TestCase {
 		assertTrue(p instanceof Proxy);
 		assertFalse(p instanceof Component);
 		assertEquals("proxy$java.util.HashMap", p.getClass().getName());
-		assertNull(p.getClass().getMethod("size", new Class[]{InvocationHandler.class}));
+		try {
+			p.getClass().getMethod("size", new Class[]{InvocationHandler.class});
+			fail();
+		}
+		catch (NoSuchMethodException e) {}
 	}
 
 	public void testCreateProxy2() throws Exception {

@@ -41,7 +41,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 	private final ConstantPoolGen constPool;
 
 	private ProxyGenerator(String className, Class superClass, MethodFilter methodFilter,
-			Class marker) {
+			Class marker, boolean addSuperCall) {
 		String[] extraInterfaces = new String[]{marker.getName(), ISelf.class.getName()};
 		int modifiers = (Modifier.isPublic(superClass.getModifiers()) ? ACC_PUBLIC : 0) | ACC_SUPER;
 		classGen = new ClassGen(className, superClass.getName(), "", modifiers, extraInterfaces);
@@ -50,7 +50,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		instrList = new InstructionList();
 		addSelfField();
 		addDefaultConstructor();
-		addMethodsFromSuperClass(methodFilter, superClass, extraInterfaces);
+		addMethodsFromSuperClass(methodFilter, superClass, extraInterfaces, addSuperCall);
 	}
 
 	public byte[] generateClass() {
@@ -89,7 +89,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 	}
 
 	private void addMethodsFromSuperClass(MethodFilter methodFilter, Class superClass,
-			String[] extraInterfaces) {
+			String[] extraInterfaces, boolean addSuperCallMethod) {
 		//System.out.println("=============" + superClass);
 		Set methods = new TreeSet(new MethodComparator());
 		MethodUtil.addMethods(superClass, methods, methodFilter);
@@ -109,7 +109,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 			if (!Modifier.isFinal(modifiers) && !Modifier.isStatic(modifiers)) {
 				//System.out.println("Adding " + method);
 				addDelegationMethod(method);
-				if (!Modifier.isAbstract(modifiers)) {
+				if (!Modifier.isAbstract(modifiers)  && addSuperCallMethod) {
 					addSuperCallMethod(method);
 				}
 			}
@@ -401,15 +401,15 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 	}
 
 	public static Class getProxyClass(ClassInjector injector, Class clazz, MethodFilter filter) {
-		return getXClass(injector, clazz, filter, "proxy", Proxy.class);
+		return getXClass(injector, clazz, filter, "proxy", Proxy.class, false);
 	}
 
 	public static Class getComponentClass(ClassInjector injector, Class clazz, MethodFilter filter) {
-		return getXClass(injector, clazz, filter, "component", Component.class);
+		return getXClass(injector, clazz, filter, "component", Component.class, true);
 	}
 
 	private static Class getXClass(ClassInjector injector, Class clazz, MethodFilter filter,
-			String prefix, Class marker) {
+			String prefix, Class marker, boolean addSuperCall) {
 		if (clazz.isInterface()) {
 			throw new IllegalArgumentException(
 					"Interfaces are not supported, use java.lang.reflect.Proxy.");
@@ -419,7 +419,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 			return injector.loadClass(className);
 		}
 		catch (ClassNotFoundException e) {
-			byte[] classDef = new ProxyGenerator(className, clazz, filter, marker).generateClass();
+			byte[] classDef = new ProxyGenerator(className, clazz, filter, marker, addSuperCall).generateClass();
 			return injector.inject(className, classDef, clazz.getProtectionDomain());
 		}
 	}
