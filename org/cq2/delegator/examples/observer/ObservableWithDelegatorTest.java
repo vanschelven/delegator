@@ -14,55 +14,44 @@ import org.cq2.delegator.handlers.ISelf;
 public class ObservableWithDelegatorTest extends TestCase implements Observer {
 	private Object notifier;
 
-	class MockObserver implements Observer {
-		public Object	myNotifier;
-		public void notifyChanged(Object implementation) {
-			myNotifier = implementation;
+	
+	class CountingObserver implements Observer {
+		int count;
+		public void notifyChanged(Object observable) {
+			CountingObservableWithDelegation castedObservable = ((CountingObservableWithDelegation) ((ISelf)observable).cast(CountingObservableWithDelegation.class));
+			count = castedObservable.getCount();
+			
 		}
 	}
 
-	public void testChanged() {
-		MyObservableImplWithDelegation observable = createObservable();
-		observable.addDependent(this);
-		MockObserver observer2 = new MockObserver();
-		observable.addDependent(observer2);
-		observable.changed(this);
-		assertSame(this, notifier);
-		assertSame(this, observer2.myNotifier);
+	public void testCounting() {
+		//change example to counter, with inc() and count()
+		CountingObservableWithDelegation observable = createObservable();
+		CountingObserver observer = new CountingObserver();
+		observable.addDependent(observer);
+		observable.increment();
+		assertEquals(1, observer.count);
+		observable.increment();
+		assertEquals(2, observer.count);
+		
 	}
 
 	public void testSecondObservableClass() {
-		MyObservableImplWithDelegation obs2 = createObservable();
+		CountingObservableWithDelegation obs2 = createObservable();
 		obs2.addDependent(this);
 		notifier = null;
-		obs2.changesomething();
+		obs2.increment();
 		assertSame(((ISelf)obs2).self(), 
 				((ISelf)notifier).self());
 	}
 
-	private MyObservableImplWithDelegation createObservable() {
-		return (MyObservableImplWithDelegation) Delegator.extend(
-				MyObservableImplWithDelegation.class, new Class[] {ObservableImpl.class});
+	private CountingObservableWithDelegation createObservable() {
+		return (CountingObservableWithDelegation) Delegator.extend(
+				CountingObservableWithDelegation.class, new Class[] {ObservableImpl.class});
 	}
-
-	public void testRemoveDependent() {
-		MyObservableImplWithDelegation obs = createObservable();
-		obs.addDependent(this);
-		MockObserver observer2 = new MockObserver();
-		obs.addDependent(observer2);
-		Object self = new Object();
-		obs.changed(self);
-		assertSame(self, notifier);
-		assertSame(self, observer2.myNotifier);
-		notifier = null;
-
-		obs.removeDependent(this);
-		obs.changed(self);
-		assertSame(self, observer2.myNotifier);
-		assertNull(notifier);
-	}
-
+	
 	public void notifyChanged(Object observable) {
 		this.notifier = observable;
+		
 	}
 }

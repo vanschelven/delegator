@@ -26,6 +26,11 @@ public class ObservableImpl {
 		}
 	}
 
+	public void changed() {
+		changed(this);
+		
+	}
+	
 	public void removeDependent(Observer test) {
 		observers.remove(test);
 	}

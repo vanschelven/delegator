@@ -8,7 +8,7 @@ package org.cq2.delegator.examples.observer;
 
 import junit.framework.TestCase;
 
-public class ObservableTest extends TestCase implements Observer {
+public class OrdinaryObservableWithoutDelegatorTest extends TestCase implements Observer {
 	private Object notifier;
 
 	class MockObserver implements Observer {
@@ -30,7 +30,7 @@ public class ObservableTest extends TestCase implements Observer {
 		}
 	}
 
-	public void testChanged() {
+	public void testPrivateChanged() {
 		ObservableImpl obs = new ObservableImpl();
 		obs.addDependent(this);
 		MockObserver observer2 = new MockObserver();
@@ -39,6 +39,18 @@ public class ObservableTest extends TestCase implements Observer {
 		assertSame(this, notifier);
 		assertSame(this, observer2.myNotifier);
 	}
+	
+	public void testPublicChanged() {
+		ObservableImpl observed = new ObservableImpl();
+		observed.addDependent(this);
+		MockObserver observer2 = new MockObserver();
+		observed.addDependent(observer2);
+		observed.changed();
+		assertSame(observed, notifier);
+		assertSame(observed, observer2.myNotifier);
+	}
+	
+	
 
 	public void testSecondObservableClass() {
 		Observable obs2 = createObservable();
