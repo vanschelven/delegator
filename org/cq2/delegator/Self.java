@@ -155,9 +155,8 @@ public class Self implements InvocationHandler, ISelf {
 		become(clas);
 	}
 
-	public void add(ISelf object) {
-		Self c = (Self) object;
-		for (Iterator components = c.delegates.iterator(); components.hasNext();)
+	public void add(Self object) {
+		for (Iterator components = object.delegates.iterator(); components.hasNext();)
 			delegates.add(components.next());
 		createBindings();
 	}

@@ -471,9 +471,9 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 				handler);
 	}
 
-	static Object getInvocationHandler(Object proxy) {
+	public static InvocationHandler getInvocationHandler(Object proxy) {
 		try {
-			return getDelegateField(proxy).get(proxy);
+			return (InvocationHandler) getDelegateField(proxy).get(proxy);
 		}
 		catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
