@@ -6,6 +6,21 @@
  */
 package org.cq2.delegator.classgenerator;
 
-import org.cq2.delegator.handlers.ISelf;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import org.cq2.delegator.handlers.Invoker;
 
-public abstract class SubClass implements ISelf{}
+class DDObject {
+	InvocationHandler self;
+}
+public class SubClass extends Invoker {
+	public Object invoke(Method ga, Object[] args, Object target, InvocationHandler newSelf) {
+		((DDObject) target).self = newSelf;
+		try {
+			return ga.invoke(target.getClass().getName(), args);
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+}
