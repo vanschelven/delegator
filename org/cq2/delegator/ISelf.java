@@ -10,6 +10,7 @@ public interface ISelf {
 	void add(Self self);
 	void add(Class componentType);
 	void add(Component component);
+	void insert(Class componentType);
 	//void remove();
 	//void remove(Object object);
 	//void remove(int component)

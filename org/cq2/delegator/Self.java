@@ -13,7 +13,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Stack;
-
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 public class Self implements InvocationHandler, ISelf {
@@ -50,9 +49,9 @@ public class Self implements InvocationHandler, ISelf {
 		if ("hashCode".equals(name))
 			return new Integer(hashCode());
 		Iterator cmps = components.iterator();
-		if(name.startsWith("__next__")) {
+		if (name.startsWith("__next__")) {
 			Object component = null;
-			while(component!=proxy && cmps.hasNext()){
+			while (component != proxy && cmps.hasNext()) {
 				component = cmps.next();
 			}
 			name = name.substring(8);
@@ -96,7 +95,7 @@ public class Self implements InvocationHandler, ISelf {
 		}
 		else if ("become".equals(name)) {
 			become((Class) args[0]);
-			return Void.TYPE;
+			return null;
 		}
 		else if ("toString".equals(name))
 			return toString();
@@ -110,6 +109,10 @@ public class Self implements InvocationHandler, ISelf {
 			return component(((Number) args[0]).intValue());
 		else if ("self".equals(name))
 			return self();
+		else if ("insert".equals(name) && args[0] instanceof Class) {
+			insert((Class) args[0]);
+			return null;
+		}
 		throw new NoSuchMethodError(method.toString());
 	}
 
@@ -156,6 +159,10 @@ public class Self implements InvocationHandler, ISelf {
 
 	public void add(InvocationHandler s, Class clas) {
 		add(clas);
+	}
+
+	public void insert(Class componentType) {
+		components.add(0, newComponent(componentType));
 	}
 
 	private Component newComponent(Class clas) {
@@ -205,6 +212,6 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public static Object self(Object obj) {
-		return obj instanceof Component ? ((ISelf)obj).cast(obj.getClass().getSuperclass()) : obj;
+		return obj instanceof Component ? ((ISelf) obj).cast(obj.getClass().getSuperclass()) : obj;
 	}
 }
