@@ -5,16 +5,16 @@
 package org.cq2.delegator.handlers;
 
 import java.io.DataInput;
-import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import junit.framework.TestCase;
+
 import org.cq2.delegator.Delegator;
-import org.cq2.delegator.util.MethodFilter;
 
 /**
  * @author ejgroene
@@ -122,26 +122,5 @@ public class ComposerTest extends TestCase {
 			fail();
 		}
 		catch (Error e) {}
-	}
-
-	public static class ClassA {
-		Object delegate;
-	}
-	public static class ClassB {
-		Object delegate;
-	
-	}
-
-	public void testCast() {
-		Object a = new ClassA();
-		Object b = new ClassB();
-		Composer composer = new Composer(new Object[]{a, b}, new MethodFilter() {
-			public boolean filter(Method method) {
-				return true;
-			}
-		});
-		
-		assertSame(a, composer.cast(ClassA.class));
-		assertSame(b, composer.cast(ClassB.class));
 	}
 }

@@ -16,7 +16,7 @@ public class HashMapExtensionTest extends TestCase {
 	public static abstract class MyMap implements Map {
 		
 		public static MyMap create() throws Exception {
-			return (MyMap) new Delegator().createExtension(MyMap.class, HashMap.class);
+			return (MyMap) Delegator.createExtension(MyMap.class, HashMap.class);
 		}
 		
 		public Object get(Object key) {

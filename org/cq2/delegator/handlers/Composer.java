@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
 import org.cq2.delegator.Delegator;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.handlers.Binder.Binding;
@@ -27,7 +28,19 @@ public class Composer implements InvocationHandler, Self {
 	private Object caller; // TODO threadsafe!
 	private MethodFilter methodFilter;
 
-	public Composer(Object[] delegates, MethodFilter methodFilter) {
+	public static Self compose(Object[] prototypes, MethodFilter methodFilter) {
+		for (int i = 0; i < prototypes.length; i++) {
+			if (prototypes[i] == null)
+				throw new NullPointerException("Prototype #" + i + " is null.");
+			if (!ProxyGenerator.isProxy(prototypes[i]))
+				throw new IllegalArgumentException("Prototype #" + i
+						+ " is not delegation capable. "
+						+ "Create prototypes using Delegator.create().");
+		}
+		return new Composer(prototypes, methodFilter);
+	}
+
+	private Composer(Object[] delegates, MethodFilter methodFilter) {
 		List list = new ArrayList(Arrays.asList(delegates));
 		list.add(this);
 		this.delegates = list.toArray();
@@ -70,14 +83,7 @@ public class Composer implements InvocationHandler, Self {
 	}
 
 	public Object cast(Class clas) {
-		for (int i = 0; i < delegates.length; i++) {
-			Object delegate = delegates[i];
-			if (clas.isAssignableFrom(delegate.getClass())) {
-				assimilate(delegate);
-				return delegate;
-			}
-		}
-		throw new ClassCastException("Could not find a Castable for: " + clas.getName());
+		return Delegator.proxyFor(clas, this);
 	}
 
 	// You don't wanna know why this method is here
@@ -96,7 +102,7 @@ public class Composer implements InvocationHandler, Self {
 	}
 
 	public void become(Class clas) {
-		Object delegate = Delegator.create(clas);
+		Object delegate = Delegator.instanceOf(clas);
 		assimilate(delegate);
 		int i = 0;
 		while (delegates[i] != caller)
@@ -104,7 +110,7 @@ public class Composer implements InvocationHandler, Self {
 		delegates[i] = delegate;
 		createBindings();
 	}
-	
+
 	public void become(InvocationHandler handler, Class clas) {
 		become(clas);
 	}

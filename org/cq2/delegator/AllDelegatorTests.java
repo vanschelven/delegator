@@ -14,6 +14,7 @@ import org.cq2.delegator.examples.HashMapExtensionTest;
 import org.cq2.delegator.examples.mixin.MixinTest;
 import org.cq2.delegator.examples.observer.ObservableWithDelegatorTest;
 import org.cq2.delegator.handlers.ComposerTest;
+import org.cq2.delegator.handlers.DynamicBinderTest;
 import org.cq2.delegator.handlers.LinkTest;
 import org.cq2.delegator.util.MethodComparatorTest;
 
@@ -39,6 +40,7 @@ public class AllDelegatorTests {
 		suite.addTestSuite(ObservableWithDelegatorTest.class);
 		suite.addTestSuite(MixinTest.class);
 		suite.addTestSuite(MethodComparatorTest.class);		
+		suite.addTestSuite(DynamicBinderTest.class);
 		return suite;
 	}
 }

@@ -32,7 +32,8 @@ public class SuperClassBinder extends Binder {
 	protected Object[] mapArgs(Object[] args) {
 		List argList = new ArrayList();
 		argList.add(self);
-		argList.addAll(Arrays.asList(args));
+		if(args != null)
+			argList.addAll(Arrays.asList(args));
 		return argList.toArray();
 	}
 }

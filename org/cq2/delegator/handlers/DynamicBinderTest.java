@@ -33,4 +33,8 @@ public class DynamicBinderTest extends TestCase {
 		Object result3 = binding.invoke(new Object[] { new ArrayList()});
 		assertEquals("List", result3);
 	}
+	
+	public void testTwoArgs() {
+		fail();
+	}
 }

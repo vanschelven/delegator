@@ -11,18 +11,14 @@ import org.cq2.delegator.Delegator;
 import junit.framework.TestCase;
 
 public class ObservableWithDelegatorTest extends TestCase implements Observer {
-	private Object notifier;
+	private Object	notifier;
 
 	class MockObserver implements Observer {
-		public Object myNotifier;
-
+		public Object	myNotifier;
 		public void notifyChanged(Object implementation) {
 			myNotifier = implementation;
 		}
-		
-		
 	}
-	
 
 	public void testChanged() {
 		MyObservableImplWithDelegation observable = createObservable();
@@ -36,17 +32,15 @@ public class ObservableWithDelegatorTest extends TestCase implements Observer {
 
 	public void testSecondObservableClass() {
 		MyObservableImplWithDelegation obs2 = createObservable();
-
 		obs2.addDependent(this);
 		notifier = null;
 		obs2.changesomething();
 		assertSame(obs2, notifier);
-				
 	}
 
-	
 	private MyObservableImplWithDelegation createObservable() {
-		return (MyObservableImplWithDelegation) new Delegator().createExtension(MyObservableImplWithDelegation.class, ObservableImpl.class);
+		return (MyObservableImplWithDelegation) Delegator.createExtension(
+				MyObservableImplWithDelegation.class, ObservableImpl.class);
 	}
 
 	public void testRemoveDependent() {
@@ -59,8 +53,8 @@ public class ObservableWithDelegatorTest extends TestCase implements Observer {
 		assertSame(self, notifier);
 		assertSame(self, observer2.myNotifier);
 		notifier = null;
-		
-	    obs.removeDependent(this);
+
+		obs.removeDependent(this);
 		obs.changed(self);
 		assertSame(self, observer2.myNotifier);
 		assertNull(notifier);
