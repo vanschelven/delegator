@@ -8,6 +8,9 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 import junit.textui.TestRunner;
 
+import org.cq2.delegator.binders.DynamicBinderTest;
+import org.cq2.delegator.binders.LinkTest;
+import org.cq2.delegator.classgenerator.ClassInjectorTest;
 import org.cq2.delegator.classgenerator.ProxyGeneratorDelegateTest;
 import org.cq2.delegator.classgenerator.ProxyGeneratorSelfTest;
 import org.cq2.delegator.classgenerator.ProxyGeneratorTest;
@@ -15,11 +18,8 @@ import org.cq2.delegator.examples.HashMapExtensionTest;
 import org.cq2.delegator.examples.composeddocument.ComposedDocumentTest;
 import org.cq2.delegator.examples.mixin.MixinTest;
 import org.cq2.delegator.examples.observer.CountingObservableTest;
-import org.cq2.delegator.binders.DynamicBinderTest;
-import org.cq2.delegator.binders.LinkTest;
-import org.cq2.delegator.method.MethodComparatorTest;
-
 import org.cq2.delegator.examples.state.StateTest;
+import org.cq2.delegator.method.MethodComparatorTest;
 
 public class AllDelegatorTests {
 
@@ -44,6 +44,7 @@ public class AllDelegatorTests {
 		suite.addTestSuite(MethodComparatorTest.class);		
 		suite.addTestSuite(DynamicBinderTest.class);
 		suite.addTestSuite(ProxyGeneratorTest.class);
+		suite.addTestSuite(ClassInjectorTest.class);
 		return suite;
 	}
 }

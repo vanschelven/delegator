@@ -31,6 +31,7 @@ import org.apache.bcel.generic.Type;
 import org.cq2.delegator.ISelf;
 import org.cq2.delegator.method.MethodComparator;
 import org.cq2.delegator.method.MethodFilter;
+import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 import org.cq2.delegator.method.MethodUtil;
 
 public class ProxyGenerator extends ClassLoader implements Constants {
@@ -57,7 +58,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		return classGen.getJavaClass().getBytes();
 	}
 
-	private static String getProxyClassName(Class superClass, String marker) {
+	private static String getClassName(Class superClass, String marker) {
 		String className = superClass.getName();
 		if (superClass.getPackage().getName().startsWith("java.")) {
 			return marker + "$" + className;
@@ -401,28 +402,40 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 	}
 
 	public static Class getProxyClass(ClassInjector injector, Class clazz, MethodFilter filter) {
-		return getXClass(injector, clazz, filter, "proxy", Proxy.class, false);
+		try {
+			return injector.loadClass(getClassName(clazz, "proxy"));
+		}
+		catch (ClassNotFoundException e) {
+			throw new NoClassDefFoundError(e.getMessage());
+		}
 	}
 
 	public static Class getComponentClass(ClassInjector injector, Class clazz, MethodFilter filter) {
-		return getXClass(injector, clazz, filter, "component", Component.class, true);
+		try {
+			return injector.loadClass(getClassName(clazz, "component"));
+		}
+		catch (ClassNotFoundException e) {
+			throw new NoClassDefFoundError(e.getMessage());
+		}
 	}
 
-	private static Class getXClass(ClassInjector injector, Class clazz, MethodFilter filter,
+	static Class injectProxyClass(ClassInjector injector,Class clazz){
+		return injectClass(injector,clazz,new MethodFilterNonFinalNonPrivate(),"proxy",Proxy.class,false);
+	}
+	static Class injectComponentClass(ClassInjector injector,Class clazz){
+		return injectClass(injector,clazz,new MethodFilterNonFinalNonPrivate(),"component",Component.class,true);
+	}
+	
+	private static Class injectClass(ClassInjector injector, Class clazz, MethodFilter filter,
 			String prefix, Class marker, boolean addSuperCall) {
 		if (clazz.isInterface()) {
 			throw new IllegalArgumentException(
 					"Interfaces are not supported, use java.lang.reflect.Proxy.");
 		}
-		String className = getProxyClassName(clazz, prefix);
-		try {
-			return injector.loadClass(className);
-		}
-		catch (ClassNotFoundException e) {
-			byte[] classDef = new ProxyGenerator(className, clazz, filter, marker, addSuperCall)
-					.generateClass();
-			return injector.inject(className, classDef, clazz.getProtectionDomain());
-		}
+		String className = getClassName(clazz, prefix);
+		byte[] classDef = new ProxyGenerator(className, clazz, filter, marker, addSuperCall)
+				.generateClass();
+		return injector.inject(className, classDef, clazz.getProtectionDomain());
 	}
 
 	public static Proxy newProxyInstance(ClassInjector injector, Class clazz, MethodFilter filter,
