@@ -22,8 +22,8 @@ public class Link implements InvocationHandler {
 
 	public Link(Object delegate) {
 		this(delegate, new InvocationHandler() {
-			public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
-				throw new NoSuchMethodError();
+			public Object invoke(Object arg0, Method method, Object[] args) throws Throwable {
+				throw new NoSuchMethodError(method.toString());
 			}
 		});
 	}
