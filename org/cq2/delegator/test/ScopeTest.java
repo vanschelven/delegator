@@ -20,11 +20,14 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     public void setUp() {
         invokedMethod = null;
         invokeResult = null;
+        packageMethodCalled = false;
     }
 
     private String invokedMethod;
 
     private Object invokeResult;
+
+    private static boolean packageMethodCalled;
 
     public Object invoke(Object proxy, Method method, Object[] args)
             throws Throwable {
@@ -43,6 +46,8 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     }
 
     public void testDelegateSubclassPackageScopeMethod() {
+        //this doesn't work because testPackageMethod fails
+        //the names subclass and superclass are not entirely correct
         Self self = new Self(MySuperClass.class);
         MySuperClass sup = (MySuperClass) self.cast(MySuperClass.class);
         assertEquals(3, sup.myPackageScopeMethod());
@@ -63,7 +68,8 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         abstract void method();
     }
 
-    public void testAbstractNonPublicMethods() throws Exception {
+    public void testAbstractPackageMethod() throws Exception {
+        //this doesn't work because testPackageMethod fails
         B b = (B) ProxyGenerator.newProxyInstance(B.class, this);
         Method declaredMethod = b.getClass().getDeclaredMethod("method", null);
         assertNotNull(declaredMethod);
@@ -78,64 +84,68 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         b.method();
     }
 
-    public abstract static class C {
-        protected abstract void method();// {System.out.println("C.method");}
+    public abstract static class ProtectedAbstractMethod {
+        protected abstract void method();
     }
 
-    public void testAbstractNonPublicMethods2() throws Exception {
-        C b = (C) ProxyGenerator.newProxyInstance(C.class, this);
-        Method declaredMethod = b.getClass().getDeclaredMethod("method", null);
+    public void testProtectedAbstractMethod() throws Exception {
+        ProtectedAbstractMethod m = (ProtectedAbstractMethod) ProxyGenerator.newProxyInstance(ProtectedAbstractMethod.class, this);
+        Method declaredMethod = m.getClass().getDeclaredMethod("method", null);
         assertNotNull(declaredMethod);
         assertFalse(Modifier.isAbstract(declaredMethod.getModifiers()));
         //assertTrue(Modifier.isPublic(declaredMethod.getModifiers()));
-        declaredMethod.setAccessible(true);
-        declaredMethod.invoke(b, null);
-        b.method();
+        //declaredMethod.setAccessible(true);
+        declaredMethod.invoke(m, null);
+        m.method();
     }
 
-    public static class B2 extends B {
+    public static class PackageMethod {
+ 
         void method() {
+            packageMethodCalled = true;
         }
+        
     }
-
-    public void testAbstract() {
-        new B2().method();
-    }
-
-    public void testAbstract2() {
-        B b = new B2();
-        b.method();
-    }
-
-    public void testMethodLookup() throws Exception {
-        B b = (B) ProxyGenerator.newProxyInstance(B2.class, this);
-        b.method();
-        assertEquals("method", invokedMethod);
-    }
-
-    public static class D {
-        protected void method() {
-            System.out.println("d.method");
+    
+    public static class ExtendedPackageMethod extends PackageMethod {
+        
+        void method() {
+            System.out.println("pop");
         }
         
     }
 
-    public void testMethodLookup2() throws Exception {
-        D d = (D) ProxyGenerator.newProxyInstance(D.class, this);
-        d.method();
+    public void testPackageMethod() throws Exception {
+        PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(PackageMethod.class, this);
+        m.method();
+        assertFalse(packageMethodCalled);
         assertEquals("method", invokedMethod);
     }
 
-    public void testMethodLookup3() throws Exception {
-        D d = (D) ProxyGenerator.newProxyInstance(D.class, this);
-        assertEquals("class org.cq2.delegator.test.ScopeTest$D$proxy", d
+    public void testPackageMethodUsingReflection() throws Exception {
+        PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(PackageMethod.class, this);
+        Method proxyMethod = m.getClass().getDeclaredMethod("method", null);
+        proxyMethod.invoke(m, null);
+        assertFalse(packageMethodCalled);
+        assertEquals("method", invokedMethod);
+    }
+    
+    public void testPackageMethodRegularJava() {
+        PackageMethod m = new ExtendedPackageMethod();
+        m.method();
+        assertFalse(packageMethodCalled);
+        //true: extendedPackageMethodCalled
+    }
+    
+    //de volgende test hoort elders thuis...
+    public void testMethodSignaturesMatch() throws Exception {
+        PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(PackageMethod.class, this);
+        assertEquals("class org.cq2.delegator.test.ScopeTest$PackageMethod$proxy", m
                 .getClass().toString());
-        assertEquals(this.getClass().getPackage(), d.getClass().getPackage());
-        Method proxyMethod = d.getClass().getDeclaredMethod("method", null);
-        proxyMethod.invoke(d, null);
-        assertEquals("method", invokedMethod);
+        assertEquals(this.getClass().getPackage(), m.getClass().getPackage());
+        Method proxyMethod = m.getClass().getDeclaredMethod("method", null);
         
-        Method originalMethod = D.class.getDeclaredMethod("method", null);
+        Method originalMethod = PackageMethod.class.getDeclaredMethod("method", null);
         assertEquals(originalMethod.getName(), proxyMethod.getName());
         assertArrayEquals(originalMethod.getParameterTypes(), proxyMethod
                 .getParameterTypes());
@@ -144,13 +154,8 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         assertEquals(originalMethod.getReturnType(), proxyMethod
                 .getReturnType());
         assertEquals(originalMethod.isAccessible(), proxyMethod.isAccessible());
-        invokedMethod = null;
-        d.method();
-        assertEquals("method", invokedMethod);
-        
-        //assertEquals(originalMethod.getModifiers(), proxyMethod.getModifiers());
-        //en dat dit werkt snap ik dus niet!!
-    }
+        //assertEquals(originalMethod.getModifiers(), proxyMethod.getModifiers()); - this is untrue because some of the modifiers are set to public
+    }    
 
     private void assertArrayEquals(Object[] array1, Object[] array2) {
         assertEquals(array1.length, array2.length);
@@ -159,21 +164,9 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         }
     }
 
-    //public void testMethodLookup4() throws Exception {
-    //dit kan niet ProxyGenerator.newProxyInstance(D.class, this).method();
-    //assertEquals("method", invokedMethod);
-    //}
-
-    public void testHowDoesThisWork() {
-        int oldMods = Modifier.STATIC + Modifier.NATIVE;
-        int newMods = oldMods
-                & ~(Modifier.NATIVE | Modifier.ABSTRACT | Modifier.PRIVATE | Modifier.PROTECTED)
-                | Modifier.PUBLIC;
-        assertEquals(Modifier.STATIC | Modifier.PUBLIC, newMods);
-    }
-    
     public void testPackages() {
-        D d = new BInSubPackage();
+        //See generated compiler messages in the subpackage for the idea behind this test...
+        PackageMethod d = new BInSubPackage();
         d.method();
         BInSubPackage d2 = new BInSubPackage();
         d2.method();
