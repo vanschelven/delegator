@@ -6,13 +6,13 @@ package org.cq2.delegator.classgenerator;
 
 import java.security.ProtectionDomain;
 
-class ClassInjector extends ClassLoader {
+public class ClassInjector extends ClassLoader {
 
-	ClassInjector(ClassLoader parent) {
+	public ClassInjector(ClassLoader parent) {
 		super(parent);
 	}
 	
-	Class inject(String className, byte[] classDef, ProtectionDomain domain) {
+	public Class inject(String className, byte[] classDef, ProtectionDomain domain) {
 		return defineClass(className, classDef, 0, classDef.length, domain);
 	}
 }

@@ -106,11 +106,11 @@ public class Self implements InvocationHandler, ISelf {
 					new MethodFilterNonFinalNonPrivate() {
 						public boolean filter(Method method) {
 							if (method.getDeclaringClass().equals(Object.class)) {
-								System.out.println("Ignoring " + method);
+								//System.out.println("Ignoring " + method);
 								return false;
 							}
 							else {
-								System.out.println("Adding " + method);
+								//System.out.println("Adding " + method);
 								return super.filter(method);
 							}
 						}
