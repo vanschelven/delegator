@@ -37,7 +37,7 @@ public class Self implements InvocationHandler, ISelf {
 	private final transient Binder binder = new SuperClassBinder(this);
 
 	private Self(MethodFilter methodFilter, Component object) {
-		this.delegates = new ArrayList();
+		this();
 		delegates.add(object);
 	}
 
@@ -46,7 +46,7 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public Self(Class firstComponentClass) {
-		this.delegates = new ArrayList();
+		this();
 		delegates.add(newComponent(firstComponentClass));
 	}
 
