@@ -339,26 +339,37 @@ public class SelfTest extends TestCase {
 			assertEquals("oops", e.getMessage());
 		}
 	}
-	
+
 	public static class R1 {
-		R2 other = (R2) new Self(R2.class).cast(R2.class);
-		public String f() {
-			return other.g();
+		public String f(R2 other) {
+			return "R1.f()/" + other.g() + "/" + h();
 		}
-		public String g() {
-			return "R1.g()";
-		}
-		} 
-	public static class R2 {
-		public String f() {
-			return "R2.f()";
-		}
-		public String g() {
-			return g();
+
+		public String h() {
+			return "R1.h()";
 		}
 	}
+	public static class R2 {
+		public String g() {
+			return "R2.g()/" + h();
+		}
+
+		public String h() {
+			return "R2.h()";
+		}
+	}
+
 	public void testCrossRefs() {
-		R1 r1 = new Self(R1.class).cast(R1.class);
-		assertNotNull(r1);
+		Component r1 = (Component) new Self(R1.class).component(0);
+		Component r2 = (Component) new Self(R2.class).component(0);
+		Self self = new Self();
+		self.add(r2);
+		self.add(r1);
+		Self other = new Self();
+		other.add(r1);
+		other.add(r2);
+		R1 r = (R1) self.cast(R1.class);
+		String result = r.f((R2) other.cast(R2.class));
+		assertEquals(result, "R1.f()/R2.g()/R1.h()/R2.h()", result);
 	}
 }
