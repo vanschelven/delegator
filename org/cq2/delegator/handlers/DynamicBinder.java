@@ -50,16 +50,15 @@ public class DynamicBinder extends Binder {
 		}
 	}
 
-	protected Method mapMethod(Method method, Object delegate) throws NoSuchMethodException {
-		return delegate.getClass().getMethod(method.getName(), method.getParameterTypes());
-	}
-
-	protected Object[] mapArgs(Object[] args) {
-		return args;
-	}
-
 	Binding bind(Method method, Object delegate) {
 		return new DynamicBinding(method, delegate);
 	}
 
+	protected Method mapMethod(Method method, Object delegate) throws NoSuchMethodException {
+		throw new UnsupportedOperationException();
+	}
+
+	protected Object[] mapArgs(Object[] args) {
+		throw new UnsupportedOperationException();
+	}
 }
