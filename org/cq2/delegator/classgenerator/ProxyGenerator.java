@@ -142,9 +142,7 @@ public class ProxyGenerator implements Constants {
 		if (superClass.getPackage().getName().startsWith("java.")) {
 			return marker + "$" + className;
 		}
-		else {
-			return className + "$" + marker;
-		}
+		return className + "$" + marker;
 	}
 
 	public static Field getDelegateField(Object proxy) {

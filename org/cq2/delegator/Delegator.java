@@ -15,20 +15,18 @@ import org.cq2.delegator.classgenerator.ProxyGenerator;
  */
 public class Delegator {
 
-/*	private final static InvocationHandler nullHandler = new InvocationHandler() {
-		public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
-			throw new NullPointerException("Delegator: Object has no SELF pointer.");
-		}
-	};
-*/
+	/*	private final static InvocationHandler nullHandler = new InvocationHandler() {
+	 public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
+	 throw new NullPointerException("Delegator: Object has no SELF pointer.");
+	 }
+	 };
+	 */
 	public static Object proxyFor(Class theInterface, InvocationHandler handler) {
 		if (theInterface.isInterface()) {
-			return Proxy.newProxyInstance(ProxyGenerator.getClassLoader(), new Class[]{theInterface, ISelf.class}, handler);
+			return Proxy.newProxyInstance(ProxyGenerator.getClassLoader(), new Class[]{
+					theInterface, ISelf.class}, handler);
 		}
-		else {
-			return ProxyGenerator
-					.newProxyInstance(theInterface, handler);
-		}
+		return ProxyGenerator.newProxyInstance(theInterface, handler);
 	}
 
 	public static Object forInterface(Class theInterface, Object delegate) {
@@ -37,8 +35,8 @@ public class Delegator {
 
 	public static Object forInterface(Class theInterface, Object[] delegates) {
 		InvocationHandler newDynImpl = Link.noSuchMethodInvocationHandler();
-		for(int i = delegates.length -1; i >= 0; i--)
-			newDynImpl = new Link(delegates[i],newDynImpl);
+		for (int i = delegates.length - 1; i >= 0; i--)
+			newDynImpl = new Link(delegates[i], newDynImpl);
 		return Proxy.newProxyInstance(Self.class.getClassLoader(), new Class[]{theInterface},
 				newDynImpl);
 	}

@@ -102,8 +102,7 @@ public class Self implements InvocationHandler, ISelf {
 		else if ("respondsTo".equals(name)) {
 			if (args[0] instanceof Method)
 				return Boolean.valueOf(respondsTo((Method) args[0]));
-			else
-				return Boolean.valueOf(respondsTo((Class) args[0]));
+			return Boolean.valueOf(respondsTo((Class) args[0]));
 		}
 		else if ("component".equals(name))
 			return component(((Number) args[0]).intValue());
