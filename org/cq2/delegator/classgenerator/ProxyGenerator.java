@@ -109,7 +109,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 			if (!Modifier.isFinal(modifiers) && !Modifier.isStatic(modifiers)) {
 				//System.out.println("Adding " + method);
 				addDelegationMethod(method);
-				if (!Modifier.isAbstract(modifiers)  && addSuperCallMethod) {
+				if (!Modifier.isAbstract(modifiers) && addSuperCallMethod) {
 					addSuperCallMethod(method);
 				}
 			}
@@ -419,14 +419,37 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 			return injector.loadClass(className);
 		}
 		catch (ClassNotFoundException e) {
-			byte[] classDef = new ProxyGenerator(className, clazz, filter, marker, addSuperCall).generateClass();
+			byte[] classDef = new ProxyGenerator(className, clazz, filter, marker, addSuperCall)
+					.generateClass();
 			return injector.inject(className, classDef, clazz.getProtectionDomain());
 		}
 	}
 
 	public static Proxy newProxyInstance(ClassInjector injector, Class clazz, MethodFilter filter,
 			InvocationHandler handler) {
-		return (Proxy) getInstance(ProxyGenerator.getProxyClass(injector, clazz, filter), handler);
+		Object instance = getInstance(ProxyGenerator.getProxyClass(injector, clazz, filter),
+				handler);
+		zeroAllFields(instance, clazz);
+		return (Proxy) instance;
+	}
+
+	private static void zeroAllFields(Object instance, Class clazz) {
+		if (Object.class.equals(clazz))
+			return;
+		Field[] fields = clazz.getDeclaredFields();
+		for (int i = 0; i < fields.length; i++) {
+			Field field = fields[i];
+			if (!Modifier.isFinal(field.getModifiers()) && !field.getType().isPrimitive()) {
+				field.setAccessible(true);
+				try {
+					field.set(instance, null);
+				}
+				catch (Exception e) {
+					throw new RuntimeException(e);
+				}
+			}
+		}
+		zeroAllFields(instance, clazz.getSuperclass());
 	}
 
 	public static Component newComponentInstance(ClassInjector injector, Class clazz,
@@ -448,7 +471,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		return object instanceof Proxy;
 	}
 
-	public static boolean isComponent(Object p) {
-		return false;
+	public static boolean isComponent(Object object) {
+		return object instanceof Component;
 	}
 }
