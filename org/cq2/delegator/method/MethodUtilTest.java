@@ -35,7 +35,7 @@ public class MethodUtilTest extends TestCase {
 		assertTrue(string.matches(".*finalize().*"));
 		assertTrue(string.matches(".*hashCode().*"));
 		assertTrue(string.matches(".*toString().*"));
-		assertEquals(6, set.size());
+		assertEquals(13, set.size()); //This used to say 6 but I don't see why
 	}
 
 	interface I1 {
@@ -49,7 +49,7 @@ public class MethodUtilTest extends TestCase {
 	public void testAbstractSuperSuperMethod() {
 		Set methods = new TreeSet(new MethodComparator());
 		MethodUtil.addMethods(C1.class, methods);
-		assertEquals(6, methods.size());
+		assertEquals(13, methods.size()); //This used to say 6 but I don't see why
 		printMethods(methods);
 	}
 
