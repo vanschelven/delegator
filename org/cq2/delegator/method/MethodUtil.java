@@ -8,22 +8,20 @@ import java.lang.reflect.Method;
 import java.util.Set;
 
 public class MethodUtil {
-
-	public static void addMethods(Class theClass, Set methodSet, MethodFilter filter) {
-		Method[] methods = theClass.getDeclaredMethods();
-		for (int i = 0; i < methods.length; i++) {
-			Method method = methods[i];
-			if (filter.filter(method)) {
-				method.setAccessible(true);
-				methodSet.add(method);
-			}
-		}
+	public static void addMethods(Class theClass, Set methodSet) {
 		Class[] interfaces = theClass.getInterfaces();
 		for (int i = 0; i < interfaces.length; i++) {
-			addMethods(interfaces[i], methodSet, filter);
+			addMethods(interfaces[i], methodSet);
 		}
 		Class superclass = theClass.getSuperclass();
 		if (superclass != null)
-			addMethods(superclass, methodSet, filter);
+			addMethods(superclass, methodSet);
+		Method[] methods = theClass.getDeclaredMethods();
+		for (int i = 0; i < methods.length; i++) {
+			Method method = methods[i];
+			method.setAccessible(true);
+			methodSet.remove(method);
+			methodSet.add(method);
+		}
 	}
 }

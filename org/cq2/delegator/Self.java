@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-
 import org.cq2.delegator.binders.Binder;
 import org.cq2.delegator.binders.SuperClassBinder;
 import org.cq2.delegator.binders.Binder.Binding;
@@ -35,6 +34,16 @@ public class Self implements InvocationHandler, ISelf {
 	private transient Map bindings;
 	private transient Object caller; // TODO threadsafe!
 	private final transient Binder binder = new SuperClassBinder(this);
+	private final static MethodFilter noObjectMethodFilter = new MethodFilterNonFinalNonPrivate() {
+		public boolean filter(Method method) {
+			if (method.getDeclaringClass().equals(Object.class)) {
+				return false;
+			}
+			else {
+				return super.filter(method);
+			}
+		}
+	};
 
 	private Self(MethodFilter methodFilter, Component object) {
 		this();
@@ -83,15 +92,17 @@ public class Self implements InvocationHandler, ISelf {
 		addBinding("become", new Class[]{Class.class});
 		addBinding("self", new Class[]{});
 		addBinding("toString", new Class[]{});
-		addBinding("component", new Class[] {Integer.TYPE});
+		addBinding("component", new Class[]{Integer.TYPE});
 		Method[] methods = collectMethods();
 		for (int ifNr = 0; ifNr < methods.length; ifNr++) {
-			Method method = methods[ifNr];
-			for (Iterator iter = delegates.iterator(); iter.hasNext();) {
-				Binding binding = binder.bind(method, iter.next());
-				if (binding != null) {
-					bindings.put(method, binding);
-					break;
+			if (noObjectMethodFilter.filter(methods[ifNr])) {
+				Method method = methods[ifNr];
+				for (Iterator iter = delegates.iterator(); iter.hasNext();) {
+					Binding binding = binder.bind(method, iter.next());
+					if (binding != null) {
+						bindings.put(method, binding);
+						break;
+					}
 				}
 			}
 		}
@@ -115,19 +126,7 @@ public class Self implements InvocationHandler, ISelf {
 	private Method[] collectMethods() {
 		Set methods = new TreeSet(new MethodComparator());
 		for (Iterator iter = delegates.iterator(); iter.hasNext();) {
-			MethodUtil.addMethods(iter.next().getClass().getSuperclass(), methods,
-					new MethodFilterNonFinalNonPrivate() {
-						public boolean filter(Method method) {
-							if (method.getDeclaringClass().equals(Object.class)) {
-								//System.out.println("Ignoring " + method);
-								return false;
-							}
-							else {
-								//System.out.println("Adding " + method);
-								return super.filter(method);
-							}
-						}
-					});
+			MethodUtil.addMethods(iter.next().getClass().getSuperclass(), methods);
 		}
 		return (Method[]) methods.toArray(new Method[]{});
 	}
@@ -144,7 +143,7 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public void become(Class clas) {
-		Object newComponent = newComponent(clas); 
+		Object newComponent = newComponent(clas);
 		for (ListIterator iter = delegates.listIterator(); iter.hasNext();) {
 			if (iter.next() == caller)
 				iter.set(newComponent);
@@ -165,7 +164,7 @@ public class Self implements InvocationHandler, ISelf {
 	public Object component(int component) {
 		return delegates.get(component);
 	}
-	
+
 	public Object component(InvocationHandler h, int component) {
 		return component(component);
 	}
@@ -184,7 +183,8 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	private Component newComponent(Class clas) {
-		return ProxyGenerator.newComponentInstance(Delegator.injector, clas, methodFilter, nullHandler);
+		return ProxyGenerator.newComponentInstance(Delegator.injector, clas, methodFilter,
+				nullHandler);
 	}
 
 	public Self extend(Class class1) {
@@ -201,10 +201,18 @@ public class Self implements InvocationHandler, ISelf {
 		return this;
 	}
 
+	public String toString() {
+		return super.toString();
+	}
+	
 	public String toString(InvocationHandler h) {
 		return toString();
 	}
 
+	public int hashCode() {
+		return super.hashCode();
+	}
+	
 	public int hashCode(InvocationHandler self) {
 		return hashCode();
 	}

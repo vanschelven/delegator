@@ -20,6 +20,7 @@ import org.cq2.delegator.examples.mixin.MixinTest;
 import org.cq2.delegator.examples.observer.CountingObservableTest;
 import org.cq2.delegator.examples.state.StateTest;
 import org.cq2.delegator.method.MethodComparatorTest;
+import org.cq2.delegator.test.FinalMethodAlsoOnInterfaceTest;
 
 public class AllDelegatorTests {
 
@@ -45,6 +46,7 @@ public class AllDelegatorTests {
 		suite.addTestSuite(DynamicBinderTest.class);
 		suite.addTestSuite(ProxyGeneratorTest.class);
 		suite.addTestSuite(ClassInjectorTest.class);
+		suite.addTestSuite(FinalMethodAlsoOnInterfaceTest.class);
 		return suite;
 	}
 }

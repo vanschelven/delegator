@@ -94,15 +94,15 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 			String[] extraInterfaces, boolean addSuperCallMethod) {
 		//System.out.println("=============" + superClass);
 		Set methods = new TreeSet(new MethodComparator());
-		MethodUtil.addMethods(superClass, methods, methodFilter);
 		for (int i = 0; i < extraInterfaces.length; i++) {
 			try {
-				MethodUtil.addMethods(Class.forName(extraInterfaces[i]), methods, methodFilter);
+				MethodUtil.addMethods(Class.forName(extraInterfaces[i]), methods);
 			}
 			catch (ClassNotFoundException e) {
 				throw new RuntimeException(e);
 			}
 		}
+		MethodUtil.addMethods(superClass, methods);
 		//printArray(methods);
 		for (Iterator iter = methods.iterator(); iter.hasNext();) {
 			Method method = (Method) iter.next();
@@ -167,8 +167,10 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		if (firstArg != null) {
 			types.add(0, Type.getType(firstArg));
 		}
-		MethodGen methodGen = new MethodGen(method.getModifiers()
-				& ~(Modifier.NATIVE | Modifier.ABSTRACT), returnType, (Type[]) types
+		int newMods = method.getModifiers()
+				& ~(Modifier.NATIVE | Modifier.ABSTRACT | Modifier.PROTECTED | Modifier.PRIVATE)
+				| Modifier.PUBLIC;
+		MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
 				.toArray(new Type[]{}), generateParameterNames(types.size()), method.getName(),
 				classGen.getClassName(), instrList, constPool);
 		return methodGen;
@@ -269,9 +271,9 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		Class[] argTypes = method.getParameterTypes();
 		createParameterTypeArray(argTypes);
 		// ... getClass().>getMethod(..., ...)< ...
-		instrList.append(instrFact.createInvoke("java.lang.Class", "getMethod", new ObjectType(
-				"java.lang.reflect.Method"), new Type[]{Type.STRING, new ArrayType(CLASS, 1)},
-				Constants.INVOKEVIRTUAL));
+		instrList.append(instrFact.createInvoke("java.lang.Class", "getDeclaredMethod",
+				new ObjectType("java.lang.reflect.Method"), new Type[]{Type.STRING,
+						new ArrayType(CLASS, 1)}, Constants.INVOKEVIRTUAL));
 		// this.delegate.>invoke(proxy, method, >args<)<;
 		createParameterArray(argTypes);
 		// this.delegate.>invoke(proxy, method, args)<;
@@ -420,13 +422,16 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		}
 	}
 
-	static Class injectProxyClass(ClassInjector injector,Class clazz){
-		return injectClass(injector,clazz,new MethodFilterNonFinalNonPrivate(),"proxy",Proxy.class,false);
+	static Class injectProxyClass(ClassInjector injector, Class clazz) {
+		return injectClass(injector, clazz, new MethodFilterNonFinalNonPrivate(), "proxy",
+				Proxy.class, false);
 	}
-	static Class injectComponentClass(ClassInjector injector,Class clazz){
-		return injectClass(injector,clazz,new MethodFilterNonFinalNonPrivate(),"component",Component.class,true);
+
+	static Class injectComponentClass(ClassInjector injector, Class clazz) {
+		return injectClass(injector, clazz, new MethodFilterNonFinalNonPrivate(), "component",
+				Component.class, true);
 	}
-	
+
 	private static Class injectClass(ClassInjector injector, Class clazz, MethodFilter filter,
 			String prefix, Class marker, boolean addSuperCall) {
 		if (clazz.isInterface()) {

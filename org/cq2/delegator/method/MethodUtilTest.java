@@ -27,7 +27,7 @@ public class MethodUtilTest extends TestCase {
 			public void f1() {}
 		}
 		Set set = new TreeSet(new MethodComparator());
-		MethodUtil.addMethods(Class1.class, set, methodFilter);
+		MethodUtil.addMethods(Class1.class, set);
 		String string = set.toString();
 		assertTrue(string.matches(".*clone().*"));
 		assertTrue(string.matches(".*equals().*"));
@@ -48,7 +48,7 @@ public class MethodUtilTest extends TestCase {
 
 	public void testAbstractSuperSuperMethod() {
 		Set methods = new TreeSet(new MethodComparator());
-		MethodUtil.addMethods(C1.class, methods, methodFilter);
+		MethodUtil.addMethods(C1.class, methods);
 		assertEquals(6, methods.size());
 		printMethods(methods);
 	}
