@@ -10,9 +10,16 @@ import org.cq2.delegator.Self;
 import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 
 public class ProxyGeneratorTest extends TestCase {
+	ClassInjector injector;
+
+	protected void setUp() throws Exception {
+		super.setUp();
+		injector = ClassInjector.create(ClassLoader.getSystemClassLoader());
+	}
+
 	public void testCreateProxy() throws Exception {
-		Object p = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
-				HashMap.class, null, new MethodFilterNonFinalNonPrivate(), null);
+		Object p = ProxyGenerator.newProxyInstance(injector, HashMap.class,
+				new MethodFilterNonFinalNonPrivate(), null);
 		assertTrue(ProxyGenerator.isProxy(p));
 		assertFalse(ProxyGenerator.isComponent(p));
 		assertTrue(p instanceof Proxy);
@@ -22,13 +29,12 @@ public class ProxyGeneratorTest extends TestCase {
 	}
 
 	public void testCreateProxy2() throws Exception {
-		Object p = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
-				ProxyGeneratorTest.class, null, new MethodFilterNonFinalNonPrivate(), null);
-		assertEquals(ProxyGeneratorTest.class.getName()+"$proxy", p.getClass().getName());
+		Object p = ProxyGenerator.newProxyInstance(injector, ProxyGeneratorTest.class,
+				new MethodFilterNonFinalNonPrivate(), null);
+		assertEquals(ProxyGeneratorTest.class.getName() + "$proxy", p.getClass().getName());
 	}
 
 	// TODO ProxyGenerator.newComponentInstance();
-	
 	public void testCachingOfClasses() {
 		Self self = new Self();
 		Object c1 = self.cast(ProxyGeneratorTest.class);

@@ -12,13 +12,13 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.HashMap;
-import org.cq2.delegator.Delegator;
-import org.cq2.delegator.method.MethodFilter;
-import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 
 import junit.framework.TestCase;
 
+import org.cq2.delegator.Delegator;
+
 public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHandler {
+	private ClassInjector classInjector;
 	private boolean invokeCalled;
 	private Object invokeProxy;
 	private Object invokeResult;
@@ -26,7 +26,6 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 	private Throwable invokeException;
 	private Method invokeMethod;
 	private Object[] invokeArgs;
-	private MethodFilter methodFilter = new MethodFilterNonFinalNonPrivate();
 
 	public ProxyGeneratorDelegateTest(String arg0) {
 		super(arg0);
@@ -39,22 +38,22 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 		invokeException = null;
 		invokeMethod = null;
 		invokeArgs = null;
-		proxy = (ProxyGeneratorDelegateTestClass) ProxyGenerator.newProxyInstance(ClassLoader
-				.getSystemClassLoader(), ProxyGeneratorDelegateTestClass.class, this, Delegator
-				.defaultMethodFilter(), null);
+		classInjector = ClassInjector.create();
+		proxy = (ProxyGeneratorDelegateTestClass) ProxyGenerator.newProxyInstance(classInjector,
+				ProxyGeneratorDelegateTestClass.class, Delegator.defaultMethodFilter(), this);
 	}
 
 	public void testGenClass() throws Exception {
-		Object obj = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
-				ProxyGeneratorDelegateTestClass.class, this, Delegator.defaultMethodFilter(), null);
+		Object obj = ProxyGenerator.newProxyInstance(classInjector,
+				ProxyGeneratorDelegateTestClass.class, Delegator.defaultMethodFilter(), this);
 		assertNotNull(obj);
 		Method objectString = obj.getClass().getMethod("objectString", new Class[]{String.class});
 		assertNotNull(objectString);
 	}
 
 	public void testProxy() throws Exception {
-		Object testProxy = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
-				ProxyGeneratorDelegateTestClass.class, this, Delegator.defaultMethodFilter(), null);
+		Object testProxy = ProxyGenerator.newProxyInstance(classInjector,
+				ProxyGeneratorDelegateTestClass.class, Delegator.defaultMethodFilter(), this);
 		assertTrue(testProxy instanceof ProxyGeneratorDelegateTestClass);
 	}
 
@@ -69,9 +68,8 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 
 	public void testDelegate() throws Exception {
 		ProxyGeneratorDelegateTestClass testProxy = (ProxyGeneratorDelegateTestClass) ProxyGenerator
-				.newProxyInstance(ClassLoader.getSystemClassLoader(),
-						ProxyGeneratorDelegateTestClass.class, this, Delegator
-								.defaultMethodFilter(), null);
+				.newProxyInstance(classInjector, ProxyGeneratorDelegateTestClass.class,
+						Delegator.defaultMethodFilter(), this);
 		Field delegate = testProxy.getClass().getDeclaredField("self");
 		assertTrue(Modifier.isTransient(delegate.getModifiers()));
 		assertNotNull(delegate);
@@ -316,14 +314,14 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 	//		assertTrue(invokeCalled == false);
 	//	}
 	public void testProhibitedPackageName() {
-		Object testProxy = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
-				HashMap.class, this, Delegator.defaultMethodFilter(), null);
+		Object testProxy = ProxyGenerator.newProxyInstance(classInjector, HashMap.class, 
+				Delegator.defaultMethodFilter(), this);
 		assertNotNull(testProxy);
 	}
 
 	public void testSetdelegate() {
-		Object testProxy = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
-				HashMap.class, this, Delegator.defaultMethodFilter(), null);
+		Object testProxy = ProxyGenerator.newProxyInstance(classInjector, HashMap.class,
+				Delegator.defaultMethodFilter(), this);
 		assertSame(this, ProxyGenerator.getInvocationHandler(testProxy));
 	}
 
@@ -332,8 +330,8 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 	}
 
 	public void testProtectedMethod() {
-		Object testProxy = ProxyGenerator.newProxyInstance(MyClass.class.getClassLoader(),
-				MyClass.class, this, Delegator.defaultMethodFilter(), null);
+		Object testProxy = ProxyGenerator.newProxyInstance(classInjector,
+				MyClass.class, Delegator.defaultMethodFilter(), this);
 		assertNotNull(testProxy);
 	}
 
@@ -353,16 +351,6 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 			this.l = l.longValue();
 			this.s = s.toString();
 		}
-	}
-
-	public void testCtor() throws Exception {
-		assertNotNull(WithCtorWithArgs.class.getConstructor(new Class[]{Long.class, String.class}));
-		WithCtorWithArgs obj = (WithCtorWithArgs) ProxyGenerator.newProxyInstance(
-				WithCtorWithArgs.class.getClassLoader(), WithCtorWithArgs.class, null,
-				methodFilter, new Object[]{new Long(3), "Yep!"});
-		assertNotNull(obj);
-		assertEquals(3, obj.l);
-		assertEquals("Yep!", obj.s);
 	}
 
 	public Object invoke(Object theProxy, Method method, Object[] args) throws Throwable {

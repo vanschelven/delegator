@@ -7,16 +7,17 @@ package org.cq2.delegator;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
-import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.binders.Link;
-import org.cq2.delegator.method.*;
+import org.cq2.delegator.classgenerator.ClassInjector;
+import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.method.MethodFilter;
+import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 
 /**
  * @author ejgroene
  */
 public class Delegator {
-	private final static ClassLoader classLoader = Self.classLoader;
+	private final static ClassInjector classInjector = Self.classInjector;
 	private final static MethodFilter methodFilter = new MethodFilterNonFinalNonPrivate();
 /*	private final static InvocationHandler nullHandler = new InvocationHandler() {
 		public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
@@ -26,11 +27,11 @@ public class Delegator {
 */
 	public static Object proxyFor(Class theInterface, InvocationHandler handler) {
 		if (theInterface.isInterface()) {
-			return Proxy.newProxyInstance(classLoader, new Class[]{theInterface}, handler);
+			return Proxy.newProxyInstance(classInjector, new Class[]{theInterface}, handler);
 		}
 		else {
 			return ProxyGenerator
-					.newProxyInstance(classLoader, theInterface, handler, methodFilter, null);
+					.newProxyInstance(classInjector, theInterface, methodFilter, handler);
 		}
 	}
 

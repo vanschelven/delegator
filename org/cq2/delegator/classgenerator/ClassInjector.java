@@ -16,6 +16,10 @@ public class ClassInjector extends ClassLoader {
 		return defineClass(className, classDef, 0, classDef.length, domain);
 	}
 	
+	public static ClassInjector create(){
+		return ClassInjector.create(getSystemClassLoader());
+	}
+	
 	public static ClassInjector create(ClassLoader parent){
 		if(parent instanceof ClassInjector){
 			return (ClassInjector) parent;

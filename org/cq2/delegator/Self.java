@@ -27,7 +27,7 @@ import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 import org.cq2.delegator.method.MethodUtil;
 
 public class Self implements InvocationHandler, ISelf {
-	public final static ClassLoader classLoader = ClassInjector.create(ClassLoader.getSystemClassLoader());
+	public final static ClassInjector classInjector = ClassInjector.create(ClassLoader.getSystemClassLoader());
 	private final transient Binder binder = new SuperClassBinder(this);
 	private transient Map bindings;
 	private final static InvocationHandler nullHandler = new InvocationHandler() {
@@ -53,7 +53,7 @@ public class Self implements InvocationHandler, ISelf {
 	public Self(Class firstComponentClass) {
 		this.delegates = new ArrayList();
 		this.methodFilter = new MethodFilterNonFinalNonPrivate();
-		delegates.add(newComponent(firstComponentClass, null));
+		delegates.add(newComponent(firstComponentClass));
 	}
 
 	/**
@@ -148,7 +148,7 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public void become(Class clas) {
-		Object newComponent = newComponent(clas, null); 
+		Object newComponent = newComponent(clas); 
 		for (ListIterator iter = delegates.listIterator(); iter.hasNext();) {
 			if (iter.next() == caller)
 				iter.set(newComponent);
@@ -172,7 +172,7 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public void add(Class clas) {
-		delegates.add(newComponent(clas, null));
+		delegates.add(newComponent(clas));
 		createBindings();
 	}
 
@@ -181,17 +181,16 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public void add(Class componentType, Object[] ctorArgs) {
-		delegates.add(newComponent(componentType, ctorArgs));
+		delegates.add(newComponent(componentType));
 		createBindings();
 	}
 
-	private Component newComponent(Class clas, Object[] ctorArgs) {
-		return (Component) ProxyGenerator.newComponentInstance(classLoader, clas, nullHandler, methodFilter,
-				ctorArgs);
+	private Component newComponent(Class clas) {
+		return ProxyGenerator.newComponentInstance(classInjector, clas, methodFilter, nullHandler);
 	}
 
 	public Self extend(Class class1) {
-		Self newSelf = new Self(methodFilter, newComponent(class1, null));
+		Self newSelf = new Self(methodFilter, newComponent(class1));
 		newSelf.add(this);
 		return newSelf;
 	}

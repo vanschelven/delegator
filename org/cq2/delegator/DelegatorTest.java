@@ -97,7 +97,7 @@ public class DelegatorTest extends TestCase implements InvocationHandler {
 			fail();
 		}
 		catch (IllegalArgumentException e) {
-			assertEquals("Interfaces are not supported.", e.getMessage());
+			assertEquals("Interfaces are not supported, use java.lang.reflect.Proxy.", e.getMessage());
 		}
 	}
 }
