@@ -23,7 +23,7 @@ abstract class Binder {
 
 		public Object invoke(Object[] args) throws Throwable {
 			try {
-				System.out.println("invoking " + method);
+//				System.out.println("invoking " + method);
 				return method.invoke(delegate, mapArgs(args));
 			} catch (InvocationTargetException e) {
 				throw e.getTargetException();
