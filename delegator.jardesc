@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jardesc>
     <jar path="/home/ejgroene/workspace/delegator/delegator1.2.jar"/>
-    <options overwrite="false" compress="true" exportErrors="false" exportWarnings="false" saveDescription="true" descriptionLocation="/delegator/delegator.jardesc" useSourceFolders="false" buildIfNeeded="true"/>
+    <options overwrite="false" compress="true" exportErrors="false" exportWarnings="true" saveDescription="true" descriptionLocation="/delegator/delegator.jardesc" useSourceFolders="false" buildIfNeeded="true"/>
     <manifest manifestVersion="1.0" usesManifest="true" reuseManifest="false" saveManifest="false" generateManifest="true" manifestLocation="">
         <sealing sealJar="false">
             <packagesToSeal/>
