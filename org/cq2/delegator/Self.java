@@ -15,15 +15,15 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.cq2.delegator.classgenerator.ClassInjector;
-import org.cq2.delegator.classgenerator.Component;
-import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.binders.Binder;
 import org.cq2.delegator.binders.SuperClassBinder;
 import org.cq2.delegator.binders.Binder.Binding;
-import org.cq2.delegator.method.*;
+import org.cq2.delegator.classgenerator.ClassInjector;
+import org.cq2.delegator.classgenerator.Component;
+import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.method.MethodComparator;
 import org.cq2.delegator.method.MethodFilter;
+import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 import org.cq2.delegator.method.MethodUtil;
 
 public class Self implements InvocationHandler, ISelf {
@@ -186,7 +186,7 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	private Component newComponent(Class clas, Object[] ctorArgs) {
-		return ProxyGenerator.newComponentInstance(classLoader, clas, nullHandler, methodFilter,
+		return (Component) ProxyGenerator.newComponentInstance(classLoader, clas, nullHandler, methodFilter,
 				ctorArgs);
 	}
 

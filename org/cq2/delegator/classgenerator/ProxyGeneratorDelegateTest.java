@@ -322,7 +322,7 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 	}
 
 	public void testSetdelegate() {
-		Component testProxy = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
+		Object testProxy = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
 				HashMap.class, this, Delegator.defaultMethodFilter(), null);
 		assertSame(this, ProxyGenerator.getInvocationHandler(testProxy));
 	}

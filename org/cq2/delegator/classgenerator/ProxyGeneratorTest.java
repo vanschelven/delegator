@@ -3,25 +3,36 @@
  */
 package org.cq2.delegator.classgenerator;
 
-import org.cq2.delegator.Self;
-
+import java.lang.reflect.InvocationHandler;
+import java.util.HashMap;
 import junit.framework.TestCase;
+import org.cq2.delegator.Self;
+import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 
 public class ProxyGeneratorTest extends TestCase {
-	public void testCreateProxy() {
-		//ProxyGenerator.newProxyInstance();
-		//ProxyGenerator.newComponentInstance();
+	public void testCreateProxy() throws Exception {
+		Object p = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
+				HashMap.class, null, new MethodFilterNonFinalNonPrivate(), null);
+		assertTrue(ProxyGenerator.isProxy(p));
+		assertFalse(ProxyGenerator.isComponent(p));
+		assertTrue(p instanceof Proxy);
+		assertFalse(p instanceof Component);
+		assertEquals("proxy$java.util.HashMap", p.getClass().getName());
+		assertNull(p.getClass().getMethod("size", new Class[]{InvocationHandler.class}));
 	}
+
+	public void testCreateProxy2() throws Exception {
+		Object p = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
+				ProxyGeneratorTest.class, null, new MethodFilterNonFinalNonPrivate(), null);
+		assertEquals(ProxyGeneratorTest.class.getName()+"$proxy", p.getClass().getName());
+	}
+
+	// TODO ProxyGenerator.newComponentInstance();
 	
-	public void testCachingOfClasses(){
+	public void testCachingOfClasses() {
 		Self self = new Self();
-		self.cast(ProxyGeneratorTest.class);
-		self.cast(ProxyGeneratorTest.class);
-		self.cast(ProxyGeneratorTest.class);
-		self.cast(ProxyGeneratorTest.class);
-		self.cast(ProxyGeneratorTest.class);
-		self.cast(ProxyGeneratorTest.class);
-		self.cast(ProxyGeneratorTest.class);
-		fail();
+		Object c1 = self.cast(ProxyGeneratorTest.class);
+		Object c2 = self.cast(ProxyGeneratorTest.class);
+		assertSame(c1.getClass(), c2.getClass());
 	}
 }
