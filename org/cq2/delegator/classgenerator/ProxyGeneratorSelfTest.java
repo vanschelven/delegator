@@ -11,8 +11,6 @@ import java.lang.reflect.Method;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
-import org.cq2.delegator.Delegator;
-
 public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandler {
 	private ProxyGeneratorSelfTestClass proxy;
 
@@ -21,7 +19,7 @@ public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandle
 			(ProxyGeneratorSelfTestClass) ProxyGenerator.newComponentInstance(
 				ClassInjector.create(),
 				ProxyGeneratorSelfTestClass.class,
-				 Delegator.defaultMethodFilter(), null);
+				 null);
 	}
 
 	public void testSuperObjectVoid() throws Exception {

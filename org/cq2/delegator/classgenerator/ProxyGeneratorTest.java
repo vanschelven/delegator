@@ -6,15 +6,15 @@ package org.cq2.delegator.classgenerator;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.util.HashMap;
+
 import junit.framework.TestCase;
 
-import org.cq2.delegator.*;
+import org.cq2.delegator.Component;
+import org.cq2.delegator.Proxy;
 import org.cq2.delegator.Self;
-import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 
 public class ProxyGeneratorTest extends TestCase {
 	ClassInjector injector;
-	private final MethodFilterNonFinalNonPrivate filter = new MethodFilterNonFinalNonPrivate();
 
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -22,7 +22,7 @@ public class ProxyGeneratorTest extends TestCase {
 	}
 
 	public void testCreateProxyForJDKClass() throws Exception {
-		Object p = ProxyGenerator.newProxyInstance(injector, HashMap.class, filter, null);
+		Object p = ProxyGenerator.newProxyInstance(injector, HashMap.class, null);
 		assertTrue(ProxyGenerator.isProxy(p));
 		assertFalse(ProxyGenerator.isComponent(p));
 		assertTrue(p instanceof Proxy);
@@ -37,12 +37,12 @@ public class ProxyGeneratorTest extends TestCase {
 
 	public void testCreateProxyForOwnClass() throws Exception {
 		Object p = ProxyGenerator.newProxyInstance(injector, ProxyGeneratorTest.class,
-				new MethodFilterNonFinalNonPrivate(), null);
+				null);
 		assertEquals(ProxyGeneratorTest.class.getName() + "$proxy", p.getClass().getName());
 	}
 
 	public void testCreateComponent() throws Exception {
-		Object c = ProxyGenerator.newComponentInstance(injector, HashMap.class, filter, null);
+		Object c = ProxyGenerator.newComponentInstance(injector, HashMap.class, null);
 		assertTrue(ProxyGenerator.isComponent(c));
 		assertFalse(ProxyGenerator.isProxy(c));
 		assertFalse(c instanceof Proxy);
@@ -66,7 +66,7 @@ public class ProxyGeneratorTest extends TestCase {
 	}
 
 	public void testDirtyProxyFieldZerod() throws Exception {
-		P p = (P) ProxyGenerator.newProxyInstance(injector, P.class, filter, null);
+		P p = (P) ProxyGenerator.newProxyInstance(injector, P.class, null);
 		assertNull(p.o);
 		assertNull(p.p);
 		Field f =P.class.getDeclaredField("r");

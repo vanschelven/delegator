@@ -28,14 +28,18 @@ import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.ReferenceType;
 import org.apache.bcel.generic.Type;
-import org.cq2.delegator.*;
+import org.cq2.delegator.Component;
+import org.cq2.delegator.ComponentMethodFilter;
 import org.cq2.delegator.ISelf;
+import org.cq2.delegator.Proxy;
 import org.cq2.delegator.method.MethodComparator;
 import org.cq2.delegator.method.MethodFilter;
-import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 import org.cq2.delegator.method.MethodUtil;
+import org.cq2.delegator.method.ProxyMethodFilter;
 
 public class ProxyGenerator extends ClassLoader implements Constants {
+	private final static MethodFilter proxyMethodFilter = new ProxyMethodFilter();
+	private final static MethodFilter componentMethodFilter = new ComponentMethodFilter();
 	private static final ObjectType CLASS = new ObjectType("java.lang.Class");
 	private final ClassGen classGen;
 	private final InstructionFactory instrFact;
@@ -108,7 +112,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 			Method method = (Method) iter.next();
 			int modifiers = method.getModifiers();
 			// TODO use MethodFilter
-			if (!Modifier.isFinal(modifiers) && !Modifier.isStatic(modifiers)) {
+			if (methodFilter.filter(method)) { //!Modifier.isFinal(modifiers) && !Modifier.isStatic(modifiers)
 				//System.out.println("Adding " + method);
 				addDelegationMethod(method);
 				if (!Modifier.isAbstract(modifiers) && addSuperCallMethod) {
@@ -423,13 +427,12 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 	}
 
 	static Class injectProxyClass(ClassInjector injector, Class clazz) {
-		return injectClass(injector, clazz, new MethodFilterNonFinalNonPrivate(), "proxy",
-				Proxy.class, false);
+		return injectClass(injector, clazz, proxyMethodFilter, "proxy", Proxy.class, false);
 	}
 
 	static Class injectComponentClass(ClassInjector injector, Class clazz) {
-		return injectClass(injector, clazz, new MethodFilterNonFinalNonPrivate(), "component",
-				Component.class, true);
+		return injectClass(injector, clazz, componentMethodFilter, "component", Component.class,
+				true);
 	}
 
 	private static Class injectClass(ClassInjector injector, Class clazz, MethodFilter filter,
@@ -444,10 +447,10 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		return injector.inject(className, classDef, clazz.getProtectionDomain());
 	}
 
-	public static Proxy newProxyInstance(ClassInjector injector, Class clazz, MethodFilter filter,
+	public static Proxy newProxyInstance(ClassInjector injector, Class clazz,
 			InvocationHandler handler) {
-		Object instance = getInstance(ProxyGenerator.getProxyClass(injector, clazz, filter),
-				handler);
+		Object instance = getInstance(ProxyGenerator.getProxyClass(injector, clazz,
+				proxyMethodFilter), handler);
 		zeroAllFields(instance, clazz);
 		return (Proxy) instance;
 	}
@@ -478,9 +481,9 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 	}
 
 	public static Component newComponentInstance(ClassInjector injector, Class clazz,
-			MethodFilter filter, InvocationHandler handler) {
-		return (Component) getInstance(ProxyGenerator.getComponentClass(injector, clazz, filter),
-				handler);
+			InvocationHandler handler) {
+		return (Component) getInstance(ProxyGenerator.getComponentClass(injector, clazz,
+				componentMethodFilter), handler);
 	}
 
 	public static InvocationHandler getInvocationHandler(Object proxy) {
