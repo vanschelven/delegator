@@ -29,7 +29,8 @@ public class TypeRefinementTest extends TestCase {
 	public void testPutAndGetWithMoreSpecificTypes() {
 		DateMap map = (DateMap) createMap().cast(DateMap.class);
 		map.put("birthday", new Date(2345690));
-		assertEquals(new Date(2345690), map.get("birthday"));
+		Date result = map.get("birthday");
+        assertEquals(new Date(2345690), result);
 	}
 
 	public interface IntMap {

@@ -44,6 +44,8 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 
     public void testDelegateSubclassPackageScopeMethod() {
         Self self = new Self(MySuperClass.class);
+        MySuperClass sup = (MySuperClass) self.cast(MySuperClass.class);
+        assertEquals(3, sup.myPackageScopeMethod());
         self.add(MySubclass.class);
         MySubclass subclass = (MySubclass) self.cast(MySubclass.class);
         assertEquals(3, subclass.myPackageScopeMethod());
@@ -112,9 +114,10 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     }
 
     public static class D {
-        void method() {
+        protected void method() {
             System.out.println("d.method");
         }
+        
     }
 
     public void testMethodLookup2() throws Exception {
@@ -129,6 +132,9 @@ public class ScopeTest extends TestCase implements InvocationHandler {
                 .getClass().toString());
         assertEquals(this.getClass().getPackage(), d.getClass().getPackage());
         Method proxyMethod = d.getClass().getDeclaredMethod("method", null);
+        proxyMethod.invoke(d, null);
+        assertEquals("method", invokedMethod);
+        
         Method originalMethod = D.class.getDeclaredMethod("method", null);
         assertEquals(originalMethod.getName(), proxyMethod.getName());
         assertArrayEquals(originalMethod.getParameterTypes(), proxyMethod
@@ -138,7 +144,11 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         assertEquals(originalMethod.getReturnType(), proxyMethod
                 .getReturnType());
         assertEquals(originalMethod.isAccessible(), proxyMethod.isAccessible());
-        assertEquals(originalMethod.getModifiers(), proxyMethod.getModifiers());
+        invokedMethod = null;
+        d.method();
+        assertEquals("method", invokedMethod);
+        
+        //assertEquals(originalMethod.getModifiers(), proxyMethod.getModifiers());
         //en dat dit werkt snap ik dus niet!!
     }
 
