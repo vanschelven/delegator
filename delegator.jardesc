@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jardesc>
-    <jar path="/home/ejgroene/workspace/delegator/delegator1.1.1.jar"/>
-    <options overwrite="false" compress="true" exportErrors="false" exportWarnings="false" saveDescription="true" descriptionLocation="/delegator/delegator1.1.jardesc" useSourceFolders="false" buildIfNeeded="true"/>
+    <jar path="/home/ejgroene/workspace/delegator/delegator1.2.jar"/>
+    <options overwrite="false" compress="true" exportErrors="false" exportWarnings="false" saveDescription="true" descriptionLocation="/delegator/delegator.jardesc" useSourceFolders="false" buildIfNeeded="true"/>
     <manifest manifestVersion="1.0" usesManifest="true" reuseManifest="false" saveManifest="false" generateManifest="true" manifestLocation="">
         <sealing sealJar="false">
             <packagesToSeal/>
@@ -13,14 +13,15 @@
         <file path="/libs/lib/junit.license"/>
         <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.examples.mixin"/>
         <file path="/libs/lib/bcel.jar"/>
-        <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.examples.ComposedDocument"/>
-        <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.handlers"/>
+        <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.binders"/>
+        <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.test"/>
+        <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.examples.composeddocument"/>
         <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.classgenerator"/>
+        <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.method"/>
         <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.examples.state"/>
         <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.examples.observer"/>
         <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator"/>
         <file path="/libs/lib/junit.jar"/>
         <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.examples"/>
-        <javaElement handleIdentifier="=delegator/&lt;org.cq2.delegator.util"/>
     </selectedElements>
 </jardesc>
