@@ -7,56 +7,34 @@ package org.cq2.delegator;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import org.cq2.delegator.binders.Binder;
-import org.cq2.delegator.binders.SuperClassBinder;
-import org.cq2.delegator.binders.Binder.Binding;
+
 import org.cq2.delegator.classgenerator.ProxyGenerator;
-import org.cq2.delegator.method.MethodComparator;
-import org.cq2.delegator.method.MethodFilter;
-import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
-import org.cq2.delegator.method.MethodUtil;
 
 public class Self implements InvocationHandler, ISelf {
-	private final static MethodFilter methodFilter = new MethodFilterNonFinalNonPrivate();
 	private final static InvocationHandler nullHandler = new InvocationHandler() {
 		public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
 			throw new NullPointerException("Delegator: Object has no SELF pointer.");
 		}
 	};
-	private List delegates;
-	private transient Map bindings;
+	private List components;
 	private transient Object caller; // TODO threadsafe!
-	private final transient Binder binder = new SuperClassBinder(this);
-	private final static MethodFilter noObjectMethodFilter = new MethodFilterNonFinalNonPrivate() {
-		public boolean filter(Method method) {
-			if (method.getDeclaringClass().equals(Object.class)) {
-				return false;
-			}
-			else {
-				return super.filter(method);
-			}
-		}
-	};
 
-	private Self(MethodFilter methodFilter, Component object) {
+	private Self(Component object) {
 		this();
-		delegates.add(object);
+		components.add(object);
 	}
 
 	public Self() {
-		this.delegates = new ArrayList();
+		this.components = new ArrayList();
 	}
 
 	public Self(Class firstComponentClass) {
 		this();
-		delegates.add(newComponent(firstComponentClass));
+		components.add(newComponent(firstComponentClass));
 	}
 
 	/**
@@ -64,106 +42,79 @@ public class Self implements InvocationHandler, ISelf {
 	 */
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		this.caller = proxy;
-		Binding binding = (Binding) getBindings().get(method);
-		if (binding == null) {
-			throw new NoSuchMethodError(method.toString());
-		}
-		return binding.invoke(args);
-	}
-
-	private Map getBindings() {
-		if (bindings == null) {
-			createBindings();
-		}
-		return bindings;
-	}
-
-	private void createBindings() {
-		if (bindings == null) {
-			bindings = new TreeMap(new MethodComparator());
-		}
-		else {
-			bindings.clear();
-		}
-		addBinding("cast", new Class[]{Class.class});
-		addBinding("add", new Class[]{Self.class});
-		addBinding("add", new Class[]{Component.class});
-		addBinding("add", new Class[]{Class.class});
-		addBinding("become", new Class[]{Class.class});
-		addBinding("self", new Class[]{});
-		addBinding("toString", new Class[]{});
-		addBinding("respondsTo", new Class[]{Method.class});
-		addBinding("component", new Class[]{Integer.TYPE});
-		Method[] methods = collectMethods();
-		for (int ifNr = 0; ifNr < methods.length; ifNr++) {
-			if (noObjectMethodFilter.filter(methods[ifNr])) {
-				Method method = methods[ifNr];
-				for (Iterator iter = delegates.iterator(); iter.hasNext();) {
-					Binding binding = binder.bind(method, iter.next());
-					if (binding != null) {
-						bindings.put(method, binding);
-						break;
-					}
-				}
+		final String name = method.getName();
+		if ("equals".equals(name))
+			return new Boolean(equals(args[0]));
+		if ("hashCode".equals(name))
+			return new Integer(hashCode());
+		Iterator cmps = components.iterator();
+		List argTypeList = new ArrayList();
+		argTypeList.add(InvocationHandler.class);
+		argTypeList.addAll(Arrays.asList(method.getParameterTypes()));
+		while (cmps.hasNext()) {
+			Object component = cmps.next();
+			try {
+				Method delegateMethod = component.getClass().getDeclaredMethod(name,
+						(Class[]) argTypeList.toArray(new Class[]{}));
+				return delegateMethod.invoke(component, mapArgs(args));
+			}
+			catch (NoSuchMethodException e) {
+				continue;
 			}
 		}
-		// hashCode and equals cannot be overridden, because it is not possible to
-		// make equals symetric, as per the Object.equals() spec.
-		addBinding("hashCode", new Class[]{});
-		addBinding("equals", new Class[]{Object.class});
+		if ("cast".equals(name))
+			return cast((Class) args[0]);
+		else if ("add".equals(name)) {
+			if (args[0] instanceof Class)
+				add((Class) args[0]);
+			else if (args[0] instanceof Self)
+				add((Self) args[0]);
+			else if (args[0] instanceof Component)
+				add((Component) args[0]);
+			return null;
+		}
+		else if ("become".equals(name)) {
+			become((Class) args[0]);
+			return Void.TYPE;
+		}
+		else if ("toString".equals(name))
+			return toString();
+		else if ("respondsTo".equals(name))
+			return new Boolean(respondsTo((Method) args[0]));
+		else if ("component".equals(name))
+			return component(((Number) args[0]).intValue());
+		else if ("self".equals(name))
+			return self();
+		throw new NoSuchMethodError(method.toString());
 	}
 
-	private void addBinding(String name, Class[] argTypes) {
-		Method cast;
-		try {
-			cast = getClass().getMethod(name, argTypes);
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-		bindings.put(cast, binder.bind(cast, this));
+	private Object[] mapArgs(Object[] args) {
+		List argList = new ArrayList();
+		argList.add(this);
+		if (args != null)
+			argList.addAll(Arrays.asList(args));
+		return argList.toArray();
 	}
 
-	private Method[] collectMethods() {
-		Set methods = new TreeSet(new MethodComparator());
-		for (Iterator iter = delegates.iterator(); iter.hasNext();) {
-			MethodUtil.addMethods(iter.next().getClass().getSuperclass(), methods);
-		}
-		return (Method[]) methods.toArray(new Method[]{});
-	}
-
-	// For each method that is added using addBinding, there is a second version
-	// with an additional arg "InvocationHandler self", because the binder will
-	// add this arg before calling the method.
 	public Object cast(Class clas) {
 		return Delegator.proxyFor(clas, this);
 	}
 
-	public Object cast(InvocationHandler self, Class clas) {
-		return cast(clas);
-	}
-
 	public void become(Class clas) {
 		Object newComponent = newComponent(clas);
-		for (ListIterator iter = delegates.listIterator(); iter.hasNext();) {
+		for (ListIterator iter = components.listIterator(); iter.hasNext();) {
 			if (iter.next() == caller)
 				iter.set(newComponent);
 		}
-		createBindings();
-	}
-
-	public void become(InvocationHandler handler, Class clas) {
-		become(clas);
 	}
 
 	public void add(Self object) {
-		for (Iterator components = object.delegates.iterator(); components.hasNext();)
-			delegates.add(components.next());
-		createBindings();
+		for (Iterator c = object.components.iterator(); c.hasNext();)
+			components.add(c.next());
 	}
 
 	public Object component(int component) {
-		return delegates.get(component);
+		return components.get(component);
 	}
 
 	public Object component(InvocationHandler h, int component) {
@@ -175,8 +126,7 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public void add(Component component) {
-		delegates.add(component);
-		createBindings();
+		components.add(component);
 	}
 
 	public void add(InvocationHandler self, Class clas) {
@@ -184,12 +134,11 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	private Component newComponent(Class clas) {
-		return ProxyGenerator.newComponentInstance(Delegator.injector, clas, methodFilter,
-				nullHandler);
+		return ProxyGenerator.newComponentInstance(Delegator.injector, clas, nullHandler);
 	}
 
 	public Self extend(Class class1) {
-		Self newSelf = new Self(methodFilter, newComponent(class1));
+		Self newSelf = new Self(newComponent(class1));
 		newSelf.add(this);
 		return newSelf;
 	}
@@ -198,38 +147,26 @@ public class Self implements InvocationHandler, ISelf {
 		return this;
 	}
 
-	public Self self(InvocationHandler handler) {
-		return this;
-	}
-
-	public String toString() {
-		return super.toString();
-	}
-	
-	public String toString(InvocationHandler h) {
-		return toString();
-	}
-
-	public int hashCode() {
-		return super.hashCode();
-	}
-	
-	public int hashCode(InvocationHandler self) {
-		return hashCode();
-	}
-
 	public boolean equals(Object arg0) {
 		return arg0 instanceof Self ? super.equals(arg0) : arg0 != null ? arg0.equals(this) : false;
 	}
 
-	public boolean equals(InvocationHandler self, Object arg0) {
-		return equals(arg0);
+	private Method findMethod(Method m) {
+		Iterator c = components.iterator();
+		while (c.hasNext()) {
+			Object component = c.next();
+			try {
+				return component.getClass().getSuperclass().getMethod(m.getName(),
+						m.getParameterTypes());
+			}
+			catch (NoSuchMethodException e) {
+				continue;
+			}
+		}
+		return null;
 	}
 
 	public boolean respondsTo(Method m) {
-		return getBindings().containsKey(m);
-	}
-	public boolean respondsTo(InvocationHandler self, Method m){
-		return respondsTo(m);
+		return findMethod(m) != null;
 	}
 }

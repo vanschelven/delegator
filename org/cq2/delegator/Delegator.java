@@ -10,14 +10,11 @@ import java.lang.reflect.Proxy;
 import org.cq2.delegator.binders.Link;
 import org.cq2.delegator.classgenerator.ClassInjector;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
-import org.cq2.delegator.method.MethodFilter;
-import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 
 /**
  * @author ejgroene
  */
 public class Delegator {
-	private final static MethodFilter methodFilter = new MethodFilterNonFinalNonPrivate();
 	static ClassInjector injector = ClassInjector.create(ClassLoader.getSystemClassLoader());
 /*	private final static InvocationHandler nullHandler = new InvocationHandler() {
 		public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
@@ -31,7 +28,7 @@ public class Delegator {
 		}
 		else {
 			return ProxyGenerator
-					.newProxyInstance(injector, theInterface, methodFilter, handler);
+					.newProxyInstance(injector, theInterface, handler);
 		}
 	}
 
@@ -53,10 +50,6 @@ public class Delegator {
 			extension.add(superclasses[i]);
 		}
 		return extension.cast(subclass);
-	}
-
-	public static MethodFilter defaultMethodFilter() {
-		return methodFilter;
 	}
 
 	public static ClassLoader configureClassLoader(ClassLoader loader) {
