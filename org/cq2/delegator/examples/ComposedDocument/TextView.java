@@ -7,7 +7,7 @@ import org.cq2.delegator.Delegator;
 
 public abstract class TextView {
 	public static TextView create() {
-		return (TextView) Delegator.instanceOf(TextView.class);
+		return (TextView) Delegator.create(TextView.class, new Object[0]);
 	}
 
 	// prototypes for methods from TextDocument

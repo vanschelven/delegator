@@ -3,7 +3,6 @@
  */
 package org.cq2.delegator.examples.observer;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -13,9 +12,9 @@ import java.util.Observable;
 public class ObservableList extends Observable implements List {
 	private final List innerList;
 	public ObservableList create() {
-		innerList = new ArrayList();
+		//innerList = new ArrayList();
 		ObservableList list = new ObservableList(innerList);
-		list.addObserver(...);
+		//list.addObserver(...);
 		return list;
 	}
 	private ObservableList(List list) {

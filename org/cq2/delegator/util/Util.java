@@ -6,17 +6,10 @@ package org.cq2.delegator.util;
 
 import java.lang.reflect.Method;
 import java.util.Set;
-import java.util.TreeSet;
 
 public class Util {
 
-	public static Set getMethods(Class theClass, MethodFilter filter) {
-		Set methods = new TreeSet(new MethodComparator());
-		addNonPrivateMethods(theClass, methods, filter);
-		return methods;
-	}
-
-	private static void addNonPrivateMethods(Class theClass, Set methodSet, MethodFilter filter) {
+	public static void addMethods(Class theClass, Set methodSet, MethodFilter filter) {
 		Method[] methods = theClass.getDeclaredMethods();
 		for (int i = 0; i < methods.length; i++) {
 			Method method = methods[i];
@@ -27,10 +20,10 @@ public class Util {
 		}
 		Class[] interfaces = theClass.getInterfaces();
 		for (int i = 0; i < interfaces.length; i++) {
-			addNonPrivateMethods(interfaces[i], methodSet, filter);
+			addMethods(interfaces[i], methodSet, filter);
 		}
 		Class superclass = theClass.getSuperclass();
 		if (superclass != null)
-			addNonPrivateMethods(superclass, methodSet, filter);
+			addMethods(superclass, methodSet, filter);
 	}
 }

@@ -8,8 +8,6 @@ public abstract class XMLRenderer  {
 	public void addToResult(String aresult) {
 		result += aresult;
 	}
-	
-	
 
 	public String render() {
 		return result;

@@ -18,7 +18,7 @@ public class AbstractMapExtensionTest extends TestCase {
 	public static abstract class MyMap implements Map {
 	
 		public static MyMap create() {
-			return (MyMap) Delegator.createExtension(MyMap.class, AbstractMap.class);
+			return (MyMap) Delegator.extend(MyMap.class, new Class[] {AbstractMap.class});
 		}
 		
 		public Set entrySet() {

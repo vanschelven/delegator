@@ -9,6 +9,10 @@ import java.util.List;
 import junit.framework.TestCase;
 
 public class MethodComparatorTest extends TestCase {
+	public void testGetName() throws SecurityException, NoSuchMethodException {
+		assertEquals("testGetName", getClass().getMethod("testGetName", null).getName());
+	}
+
 	public void testCompareEquals() throws Exception {
 		Method a = Collection.class.getMethod("toArray", new Class[]{});
 		Method b = List.class.getMethod("toArray", new Class[]{});

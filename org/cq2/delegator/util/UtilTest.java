@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.TreeSet;
 
 import junit.framework.TestCase;
 
@@ -25,7 +26,8 @@ public class UtilTest extends TestCase {
 		class Class1 {
 			public void f1() {}
 		}
-		Set set = Util.getMethods(Class1.class, methodFilter);
+		Set set = new TreeSet(new MethodComparator());
+		Util.addMethods(Class1.class, set, methodFilter);
 		String string = set.toString();
 		assertTrue(string.matches(".*clone().*"));
 		assertTrue(string.matches(".*equals().*"));
@@ -45,7 +47,8 @@ public class UtilTest extends TestCase {
 	public static abstract class C1 implements I1, I2 {}
 
 	public void testAbstractSuperSuperMethod() {
-		Set methods = Util.getMethods(C1.class, methodFilter);
+		Set methods = new TreeSet(new MethodComparator());
+		Util.addMethods(C1.class, methods, methodFilter);
 		assertEquals(6, methods.size());
 		printMethods(methods);
 	}

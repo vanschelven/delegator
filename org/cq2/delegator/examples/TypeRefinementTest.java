@@ -5,13 +5,15 @@ package org.cq2.delegator.examples;
 
 import java.util.Date;
 import java.util.HashMap;
+
 import junit.framework.TestCase;
+
 import org.cq2.delegator.Delegator;
 import org.cq2.delegator.handlers.Self;
 
 public class TypeRefinementTest extends TestCase {
 	public static Self createMap() {
-		return Delegator.extend(HashMap.class, new Class[]{});
+		return Delegator.create(HashMap.class, new Object[0]);
 	}
 
 	interface DateMap {

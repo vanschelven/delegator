@@ -9,7 +9,9 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
+import org.cq2.delegator.util.MethodComparator;
 import org.cq2.delegator.util.MethodFilter;
 import org.cq2.delegator.util.Util;
 
@@ -23,7 +25,8 @@ public class DynamicBinder extends Binder {
 			this.delegate = delegate;
 		}
 		public Object invoke(final Object[] args) throws Throwable {
-			Set candidateMethods = Util.getMethods(delegate.getClass(), new MethodFilter() {
+			Set candidateMethods = new TreeSet(new MethodComparator());			
+			Util.addMethods(delegate.getClass(), candidateMethods, new MethodFilter() {
 				public boolean filter(Method method) {
 					return method.getName().equals(mainMethod.getName())
 						&& mainMethod.getParameterTypes()[0].isAssignableFrom(

@@ -39,8 +39,8 @@ public class ObservableWithDelegatorTest extends TestCase implements Observer {
 	}
 
 	private MyObservableImplWithDelegation createObservable() {
-		return (MyObservableImplWithDelegation) Delegator.createExtension(
-				MyObservableImplWithDelegation.class, ObservableImpl.class);
+		return (MyObservableImplWithDelegation) Delegator.extend(
+				MyObservableImplWithDelegation.class, new Class[] {ObservableImpl.class});
 	}
 
 	public void testRemoveDependent() {

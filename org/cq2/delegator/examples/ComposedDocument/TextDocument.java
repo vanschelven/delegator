@@ -7,7 +7,7 @@ import org.cq2.delegator.Delegator;
 
 public class TextDocument {
 	public static TextDocument create(String title, String body) {
-		return (TextDocument) Delegator.instanceOf(TextDocument.class);
+		return (TextDocument) Delegator.create(TextDocument.class, new Object[0]);
 	}
 
 	public String getTitle() {

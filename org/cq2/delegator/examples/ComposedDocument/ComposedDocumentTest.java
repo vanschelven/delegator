@@ -3,11 +3,13 @@
  */
 package org.cq2.delegator.examples.ComposedDocument;
 
-import org.cq2.delegator.Delegator;
 import junit.framework.TestCase;
 
+import org.cq2.delegator.Delegator;
+import org.cq2.delegator.handlers.Self;
+
 public class ComposedDocumentTest extends TestCase {
-	interface Document {
+	interface Document extends Self {
 		String getName();
 		String getUrl();
 		String toHtml();
@@ -16,17 +18,15 @@ public class ComposedDocumentTest extends TestCase {
 	}
 
 	public void testCreateDocument() {
-		TextDocument doc = TextDocument.create("Best trips in Town", "bla bla bla...");
-		// TODO: can call methods on doc?
-		Context context = Context.create("book1", "http://books.com/besttrips");
-		TextView view = TextView.create();
-		Document cdoc = (Document) Delegator.compose(doc, context, view).cast(Document.class);
-		assertNotNull(cdoc);
-		String name = cdoc.getName();
-		String url = cdoc.getUrl();
-		String title = cdoc.getTitle();
-		String body = cdoc.getBody();
-		String html = cdoc.toHtml();
+		Document doc = (Document) Delegator.newObject().cast(Document.class);
+		doc.add(Delegator.create(TextDocument.class, new Object[] {"Best trips in Town", "bla bla bla..."}));
+		doc.add(Delegator.create(Context.class, new Object[] {"book1", "http://books.com/besttrips"}));
+		doc.add(Delegator.create(TextView.class, new Object[0]));
+		String name = doc.getName();
+		String url = doc.getUrl();
+		String title = doc.getTitle();
+		String body = doc.getBody();
+		String html = doc.toHtml();
 		assertEquals("book", name);
 		assertEquals("Best trips in Town", title);
 		assertEquals("http://books.com/besttrips", url);
@@ -34,4 +34,3 @@ public class ComposedDocumentTest extends TestCase {
 		assertTrue(html.matches("<html><h1>Best.*</h1><a>bla.*</a></html>"));
 	}
 }
-// TODO idea: Self.addFirst(), Self.remove(), Self.addLast, Self.replace()

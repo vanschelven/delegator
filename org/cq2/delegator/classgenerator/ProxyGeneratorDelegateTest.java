@@ -334,7 +334,7 @@ public class ProxyGeneratorDelegateTest extends TestCase implements
     }
 
     public void testSetdelegate() {
-        Object testProxy = ProxyGenerator.newProxyInstance(ClassLoader
+       DObject testProxy = ProxyGenerator.newProxyInstance(ClassLoader
                 .getSystemClassLoader(), HashMap.class, this, Delegator
                 .defaultMethodFilter());
         assertSame(this, ProxyGenerator.getInvocationHandler(testProxy));

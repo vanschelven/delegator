@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+
 import junit.framework.TestCase;
-import org.cq2.delegator.handlers.Self;
 
 public class DelegatorTest extends TestCase implements InvocationHandler {
 	public DelegatorTest(String arg0) {
@@ -76,19 +76,17 @@ public class DelegatorTest extends TestCase implements InvocationHandler {
 	}
 
 	public void testSelfMixin() {
-		// Next line: test cglib
-		// Object mixin = Mixin.create(new Object[] { new A2(), new A1()});
-		Object mixin = Delegator.createExtension(A1.class, A2.class);
+		Object mixin = Delegator.extend(A1.class, new Class[] {A2.class});
 		assertEquals("A1", ((A1) mixin).f2());
 		Object result = ((A1) mixin).f1();
 		assertEquals("A1", result);
 	}
 
 	public void testListProblemFromRobWestgeest() {
-		Self self = Delegator.extend(Object.class, new Class[]{AbstractList.class});
-		assertNotNull(self);
-		self = Delegator.extend(Object.class, new Class[]{ArrayList.class});
-		assertNotNull(self);
+		Object obj = Delegator.extend(Object.class, new Class[]{AbstractList.class});
+		assertNotNull(obj);
+		obj = Delegator.extend(Object.class, new Class[]{ArrayList.class});
+		assertNotNull(obj);
 	}
 
 	public static interface AnInterface {

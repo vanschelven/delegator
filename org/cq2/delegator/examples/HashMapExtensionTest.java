@@ -6,19 +6,15 @@ package org.cq2.delegator.examples;
 
 import java.util.HashMap;
 import java.util.Map;
-
 import junit.framework.TestCase;
-
 import org.cq2.delegator.Delegator;
 
 public class HashMapExtensionTest extends TestCase {
-
 	public static abstract class MyMap implements Map {
-		
 		public static MyMap create() throws Exception {
-			return (MyMap) Delegator.createExtension(MyMap.class, HashMap.class);
+			return (MyMap) Delegator.extend(MyMap.class, new Class[]{HashMap.class});
 		}
-		
+
 		public Object get(Object key) {
 			return "ha ha ha, this method is overridden!";
 		}
@@ -31,8 +27,7 @@ public class HashMapExtensionTest extends TestCase {
 		assertTrue(map.containsKey("monkey"));
 		assertTrue(map.containsValue("fish"));
 		assertEquals("fish", map.remove("monkey"));
-		assertEquals(
-			"ha ha ha, this method is overridden!",
-			map.get("something completely nonsense"));
+		assertEquals("ha ha ha, this method is overridden!", map
+				.get("something completely nonsense"));
 	}
 }

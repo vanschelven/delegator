@@ -5,6 +5,7 @@
 package org.cq2.delegator.handlers;
 
 import java.io.DataInput;
+import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Comparator;
@@ -15,6 +16,8 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 import org.cq2.delegator.Delegator;
+import org.cq2.delegator.classgenerator.DObject;
+import org.cq2.delegator.util.MethodFilter;
 
 /**
  * @author ejgroene
@@ -122,5 +125,18 @@ public class ComposerTest extends TestCase {
 			fail();
 		}
 		catch (Error e) {}
+	}
+
+	interface I extends Self {}
+	
+	public void testCast() {
+		Composer c = new Composer(new MethodFilter() {
+			public boolean filter(Method method) {
+				return true;
+			}
+		}, new DObject() {});
+		I i = (I) c.cast(I.class);
+		assertNotNull(i);
+		assertNotNull(i.cast(Map.class));
 	}
 }
