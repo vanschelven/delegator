@@ -13,7 +13,7 @@ import org.cq2.delegator.classgenerator.ProxyGeneratorSelfTest;
 import org.cq2.delegator.examples.HashMapExtensionTest;
 import org.cq2.delegator.examples.ComposedDocument.ComposedDocumentTest;
 import org.cq2.delegator.examples.mixin.MixinTest;
-import org.cq2.delegator.examples.observer.ObservableWithDelegatorTest;
+import org.cq2.delegator.examples.observer.CountingObservableTest;
 import org.cq2.delegator.handlers.SelfTest;
 import org.cq2.delegator.handlers.DynamicBinderTest;
 import org.cq2.delegator.handlers.LinkTest;
@@ -39,7 +39,7 @@ public class AllDelegatorTests {
 		//$JUnit-END$
 		suite.addTestSuite(ComposedDocumentTest.class);
 		suite.addTestSuite(StateTest.class);
-		suite.addTestSuite(ObservableWithDelegatorTest.class);
+		suite.addTestSuite(CountingObservableTest.class);
 		suite.addTestSuite(MixinTest.class);
 		suite.addTestSuite(MethodComparatorTest.class);		
 		suite.addTestSuite(DynamicBinderTest.class);

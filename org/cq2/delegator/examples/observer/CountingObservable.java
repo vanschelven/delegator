@@ -5,9 +5,8 @@ package org.cq2.delegator.examples.observer;
 
 import org.cq2.delegator.handlers.ISelf;
 
-public abstract class CountingObservableWithDelegation implements Observable, ISelf {
+public abstract class CountingObservable implements Observable, ISelf {
 	private int count;
-	abstract public void removeDependent(Observer test);
 	abstract public void changed();
 	
 	

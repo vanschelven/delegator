@@ -15,7 +15,7 @@ public class ObservableImpl {
 		observers.put(observer2, null);
 	}
 
-	public void changed(Object self) {
+	void changed(Object self) {
 		// TODO: the arg to changed is the component that called 'changed(this)'
 		// Passing this component to observers is not a good idea.
 		// It is better to pass either the Composer (==Self) or the proxy

@@ -49,6 +49,22 @@ public class DelegatorTest extends TestCase implements InvocationHandler {
 		assertEquals(false, map.isEmpty());
 		assertEquals("isEmpty", invokedMethod);
 	}
+	
+	public void testDelegateSubclassPackageScopeMethod() {
+		Self self = new Self(MySuperClass.class); 
+		self.add(MySubclass.class);
+		MySubclass subclass = (MySubclass) self.cast(MySubclass.class);
+		assertEquals(3, subclass.myPackageScopeMethod());
+	}
+	
+	public void testDelegateSubclassProtectedMethod() {
+		Self self = new Self(MySuperClass.class); 
+		self.add(MySubclass.class);
+		MySubclass subclass = (MySubclass) self.cast(MySubclass.class);
+		int result = subclass.getProtected();
+		assertEquals(5, result);
+	}
+
 
 	public static abstract class A1 {
 		public abstract String f1();
