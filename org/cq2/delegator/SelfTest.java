@@ -17,7 +17,6 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.classgenerator.ClassInjector;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 /**
@@ -46,9 +45,8 @@ public class SelfTest extends TestCase {
 	}
 
 	public void testAddComponent() {
-		ClassInjector injector = new ClassInjector(ClassLoader.getSystemClassLoader());
 		Self self = new Self();
-		Component c = ProxyGenerator.newComponentInstance(injector, ArrayList.class, null);
+		Component c = ProxyGenerator.newComponentInstance(ArrayList.class);
 		self.add(c);
 		assertSame(c, self.component(0));
 	}

@@ -9,7 +9,6 @@ import junit.framework.TestSuite;
 import junit.textui.TestRunner;
 
 import org.cq2.delegator.binders.LinkTest;
-import org.cq2.delegator.classgenerator.ClassInjectorTest;
 import org.cq2.delegator.classgenerator.ProxyGeneratorDelegateTest;
 import org.cq2.delegator.classgenerator.ProxyGeneratorSelfTest;
 import org.cq2.delegator.classgenerator.ProxyGeneratorTest;
@@ -43,7 +42,6 @@ public class AllDelegatorTests {
 		suite.addTestSuite(MixinTest.class);
 		suite.addTestSuite(MethodComparatorTest.class);		
 		suite.addTestSuite(ProxyGeneratorTest.class);
-		suite.addTestSuite(ClassInjectorTest.class);
 		suite.addTestSuite(FinalMethodAlsoOnInterfaceTest.class);
 		return suite;
 	}

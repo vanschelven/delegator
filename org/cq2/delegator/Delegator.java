@@ -8,14 +8,13 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
 import org.cq2.delegator.binders.Link;
-import org.cq2.delegator.classgenerator.ClassInjector;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 /**
  * @author ejgroene
  */
 public class Delegator {
-	static ClassInjector injector = ClassInjector.create(ClassLoader.getSystemClassLoader());
+
 /*	private final static InvocationHandler nullHandler = new InvocationHandler() {
 		public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
 			throw new NullPointerException("Delegator: Object has no SELF pointer.");
@@ -24,11 +23,11 @@ public class Delegator {
 */
 	public static Object proxyFor(Class theInterface, InvocationHandler handler) {
 		if (theInterface.isInterface()) {
-			return Proxy.newProxyInstance(injector, new Class[]{theInterface, ISelf.class}, handler);
+			return Proxy.newProxyInstance(ProxyGenerator.getClassLoader(), new Class[]{theInterface, ISelf.class}, handler);
 		}
 		else {
 			return ProxyGenerator
-					.newProxyInstance(injector, theInterface, handler);
+					.newProxyInstance(theInterface, handler);
 		}
 	}
 
@@ -53,7 +52,6 @@ public class Delegator {
 	}
 
 	public static ClassLoader configureClassLoader(ClassLoader loader) {
-		injector = ClassInjector.create(loader);
-		return injector;
+		return ProxyGenerator.configureClassLoader(loader);
 	}
 }

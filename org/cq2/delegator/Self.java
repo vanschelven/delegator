@@ -11,14 +11,11 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 public class Self implements InvocationHandler, ISelf {
-	private final static InvocationHandler nullHandler = new InvocationHandler() {
-		public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
-			throw new NullPointerException("Delegator: Object has no SELF pointer.");
-		}
-	};
+	public static ThreadLocal self = new ThreadLocal();
 	private List components;
 	private transient Object caller; // TODO threadsafe!
 
@@ -55,6 +52,7 @@ public class Self implements InvocationHandler, ISelf {
 			try {
 				Method delegateMethod = component.getClass().getDeclaredMethod(name,
 						(Class[]) argTypeList.toArray(new Class[]{}));
+				self.set(this);
 				return delegateMethod.invoke(component, mapArgs(args));
 			}
 			catch (NoSuchMethodException e) {
@@ -132,12 +130,12 @@ public class Self implements InvocationHandler, ISelf {
 		components.add(component);
 	}
 
-	public void add(InvocationHandler self, Class clas) {
+	public void add(InvocationHandler s, Class clas) {
 		add(clas);
 	}
 
 	private Component newComponent(Class clas) {
-		return ProxyGenerator.newComponentInstance(Delegator.injector, clas, nullHandler);
+		return ProxyGenerator.newComponentInstance(clas);
 	}
 
 	public Self extend(Class class1) {

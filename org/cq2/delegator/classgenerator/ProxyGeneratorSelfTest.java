@@ -11,15 +11,15 @@ import java.lang.reflect.Method;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
 
+import org.cq2.delegator.Self;
+
 public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandler {
 	private ProxyGeneratorSelfTestClass proxy;
 
 	protected void setUp() throws Exception {
 		proxy =
 			(ProxyGeneratorSelfTestClass) ProxyGenerator.newComponentInstance(
-				ClassInjector.create(),
-				ProxyGeneratorSelfTestClass.class,
-				 null);
+				ProxyGeneratorSelfTestClass.class);
 	}
 
 	public void testSuperObjectVoid() throws Exception {
@@ -38,6 +38,7 @@ public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandle
 		throws NoSuchMethodException, IllegalAccessException, InvocationTargetException {
 		Method method =
 			proxy.getClass().getMethod(methodName, new Class[] { InvocationHandler.class });
+		Self.self.set(this);
 		Object result = method.invoke(proxy, new Object[] { this });
 		return result;
 	}
