@@ -41,7 +41,7 @@ public class Delegator {
 
 	public static Object forInterface(Class theInterface, Object[] delegates) {
 		InvocationHandler newDynImpl = Link.noSuchMethodInvocationHandler();
-		for(int i = 0; i < delegates.length; i++)
+		for(int i = delegates.length -1; i >= 0; i--)
 			newDynImpl = new Link(delegates[i],newDynImpl);
 		return Proxy.newProxyInstance(Self.class.getClassLoader(), new Class[]{theInterface},
 				newDynImpl);
