@@ -39,6 +39,17 @@ public class DelegatorTest extends TestCase implements InvocationHandler {
 		map.clear();
 		assertEquals("clear", invokedMethod);
 	}
+	
+	public void clear(){
+		invokedMethod = "clear";
+	}
+	
+	public void testDelegateInterfaceWithImplementationArray(){
+		Map map = (Map) Delegator.forInterface(Map.class, new Object[]{new Object(),"",this});
+		assertNotNull(map);
+		map.clear();
+		assertEquals("clear", invokedMethod);
+	}
 
 	public void testDelegateSubclass() {
 		Map map = (Map) Delegator.proxyFor(HashMap.class, this);

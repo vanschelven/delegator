@@ -21,11 +21,15 @@ public class Link implements InvocationHandler {
 	}
 
 	public Link(Object delegate) {
-		this(delegate, new InvocationHandler() {
+		this(delegate, noSuchMethodInvocationHandler());
+	}
+
+	public static InvocationHandler noSuchMethodInvocationHandler() {
+		return new InvocationHandler() {
 			public Object invoke(Object arg0, Method method, Object[] args) throws Throwable {
 				throw new NoSuchMethodError(method.toString());
 			}
-		});
+		};
 	}
 
 	public Object invoke(Object self, Method method, Object[] args) throws Throwable {
