@@ -6,6 +6,5 @@
 	<classpathentry sourcepath="/libs/lib/bcel.jar" kind="lib" path="/libs/lib/bcel.jar"/>
 	<classpathentry kind="lib" path="/libs/lib/hansel.jar"/>
 	<classpathentry kind="lib" path="/libs/lib/junit.jar"/>
-	<classpathentry kind="lib" path="/libs/lib/serp.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>
