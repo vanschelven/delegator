@@ -2,7 +2,7 @@
  Copyright (C) 2001 Erik J. Groeneveld, http://www.ejgroeneveld.com
  Copyright (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl 
  */
-package org.cq2.delegator.util;
+package org.cq2.delegator.method;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -13,7 +13,7 @@ import java.util.TreeSet;
 import junit.framework.TestCase;
 
 
-public class UtilTest extends TestCase {
+public class MethodUtilTest extends TestCase {
 
 	final MethodFilter methodFilter = new MethodFilter() {
 		public boolean filter(Method method) {
@@ -27,7 +27,7 @@ public class UtilTest extends TestCase {
 			public void f1() {}
 		}
 		Set set = new TreeSet(new MethodComparator());
-		Util.addMethods(Class1.class, set, methodFilter);
+		MethodUtil.addMethods(Class1.class, set, methodFilter);
 		String string = set.toString();
 		assertTrue(string.matches(".*clone().*"));
 		assertTrue(string.matches(".*equals().*"));
@@ -48,7 +48,7 @@ public class UtilTest extends TestCase {
 
 	public void testAbstractSuperSuperMethod() {
 		Set methods = new TreeSet(new MethodComparator());
-		Util.addMethods(C1.class, methods, methodFilter);
+		MethodUtil.addMethods(C1.class, methods, methodFilter);
 		assertEquals(6, methods.size());
 		printMethods(methods);
 	}

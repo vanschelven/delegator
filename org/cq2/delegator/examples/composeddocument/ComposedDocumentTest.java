@@ -1,15 +1,15 @@
 /*
  * Created on Apr 7, 2004
  */
-package org.cq2.delegator.examples.ComposedDocument;
+package org.cq2.delegator.examples.composeddocument;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.handlers.ISelf;
-import org.cq2.delegator.handlers.Self;
+import org.cq2.delegator.ISelf;
+import org.cq2.delegator.Self;
 
 public class ComposedDocumentTest extends TestCase {
-	interface Document extends ISelf {
+	public interface Document extends ISelf {
 		String getName();
 		String getUrl();
 		String toHtml();

@@ -8,8 +8,8 @@ import java.util.HashMap;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.handlers.ISelf;
-import org.cq2.delegator.handlers.Self;
+import org.cq2.delegator.ISelf;
+import org.cq2.delegator.Self;
 
 public class TypeRefinementTest extends TestCase {
 	public static ISelf createMap() {

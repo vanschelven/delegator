@@ -10,27 +10,18 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-
 import junit.framework.TestCase;
-
-import org.cq2.delegator.handlers.Self;
 
 public class DelegatorTest extends TestCase implements InvocationHandler {
 	public DelegatorTest(String arg0) {
 		super(arg0);
 	}
 
-	public void setUp() {
-		invokedMethod = null;
-		invokeResult = null;
-	}
-
 	private String invokedMethod;
-	private Object invokeResult;
 
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		invokedMethod = method.getName();
-		return invokeResult;
+		return null;
 	}
 
 	public void testDelegateInterface() {
@@ -39,53 +30,28 @@ public class DelegatorTest extends TestCase implements InvocationHandler {
 		map.clear();
 		assertEquals("clear", invokedMethod);
 	}
-	
-	public void clear(){
+
+	public void clear() {
 		invokedMethod = "clear";
 	}
-	
-	public void testDelegateInterfaceWithImplementationArray(){
-		Map map = (Map) Delegator.forInterface(Map.class, new Object[]{new Object(),"",this});
+
+	public void testDelegateInterfaceWithImplementationArray() {
+		Map map = (Map) Delegator.forInterface(Map.class, new Object[]{new Object(), "", this});
 		assertNotNull(map);
 		map.clear();
 		assertEquals("clear", invokedMethod);
 	}
 
-	public void testDelegateInterfaceWithImplementationArray2(){
+	public void testDelegateInterfaceWithImplementationArray2() {
 		Map realMap = new HashMap();
-		realMap.put("something","that is cleared");
-		Map map = (Map) Delegator.forInterface(Map.class, new Object[]{new Object(),"",realMap,this});
+		realMap.put("something", "that is cleared");
+		Map map = (Map) Delegator.forInterface(Map.class, new Object[]{new Object(), "", realMap,
+				this});
 		assertNotNull(map);
 		map.clear();
 		assertNull(invokedMethod);
 		assertTrue(realMap.isEmpty());
 	}
-
-	public void testDelegateSubclass() {
-		Map map = (Map) Delegator.proxyFor(HashMap.class, this);
-		assertNotNull(map);
-		invokeResult = new Boolean(true);
-		assertEquals(true, map.isEmpty());
-		invokeResult = new Boolean(false);
-		assertEquals(false, map.isEmpty());
-		assertEquals("isEmpty", invokedMethod);
-	}
-	
-	public void testDelegateSubclassPackageScopeMethod() {
-		Self self = new Self(MySuperClass.class); 
-		self.add(MySubclass.class);
-		MySubclass subclass = (MySubclass) self.cast(MySubclass.class);
-		assertEquals(3, subclass.myPackageScopeMethod());
-	}
-	
-	public void testDelegateSubclassProtectedMethod() {
-		Self self = new Self(MySuperClass.class); 
-		self.add(MySubclass.class);
-		MySubclass subclass = (MySubclass) self.cast(MySubclass.class);
-		int result = subclass.getProtected();
-		assertEquals(5, result);
-	}
-
 
 	public static abstract class A1 {
 		public abstract String f1();

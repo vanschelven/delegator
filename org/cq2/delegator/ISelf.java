@@ -1,4 +1,4 @@
-package org.cq2.delegator.handlers;
+package org.cq2.delegator;
 
 public interface ISelf {
 	Object cast(Class type);

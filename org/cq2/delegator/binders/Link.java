@@ -2,12 +2,12 @@
 Copyright (C) 2001 Erik J. Groeneveld, http://www.ejgroeneveld.com
 Copyright (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl 
 */
-package org.cq2.delegator.handlers;
+package org.cq2.delegator.binders;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
-import org.cq2.delegator.handlers.Binder.Binding;
+import org.cq2.delegator.binders.Binder.Binding;
 
 public class Link implements InvocationHandler {
 

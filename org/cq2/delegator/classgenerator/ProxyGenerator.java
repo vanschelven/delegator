@@ -29,10 +29,10 @@ import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.ReferenceType;
 import org.apache.bcel.generic.Type;
-import org.cq2.delegator.handlers.ISelf;
-import org.cq2.delegator.util.MethodComparator;
-import org.cq2.delegator.util.MethodFilter;
-import org.cq2.delegator.util.Util;
+import org.cq2.delegator.ISelf;
+import org.cq2.delegator.method.MethodComparator;
+import org.cq2.delegator.method.MethodFilter;
+import org.cq2.delegator.method.MethodUtil;
 
 public class ProxyGenerator extends ClassLoader implements Constants {
 	private static final ObjectType CLASS = new ObjectType("java.lang.Class");
@@ -51,7 +51,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		this.classInjector = ClassInjector.create(classLoader);
 		String superClassName = superClass.getName();
 		final String proxyClassName = ProxyGenerator.getProxyClassName(superClass);
-		String[] extraInterfaces = new String[]{DObject.class.getName(), ISelf.class.getName()};
+		String[] extraInterfaces = new String[]{Component.class.getName(), ISelf.class.getName()};
 		classGen = new ClassGen(proxyClassName, superClassName, "", (Modifier.isPublic(superClass
 				.getModifiers()) ? ACC_PUBLIC : 0)
 				| ACC_SUPER, extraInterfaces);
@@ -90,20 +90,20 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		}
 	}
 
-	private DObject getInstance(InvocationHandler handler, Object[] ctorArgs) {
+	private Component getInstance(InvocationHandler handler, Object[] ctorArgs) {
 		return getInstance(proxyClass, handler, ctorArgs);
 	}
 
-	private static DObject getInstance(Class proxyClass, InvocationHandler delegate,
+	private static Component getInstance(Class proxyClass, InvocationHandler delegate,
 			Object[] ctorArgs) {
 		try {
-			DObject proxy;
+			Component proxy;
 			if (ctorArgs != null) {
 				Constructor ctor = proxyClass.getConstructor(argTypes(ctorArgs));
-				proxy = (DObject) ctor.newInstance(ctorArgs);
+				proxy = (Component) ctor.newInstance(ctorArgs);
 			}
 			else {
-				proxy = (DObject) proxyClass.newInstance();
+				proxy = (Component) proxyClass.newInstance();
 			}
 			Field delegateField = getDelegateField(proxy);
 			delegateField.set(proxy, delegate);
@@ -122,7 +122,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		return types;
 	}
 
-	public static Field getDelegateField(DObject proxy) {
+	public static Field getDelegateField(Component proxy) {
 		try {
 			return proxy.getClass().getDeclaredField("self");
 		}
@@ -134,10 +134,10 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 	private void addMethodsFromSuperClass(String[] extraInterfaces) {
 		//System.out.println("=============" + superClass);
 		Set methods = new TreeSet(new MethodComparator());
-		Util.addMethods(superClass, methods, methodFilter);
+		MethodUtil.addMethods(superClass, methods, methodFilter);
 		for (int i = 0; i < extraInterfaces.length; i++) {
 			try {
-				Util.addMethods(Class.forName(extraInterfaces[i]), methods, methodFilter);
+				MethodUtil.addMethods(Class.forName(extraInterfaces[i]), methods, methodFilter);
 			}
 			catch (ClassNotFoundException e) {
 				throw new RuntimeException(e);
@@ -442,12 +442,12 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		return result;
 	}
 
-	public static DObject newProxyInstance(ClassLoader classLoader, Class theInterface,
+	public static Component newProxyInstance(ClassLoader classLoader, Class theInterface,
 			InvocationHandler handler, MethodFilter methodFilter, Object[] ctorArgs) {
 		return newComponentInstance(classLoader, theInterface, handler, methodFilter, ctorArgs);
 	}
 
-	public static DObject newComponentInstance(ClassLoader classLoader, Class theInterface,
+	public static Component newComponentInstance(ClassLoader classLoader, Class theInterface,
 			InvocationHandler handler, MethodFilter methodFilter, Object[] ctorArgs) {
 		if (theInterface.isInterface()) {
 			throw new IllegalArgumentException("Interfaces are not supported.");
@@ -455,7 +455,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		try {
 			Class proxyClass = classLoader
 					.loadClass(ProxyGenerator.getProxyClassName(theInterface));
-			DObject instance = ProxyGenerator.getInstance(proxyClass, handler, ctorArgs);
+			Component instance = ProxyGenerator.getInstance(proxyClass, handler, ctorArgs);
 			System.err.println("existing class");
 			return instance;
 		}
@@ -465,7 +465,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		}
 	}
 
-	static Object getInvocationHandler(DObject proxy) {
+	static Object getInvocationHandler(Component proxy) {
 		try {
 			return getDelegateField(proxy).get(proxy);
 		}
@@ -475,6 +475,6 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 	}
 
 	public static boolean isProxy(Object object) {
-		return object instanceof DObject;
+		return object instanceof Component;
 	}
 }

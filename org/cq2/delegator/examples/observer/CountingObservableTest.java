@@ -8,8 +8,8 @@ package org.cq2.delegator.examples.observer;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.handlers.ISelf;
-import org.cq2.delegator.handlers.Self;
+import org.cq2.delegator.ISelf;
+import org.cq2.delegator.Self;
 
 public class CountingObservableTest extends TestCase implements Observer {
 	private Object notifier;

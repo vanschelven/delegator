@@ -1,6 +1,7 @@
-package org.cq2.delegator;
+package org.cq2.delegator.test;
 
-import org.cq2.delegator.handlers.ISelf;
+import org.cq2.delegator.ISelf;
+
 
 public  abstract class MySubclass implements ISelf {
 	

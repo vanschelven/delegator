@@ -1,7 +1,7 @@
 /*
  * Created on Apr 1, 2004
  */
-package org.cq2.delegator.util;
+package org.cq2.delegator.method;
 
 import java.lang.reflect.Method;
 import java.util.Collection;

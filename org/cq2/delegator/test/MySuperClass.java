@@ -1,4 +1,4 @@
-package org.cq2.delegator;
+package org.cq2.delegator.test;
 
 public class MySuperClass {
 

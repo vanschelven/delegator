@@ -2,7 +2,7 @@
  Copyright (C) 2001 Erik J. Groeneveld, http://www.ejgroeneveld.com
  Copyright (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl 
  */
-package org.cq2.delegator.handlers;
+package org.cq2.delegator;
 
 import java.io.DataInput;
 import java.sql.SQLException;
@@ -15,7 +15,6 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.Delegator;
 
 /**
  * @author ejgroene
@@ -125,7 +124,7 @@ public class SelfTest extends TestCase {
 		catch (Error e) {}
 	}
 
-	interface I extends ISelf {}
+	public interface I extends ISelf {}
 
 	public void testCast() {
 		Self c = new Self();

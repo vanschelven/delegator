@@ -8,10 +8,9 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
 import org.cq2.delegator.classgenerator.ProxyGenerator;
-import org.cq2.delegator.handlers.ISelf;
-import org.cq2.delegator.handlers.Link;
-import org.cq2.delegator.handlers.Self;
-import org.cq2.delegator.util.MethodFilter;
+import org.cq2.delegator.binders.Link;
+import org.cq2.delegator.method.*;
+import org.cq2.delegator.method.MethodFilter;
 
 /**
  * @author ejgroene

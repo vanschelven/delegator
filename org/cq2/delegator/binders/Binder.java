@@ -2,12 +2,12 @@
  Copyright (C) 2001 Erik J. Groeneveld, http://www.ejgroeneveld.com
  Copyright (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl 
  */
-package org.cq2.delegator.handlers;
+package org.cq2.delegator.binders;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-abstract class Binder {
+public abstract class Binder {
 
 	public interface Binding {
 		Object invoke(Object[] args) throws Throwable;
@@ -32,7 +32,7 @@ abstract class Binder {
 		}
 	}
 
-	Binding bind(Method method, Object delegate) {
+	public Binding bind(Method method, Object delegate) {
 		Method delegateMethod = findMethod(method, delegate);
 		if (delegateMethod == null) {
 			return null;

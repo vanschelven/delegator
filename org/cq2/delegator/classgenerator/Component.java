@@ -4,4 +4,4 @@
 package org.cq2.delegator.classgenerator;
 
 
-public interface DObject {}
+public interface Component {}

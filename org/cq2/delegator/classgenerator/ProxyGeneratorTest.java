@@ -3,7 +3,7 @@
  */
 package org.cq2.delegator.classgenerator;
 
-import org.cq2.delegator.handlers.Self;
+import org.cq2.delegator.Self;
 
 import junit.framework.TestCase;
 

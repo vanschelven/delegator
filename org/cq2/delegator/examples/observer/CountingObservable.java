@@ -3,7 +3,7 @@
  */
 package org.cq2.delegator.examples.observer;
 
-import org.cq2.delegator.handlers.ISelf;
+import org.cq2.delegator.ISelf;
 
 public abstract class CountingObservable implements Observable, ISelf {
 	private int count;

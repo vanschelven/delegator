@@ -1,7 +1,7 @@
 /*
  * Created on Jan 22, 2004
  */
-package org.cq2.delegator.handlers;
+package org.cq2.delegator.binders;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -11,9 +11,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.cq2.delegator.util.MethodComparator;
-import org.cq2.delegator.util.MethodFilter;
-import org.cq2.delegator.util.Util;
+import org.cq2.delegator.method.MethodComparator;
+import org.cq2.delegator.method.MethodFilter;
+import org.cq2.delegator.method.MethodUtil;
 
 public class DynamicBinder extends Binder {
 
@@ -26,7 +26,7 @@ public class DynamicBinder extends Binder {
 		}
 		public Object invoke(final Object[] args) throws Throwable {
 			Set candidateMethods = new TreeSet(new MethodComparator());			
-			Util.addMethods(delegate.getClass(), candidateMethods, new MethodFilter() {
+			MethodUtil.addMethods(delegate.getClass(), candidateMethods, new MethodFilter() {
 				public boolean filter(Method method) {
 					return method.getName().equals(mainMethod.getName())
 						&& mainMethod.getParameterTypes()[0].isAssignableFrom(
@@ -54,7 +54,7 @@ public class DynamicBinder extends Binder {
 
 	}
 
-	Binding bind(Method method, Object delegate) {
+	public Binding bind(Method method, Object delegate) {
 		return new DynamicBinding(method, delegate);
 	}
 

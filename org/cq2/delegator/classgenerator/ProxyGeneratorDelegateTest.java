@@ -13,8 +13,9 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.HashMap;
 import org.cq2.delegator.Delegator;
-import org.cq2.delegator.MethodFilterNonFinalNonPrivate;
-import org.cq2.delegator.util.MethodFilter;
+import org.cq2.delegator.method.MethodFilter;
+import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
+
 import junit.framework.TestCase;
 
 public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHandler {
@@ -321,7 +322,7 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 	}
 
 	public void testSetdelegate() {
-		DObject testProxy = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
+		Component testProxy = ProxyGenerator.newProxyInstance(ClassLoader.getSystemClassLoader(),
 				HashMap.class, this, Delegator.defaultMethodFilter(), null);
 		assertSame(this, ProxyGenerator.getInvocationHandler(testProxy));
 	}

@@ -1,7 +1,7 @@
 /*
  * Created on Apr 7, 2004
  */
-package org.cq2.delegator.examples.ComposedDocument;
+package org.cq2.delegator.examples.composeddocument;
 
 public abstract class TextView {
 	public abstract String getBody();

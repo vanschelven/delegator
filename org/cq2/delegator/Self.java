@@ -2,7 +2,7 @@
  Copyright (C) 2001 Erik J. Groeneveld, http://www.ejgroeneveld.com
  Copyright (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl 
  */
-package org.cq2.delegator.handlers;
+package org.cq2.delegator;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -15,15 +15,16 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.cq2.delegator.Delegator;
-import org.cq2.delegator.MethodFilterNonFinalNonPrivate;
 import org.cq2.delegator.classgenerator.ClassInjector;
-import org.cq2.delegator.classgenerator.DObject;
+import org.cq2.delegator.classgenerator.Component;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
-import org.cq2.delegator.handlers.Binder.Binding;
-import org.cq2.delegator.util.MethodComparator;
-import org.cq2.delegator.util.MethodFilter;
-import org.cq2.delegator.util.Util;
+import org.cq2.delegator.binders.Binder;
+import org.cq2.delegator.binders.SuperClassBinder;
+import org.cq2.delegator.binders.Binder.Binding;
+import org.cq2.delegator.method.*;
+import org.cq2.delegator.method.MethodComparator;
+import org.cq2.delegator.method.MethodFilter;
+import org.cq2.delegator.method.MethodUtil;
 
 public class Self implements InvocationHandler, ISelf {
 	public final static ClassLoader classLoader = ClassInjector.create(ClassLoader.getSystemClassLoader());
@@ -38,7 +39,7 @@ public class Self implements InvocationHandler, ISelf {
 	private transient Object caller; // TODO threadsafe!
 	private transient MethodFilter methodFilter;
 
-	private Self(MethodFilter methodFilter, DObject object) {
+	private Self(MethodFilter methodFilter, Component object) {
 		this.delegates = new ArrayList();
 		delegates.add(object);
 		this.methodFilter = methodFilter;
@@ -118,7 +119,7 @@ public class Self implements InvocationHandler, ISelf {
 	private Method[] collectMethods() {
 		Set methods = new TreeSet(new MethodComparator());
 		for (Iterator iter = delegates.iterator(); iter.hasNext();) {
-			Util.addMethods(iter.next().getClass().getSuperclass(), methods,
+			MethodUtil.addMethods(iter.next().getClass().getSuperclass(), methods,
 					new MethodFilterNonFinalNonPrivate() {
 						public boolean filter(Method method) {
 							if (method.getDeclaringClass().equals(Object.class)) {
@@ -184,7 +185,7 @@ public class Self implements InvocationHandler, ISelf {
 		createBindings();
 	}
 
-	private DObject newComponent(Class clas, Object[] ctorArgs) {
+	private Component newComponent(Class clas, Object[] ctorArgs) {
 		return ProxyGenerator.newComponentInstance(classLoader, clas, nullHandler, methodFilter,
 				ctorArgs);
 	}

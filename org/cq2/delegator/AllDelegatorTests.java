@@ -12,13 +12,12 @@ import org.cq2.delegator.classgenerator.ProxyGeneratorDelegateTest;
 import org.cq2.delegator.classgenerator.ProxyGeneratorSelfTest;
 import org.cq2.delegator.classgenerator.ProxyGeneratorTest;
 import org.cq2.delegator.examples.HashMapExtensionTest;
-import org.cq2.delegator.examples.ComposedDocument.ComposedDocumentTest;
+import org.cq2.delegator.examples.composeddocument.ComposedDocumentTest;
 import org.cq2.delegator.examples.mixin.MixinTest;
 import org.cq2.delegator.examples.observer.CountingObservableTest;
-import org.cq2.delegator.handlers.SelfTest;
-import org.cq2.delegator.handlers.DynamicBinderTest;
-import org.cq2.delegator.handlers.LinkTest;
-import org.cq2.delegator.util.MethodComparatorTest;
+import org.cq2.delegator.binders.DynamicBinderTest;
+import org.cq2.delegator.binders.LinkTest;
+import org.cq2.delegator.method.MethodComparatorTest;
 
 import org.cq2.delegator.examples.state.StateTest;
 

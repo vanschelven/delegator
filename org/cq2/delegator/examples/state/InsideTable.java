@@ -23,7 +23,7 @@
  */
 package org.cq2.delegator.examples.state;
 
-import org.cq2.delegator.handlers.ISelf;
+import org.cq2.delegator.ISelf;
 
 public abstract class InsideTable implements ParseState , ISelf{
 

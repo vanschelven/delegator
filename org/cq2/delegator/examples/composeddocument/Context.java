@@ -1,7 +1,7 @@
 /*
  * Created on Apr 7, 2004
  */
-package org.cq2.delegator.examples.ComposedDocument;
+package org.cq2.delegator.examples.composeddocument;
 
 public class Context {
 	public String getName() {

@@ -1,7 +1,7 @@
 /*
  * Created on Jan 22, 2004
  */
-package org.cq2.delegator.handlers;
+package org.cq2.delegator.binders;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -9,7 +9,7 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.handlers.Binder.Binding;
+import org.cq2.delegator.binders.Binder.Binding;
 
 public class DynamicBinderTest extends TestCase {
 	public String testMethod(Object arg) {

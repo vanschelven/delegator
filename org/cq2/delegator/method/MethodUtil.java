@@ -2,12 +2,12 @@
  Copyright (C) 2001 Erik J. Groeneveld, http://www.ejgroeneveld.com
  Copyright (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl 
  */
-package org.cq2.delegator.util;
+package org.cq2.delegator.method;
 
 import java.lang.reflect.Method;
 import java.util.Set;
 
-public class Util {
+public class MethodUtil {
 
 	public static void addMethods(Class theClass, Set methodSet, MethodFilter filter) {
 		Method[] methods = theClass.getDeclaredMethods();
