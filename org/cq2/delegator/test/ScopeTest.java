@@ -30,9 +30,9 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 	public void testDelegateSubclass() {
 		Map map = (Map) Delegator.proxyFor(HashMap.class, this);
 		assertNotNull(map);
-		invokeResult = new Boolean(true);
+		invokeResult = Boolean.TRUE;
 		assertEquals(true, map.isEmpty());
-		invokeResult = new Boolean(false);
+		invokeResult = Boolean.FALSE;
 		assertEquals(false, map.isEmpty());
 		assertEquals("isEmpty", invokedMethod);
 	}

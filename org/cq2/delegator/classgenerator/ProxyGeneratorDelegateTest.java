@@ -118,9 +118,9 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 	}
 
 	public void testReturnBoolean() {
-		invokeResult = new Boolean(false);
+		invokeResult = Boolean.FALSE;
 		assertEquals(false, proxy.equals(""));
-		invokeResult = new Boolean(true);
+		invokeResult = Boolean.TRUE;
 		assertEquals(true, proxy.equals(""));
 	}
 
@@ -255,7 +255,7 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 
 	public void testPassBoolean() {
 		proxy.voidBoolean(true);
-		assertTrue(Arrays.equals(new Object[]{new Boolean(true)}, invokeArgs));
+		assertTrue(Arrays.equals(new Object[]{Boolean.TRUE}, invokeArgs));
 	}
 
 	public void testPassLong() {
