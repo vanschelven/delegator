@@ -5,6 +5,7 @@
 package org.cq2.delegator;
 
 import java.io.DataInput;
+import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -234,4 +235,71 @@ public class SelfTest extends TestCase {
 		assertFalse(new Object().equals(a1));
 		assertTrue(a1.equals(self1.cast(HashMap.class)));
 	}
+
+	public static class Nr1{
+		public String aMethod() {
+			return "nr1";
+		}
+	}
+	public static class Nr2 {
+		public String aMethod() {
+			return "nr2";
+		}
+		public String method2() {
+			return "nr2";
+		}
+	}
+
+	public void testRespondsTo() throws Exception {
+		Self self = new Self(Nr1.class);
+		Nr1 nr1 = (Nr1) self.cast(Nr1.class);
+		Nr2 nr2 = (Nr2) self.cast(Nr2.class);
+		Method m1 = Nr1.class.getMethod("aMethod", null);
+		assertTrue(self.respondsTo(m1));
+		assertTrue(((ISelf) nr1).respondsTo(m1));
+		Method m2 = Nr2.class.getMethod("aMethod", null);
+		assertTrue(self.respondsTo(m2));
+		assertTrue(((ISelf) nr2).respondsTo(m1));
+		assertTrue(((ISelf) nr2).respondsTo(m2));
+		Method m3 = Nr2.class.getMethod("method2", null);
+		assertFalse(self.respondsTo(m3));
+		assertFalse(((ISelf) nr2).respondsTo(m3));
+		//This test is the same as:
+		try {
+			nr2.method2();
+			fail();
+		}
+		catch (NoSuchMethodError nsme) {}
+	}
+
+	public static Object mymap_key;
+
+	public static class MyMap {
+		public Object put(Object key, Object value) {
+			mymap_key = key;
+			return key;
+		}
+	}
+
+	public void testSelfWithAllKindsofClasses() {
+		mymap_key=null;
+		Self self = new Self();
+		self.add(HashMap.class);
+		self.add(MyMap.class);
+//		self.add(HashMap.class);
+		Map map = (Map) self.cast(Map.class);
+		map.put("duck", "erik");
+		assertNull(mymap_key);
+		assertEquals("erik", map.get("duck"));
+	}
+//	public void testSelf2WithAllKindsofClasses() {
+//		mymap_key=null;
+//		Self self = new Self();
+//		self.add(MyMap.class);
+//		self.add(HashMap.class);
+//		Map map = (Map) self.cast(Map.class);
+//		map.put("duck", "erik");
+//		assertEquals("duck",mymap_key);
+//		assertNull(map.get("duck"));
+//	}
 }

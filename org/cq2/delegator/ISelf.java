@@ -1,5 +1,7 @@
 package org.cq2.delegator;
 
+import java.lang.reflect.Method;
+
 
 public interface ISelf {
 	Object cast(Class type);
@@ -16,5 +18,6 @@ public interface ISelf {
 	// Object component(Class c);
 	// Object component();
 	Self self();
+	boolean respondsTo(Method m1);
 	//	 TODO idea: Self.addFirst(), Self.remove(), Self.addLast, Self.replace()
 }

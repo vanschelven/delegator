@@ -458,7 +458,7 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 		Field[] fields = clazz.getDeclaredFields();
 		for (int i = 0; i < fields.length; i++) {
 			Field field = fields[i];
-			if (!Modifier.isFinal(field.getModifiers()) && !field.getType().isPrimitive()) {
+			if (isNullable(field)) {
 				field.setAccessible(true);
 				try {
 					field.set(instance, null);
@@ -469,6 +469,12 @@ public class ProxyGenerator extends ClassLoader implements Constants {
 			}
 		}
 		zeroAllFields(instance, clazz.getSuperclass());
+	}
+
+	private static boolean isNullable(Field field) {
+		int mods = field.getModifiers();
+		return !Modifier.isStatic(mods) && !Modifier.isFinal(mods)
+				&& !field.getType().isPrimitive();
 	}
 
 	public static Component newComponentInstance(ClassInjector injector, Class clazz,

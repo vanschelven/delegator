@@ -53,7 +53,11 @@ public class ProxyGeneratorTest extends TestCase {
 
 	public static class C {
 		Object k = new Object();
+		static String aap = "aap";
+		final String mies = "mies";
+		final static String noot = "noot";
 	}
+	
 	public static class P extends C {
 		public Object o = new HashMap();
 		int q =12345;
@@ -68,6 +72,9 @@ public class ProxyGeneratorTest extends TestCase {
 		Field f =P.class.getDeclaredField("r");
 		f.setAccessible(true);
 		assertNull(f.get(p));
+		assertEquals("aap", C.aap);
+		assertEquals("mies", p.mies);
+		assertEquals("noot", C.noot);
 	}
 
 	public void testCachingOfClasses() {

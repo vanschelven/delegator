@@ -92,6 +92,7 @@ public class Self implements InvocationHandler, ISelf {
 		addBinding("become", new Class[]{Class.class});
 		addBinding("self", new Class[]{});
 		addBinding("toString", new Class[]{});
+		addBinding("respondsTo", new Class[]{Method.class});
 		addBinding("component", new Class[]{Integer.TYPE});
 		Method[] methods = collectMethods();
 		for (int ifNr = 0; ifNr < methods.length; ifNr++) {
@@ -223,5 +224,12 @@ public class Self implements InvocationHandler, ISelf {
 
 	public boolean equals(InvocationHandler self, Object arg0) {
 		return equals(arg0);
+	}
+
+	public boolean respondsTo(Method m) {
+		return getBindings().containsKey(m);
+	}
+	public boolean respondsTo(InvocationHandler self, Method m){
+		return respondsTo(m);
 	}
 }
