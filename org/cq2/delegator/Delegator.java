@@ -17,8 +17,8 @@ import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
  * @author ejgroene
  */
 public class Delegator {
-	private final static ClassInjector classInjector = Self.classInjector;
 	private final static MethodFilter methodFilter = new MethodFilterNonFinalNonPrivate();
+	static ClassInjector injector = ClassInjector.create(ClassLoader.getSystemClassLoader());
 /*	private final static InvocationHandler nullHandler = new InvocationHandler() {
 		public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
 			throw new NullPointerException("Delegator: Object has no SELF pointer.");
@@ -27,11 +27,11 @@ public class Delegator {
 */
 	public static Object proxyFor(Class theInterface, InvocationHandler handler) {
 		if (theInterface.isInterface()) {
-			return Proxy.newProxyInstance(classInjector, new Class[]{theInterface}, handler);
+			return Proxy.newProxyInstance(injector, new Class[]{theInterface}, handler);
 		}
 		else {
 			return ProxyGenerator
-					.newProxyInstance(classInjector, theInterface, methodFilter, handler);
+					.newProxyInstance(injector, theInterface, methodFilter, handler);
 		}
 	}
 
@@ -57,5 +57,10 @@ public class Delegator {
 
 	public static MethodFilter defaultMethodFilter() {
 		return methodFilter;
+	}
+
+	public static ClassLoader configureClassLoader(ClassLoader loader) {
+		injector = ClassInjector.create(loader);
+		return injector;
 	}
 }

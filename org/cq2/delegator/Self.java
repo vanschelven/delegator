@@ -18,7 +18,6 @@ import java.util.TreeSet;
 import org.cq2.delegator.binders.Binder;
 import org.cq2.delegator.binders.SuperClassBinder;
 import org.cq2.delegator.binders.Binder.Binding;
-import org.cq2.delegator.classgenerator.ClassInjector;
 import org.cq2.delegator.classgenerator.Component;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.method.MethodComparator;
@@ -27,32 +26,28 @@ import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 import org.cq2.delegator.method.MethodUtil;
 
 public class Self implements InvocationHandler, ISelf {
-	public final static ClassInjector classInjector = ClassInjector.create(ClassLoader.getSystemClassLoader());
-	private final transient Binder binder = new SuperClassBinder(this);
-	private transient Map bindings;
+	private final static MethodFilter methodFilter = new MethodFilterNonFinalNonPrivate();
 	private final static InvocationHandler nullHandler = new InvocationHandler() {
 		public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
 			throw new NullPointerException("Delegator: Object has no SELF pointer.");
 		}
 	};
 	private List delegates;
+	private transient Map bindings;
 	private transient Object caller; // TODO threadsafe!
-	private transient MethodFilter methodFilter;
+	private final transient Binder binder = new SuperClassBinder(this);
 
 	private Self(MethodFilter methodFilter, Component object) {
 		this.delegates = new ArrayList();
 		delegates.add(object);
-		this.methodFilter = methodFilter;
 	}
 
 	public Self() {
 		this.delegates = new ArrayList();
-		this.methodFilter = new MethodFilterNonFinalNonPrivate();
 	}
 
 	public Self(Class firstComponentClass) {
 		this.delegates = new ArrayList();
-		this.methodFilter = new MethodFilterNonFinalNonPrivate();
 		delegates.add(newComponent(firstComponentClass));
 	}
 
@@ -186,7 +181,7 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	private Component newComponent(Class clas) {
-		return ProxyGenerator.newComponentInstance(classInjector, clas, methodFilter, nullHandler);
+		return ProxyGenerator.newComponentInstance(Delegator.injector, clas, methodFilter, nullHandler);
 	}
 
 	public Self extend(Class class1) {
