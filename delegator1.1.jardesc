@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jardesc>
-    <jar path="/home/thijs/workspace/delegator/delegator1.1.jar"/>
+    <jar path="/home/ejgroene/workspace/delegator/delegator1.1.1.jar"/>
     <options overwrite="false" compress="true" exportErrors="false" exportWarnings="false" saveDescription="true" descriptionLocation="/delegator/delegator1.1.jardesc" useSourceFolders="false" buildIfNeeded="true"/>
     <manifest manifestVersion="1.0" usesManifest="true" reuseManifest="false" saveManifest="false" generateManifest="true" manifestLocation="">
         <sealing sealJar="false">
