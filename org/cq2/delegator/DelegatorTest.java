@@ -149,6 +149,4 @@ public class DelegatorTest extends TestCase implements InvocationHandler {
 		assertTrue(reached);
 	}
 
-
-	
 }

@@ -152,7 +152,7 @@ public class ProxyGenerator implements Constants {
 
     static String getClassName(Class superClass, String marker) {
         String className = superClass.getName();
-        if (superClass.getPackage().getName().startsWith("java.")) {
+        if (superClass.getPackage() != null && superClass.getPackage().getName().startsWith("java.")) {
             return marker + "$" + className;
         }
         return className + "$" + marker;
