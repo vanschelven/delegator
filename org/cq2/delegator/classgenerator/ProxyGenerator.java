@@ -64,11 +64,6 @@ public class ProxyGenerator implements Constants {
       return new ClassInjector(parent);
     }
 
-    public Class loadClass(String classname) throws ClassNotFoundException {
-     // System.out.println(classname);
-      return super.loadClass(classname);
-    }
-
     protected Class findClass(String classname) throws ClassNotFoundException {
       if (classname.endsWith("$component")) {
         return injectComponentClass(loadClass(classname.substring(0, classname

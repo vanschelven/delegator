@@ -9,10 +9,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Stack;
+
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 public class Self implements InvocationHandler, ISelf {
@@ -21,21 +20,22 @@ public class Self implements InvocationHandler, ISelf {
 			return new Stack();
 		}
 	};
-	private List components;
+	private Object[] components;
 	private transient Object caller; // TODO threadsafe!
+	private int nrOfComponents = 0;
 
 	private Self(Component object) {
 		this();
-		components.add(object);
+		addComponent(object);
 	}
 
 	public Self() {
-		this.components = new ArrayList();
+		this.components = new Object[4];
 	}
 
 	public Self(Class firstComponentClass) {
 		this();
-		components.add(newComponent(firstComponentClass));
+		addComponent(newComponent(firstComponentClass));
 	}
 
 	/**
@@ -48,28 +48,26 @@ public class Self implements InvocationHandler, ISelf {
 			return Boolean.valueOf(equals(args[0]));
 		if ("hashCode".equals(name))
 			return new Integer(hashCode());
-		Iterator cmps = components.iterator();
+		int i = 0;
 		if (name.startsWith("__next__")) {
-			Object component = null;
-			while (component != proxy && cmps.hasNext()) {
-				component = cmps.next();
-			}
+			while (components[i] != proxy && (i < nrOfComponents))
+				i++;
 			name = name.substring(8);
+			i++;
 			//if(!cmps.hasNext())throw new NoSuchMethodError
 		}
 		List argTypeList = new ArrayList();
 		argTypeList.add(InvocationHandler.class);
 		argTypeList.addAll(Arrays.asList(method.getParameterTypes()));
-		while (cmps.hasNext()) {
-			Object component = cmps.next();
+		for (; i < nrOfComponents; i++) {
 			try {
-				Method delegateMethod = component.getClass().getDeclaredMethod(name,
+				Method delegateMethod = components[i].getClass().getDeclaredMethod(name,
 						(Class[]) argTypeList.toArray(new Class[]{}));
 				delegateMethod.setAccessible(true);
 				Stack stack = ((Stack) self.get());
 				stack.push(this);
 				try {
-					return delegateMethod.invoke(component, mapArgs(args));
+					return delegateMethod.invoke(components[i], mapArgs(args));
 				} finally {
 					stack.pop();
 				}
@@ -126,19 +124,20 @@ public class Self implements InvocationHandler, ISelf {
 
 	public void become(Class clas) {
 		Object newComponent = newComponent(clas);
-		for (ListIterator iter = components.listIterator(); iter.hasNext();) {
-			if (iter.next() == caller)
-				iter.set(newComponent);
+		for (int i = 0; i < components.length; i++) {
+			if (components[i] == caller)
+				components[i] = newComponent;
+			// break?
 		}
 	}
 
 	public void add(Self object) {
-		for (Iterator c = object.components.iterator(); c.hasNext();)
-			components.add(c.next());
+		for (int i = 0; i < object.nrOfComponents; i++)
+			addComponent(object.components[i]);
 	}
 
 	public Object component(int component) {
-		return components.get(component);
+		return components[component];
 	}
 
 	public Object component(InvocationHandler h, int component) {
@@ -150,7 +149,16 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public void add(Component component) {
-		components.add(component);
+		addComponent(component);
+	}
+
+	private void addComponent(Object component) {
+		if (nrOfComponents >= components.length) {
+			Object[] newComponents = new Object[components.length * 2];
+			System.arraycopy(components, 0, newComponents, 0, components.length);
+			components = newComponents;
+		}
+		components[nrOfComponents++] = component;
 	}
 
 	public void add(InvocationHandler s, Class clas) {
@@ -158,7 +166,11 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public void insert(Class componentType) {
-		components.add(0, newComponent(componentType));
+		Object[] newComponents = new Object[components.length + 1];
+		newComponents[0] = newComponent(componentType);
+		System.arraycopy(components, 0, newComponents, 1, nrOfComponents);
+		components = newComponents;
+		nrOfComponents++;
 	}
 
 	private Component newComponent(Class clas) {
@@ -180,11 +192,9 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	private Method findMethod(Method m) {
-		Iterator c = components.iterator();
-		while (c.hasNext()) {
-			Object component = c.next();
+		for (int i = 0; i < nrOfComponents; i++) {
 			try {
-				return component.getClass().getSuperclass().getMethod(m.getName(),
+				return components[i].getClass().getSuperclass().getMethod(m.getName(),
 						m.getParameterTypes());
 			} catch (NoSuchMethodException e) {
 				continue;
