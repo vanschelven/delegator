@@ -9,10 +9,13 @@ import java.lang.reflect.InvocationHandler;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import junit.framework.TestCase;
+
 import org.cq2.delegator.Delegator;
 
 /**
