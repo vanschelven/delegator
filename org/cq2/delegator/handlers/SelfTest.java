@@ -5,15 +5,14 @@
 package org.cq2.delegator.handlers;
 
 import java.io.DataInput;
+import java.lang.reflect.InvocationHandler;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import junit.framework.TestCase;
-
 import org.cq2.delegator.Delegator;
 
 /**
@@ -125,26 +124,42 @@ public class SelfTest extends TestCase {
 	}
 
 	interface I extends ISelf {}
-	
+
 	public void testCast() {
 		Self c = new Self();
 		I i = (I) c.cast(I.class);
 		assertNotNull(i);
 		assertNotNull(i.cast(Map.class));
 	}
-	
+
 	public static abstract class TestCastISelf {
-		ISelf self = (ISelf)this;
+		ISelf self = (ISelf) this;
+
 		public Object testCast() {
-			return ((ISelf)this).self();
+			return ((ISelf) this).self();
 		}
 	}
-	
+
 	public void testCastISelf() {
 		Self self = new Self(TestCastISelf.class);
 		TestCastISelf obj = (TestCastISelf) self.cast(TestCastISelf.class);
 		assertSame(self, obj.testCast());
 		// or:
-		assertSame(self, ((ISelf)obj).self());
+		assertSame(self, ((ISelf) obj).self());
+	}
+
+	public void testToString() {
+		Self self = new Self(TestCastISelf.class) {
+			public String toString(InvocationHandler h) {
+				return "aap";
+			}
+			public String toString() {
+				return "aap";
+			}
+		};
+		Object obj = self.cast(HashMap.class);
+		assertEquals("aap", self.toString());
+		assertEquals("aap", obj.toString());
+		// TODO same for equals and hashCode() (See doc for java.lang.reflext.Proxy)
 	}
 }

@@ -9,6 +9,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -73,6 +74,7 @@ public class Self implements InvocationHandler, ISelf {
 		addBinding("add", new Class[]{ISelf.class});
 		addBinding("become", new Class[]{Class.class});
 		addBinding("self", new Class[]{});
+		addBinding("toString", new Class[]{});
 		Method[] methods = collectMethods();
 		for (int ifNr = 0; ifNr < methods.length; ifNr++) {
 			Method method = methods[ifNr];
@@ -100,7 +102,19 @@ public class Self implements InvocationHandler, ISelf {
 	private Method[] collectMethods() {
 		Set methods = new TreeSet(new MethodComparator());
 		for (Iterator iter = delegates.iterator(); iter.hasNext();) {
-			Util.addMethods(iter.next().getClass(), methods, methodFilter);
+			Util.addMethods(iter.next().getClass().getSuperclass(), methods,
+					new MethodFilterNonFinalNonPrivate() {
+						public boolean filter(Method method) {
+							if (method.getDeclaringClass().equals(Object.class)) {
+								System.out.println("Ignoring " + method);
+								return false;
+							}
+							else {
+								System.out.println("Adding " + method);
+								return super.filter(method);
+							}
+						}
+					});
 		}
 		return (Method[]) methods.toArray(new Method[]{});
 	}
@@ -115,8 +129,11 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public void become(Class clas) {
-		ISelf delegate = new Self(clas);
-		delegates.set(delegates.indexOf(caller), delegate.component(0));
+		ISelf newDelegate = new Self(clas);
+		for (ListIterator iter = delegates.listIterator(); iter.hasNext();) {
+			if (iter.next() == caller)
+				iter.set(newDelegate.component(0));
+		}
 		createBindings();
 	}
 
@@ -162,5 +179,13 @@ public class Self implements InvocationHandler, ISelf {
 
 	public Self self(InvocationHandler handler) {
 		return this;
+	}
+
+	public String toString() {
+		return super.toString();
+	}
+
+	public String toString(InvocationHandler h) {
+		return super.toString();
 	}
 }
