@@ -27,10 +27,10 @@ public class ComposedDocumentTest extends TestCase {
 		String title = doc.getTitle();
 		String body = doc.getBody();
 		String html = doc.toHtml();
-		assertEquals("book", name);
-		assertEquals("Best trips in Town", title);
-		assertEquals("http://books.com/besttrips", url);
-		assertEquals("Chapter 1: Here we start. bla bla bla...", body);
-		assertTrue(html.matches("<html><h1>Best.*</h1><a>bla.*</a></html>"));
+		assertEquals("name", name);
+		assertEquals("title", title);
+		assertEquals("url", url);
+		assertEquals("body", body);
+		assertEquals("<html><h1>title</h1><a>body</a></html>", html);
 	}
 }
