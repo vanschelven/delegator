@@ -23,9 +23,9 @@
  */
 package org.cq2.delegator.examples.state;
 
-import org.cq2.delegator.handlers.Self;
+import org.cq2.delegator.handlers.ISelf;
 
-public interface ParseState extends Self {
+public interface ParseState extends ISelf {
 
 	void renderHeading(String text);
 	void startTable();

@@ -6,12 +6,13 @@
  */
 package org.cq2.delegator.examples.observer;
 
-import org.cq2.delegator.Delegator;
-
 import junit.framework.TestCase;
 
+import org.cq2.delegator.Delegator;
+import org.cq2.delegator.handlers.ISelf;
+
 public class ObservableWithDelegatorTest extends TestCase implements Observer {
-	private Object	notifier;
+	private Object notifier;
 
 	class MockObserver implements Observer {
 		public Object	myNotifier;
@@ -35,7 +36,8 @@ public class ObservableWithDelegatorTest extends TestCase implements Observer {
 		obs2.addDependent(this);
 		notifier = null;
 		obs2.changesomething();
-		assertSame(obs2, notifier);
+		assertSame(((ISelf)obs2).self(), 
+				((ISelf)notifier).self());
 	}
 
 	private MyObservableImplWithDelegation createObservable() {

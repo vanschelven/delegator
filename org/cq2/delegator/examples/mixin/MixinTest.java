@@ -4,21 +4,23 @@
 package org.cq2.delegator.examples.mixin;
 
 import junit.framework.TestCase;
+
 import org.cq2.delegator.Delegator;
 import org.cq2.delegator.examples.state.OutsideTable;
 import org.cq2.delegator.examples.state.XMLRenderer;
+import org.cq2.delegator.handlers.ISelf;
 import org.cq2.delegator.handlers.Self;
 
 public class MixinTest extends TestCase {
 	public static class MyClassC {}
-	public abstract static class MyClassB implements Self {
+	public abstract static class MyClassB implements ISelf {
 		public void foo() {}
 
 		public String bla() {
 			return "bbbbbb";
 		}
 	}
-	public abstract static class MyClass implements Self {
+	public abstract static class MyClass implements ISelf {
 		public String bla() {
 			return "multiple inheritance";
 		}
@@ -37,7 +39,7 @@ public class MixinTest extends TestCase {
 		assertEquals("bbbbbb", renderer.bla());
 	}
 
-	public abstract static class Klaas implements Self {}
+	public abstract static class Klaas implements ISelf {}
 
 	public void testSelfInterface() {
 		Klaas klaas = (Klaas) Delegator.extend(Klaas.class, new Class[]{MyClassB.class});
@@ -46,8 +48,8 @@ public class MixinTest extends TestCase {
 	}
 
 	public void testBA() {
-		Self self = Delegator.create(MyClassB.class, new Object[0]);
-		self.add(Delegator.create(MyClass.class, new Object[0]));
+		Self self = new Self(MyClassB.class);
+		self.add(MyClass.class);
 		//Self self = Delegator.extend(MyClassB.class, new Class[]{MyClass.class});
 		MyClassB b = (MyClassB) self.cast(MyClassB.class);
 		assertEquals("bbbbbb", b.bla());

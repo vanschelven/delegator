@@ -9,10 +9,11 @@ import java.lang.reflect.Method;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 import junit.framework.TestCase;
+
+import org.cq2.delegator.handlers.Self;
 
 public class DelegatorTest extends TestCase implements InvocationHandler {
 	public DelegatorTest(String arg0) {
@@ -30,15 +31,6 @@ public class DelegatorTest extends TestCase implements InvocationHandler {
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		invokedMethod = method.getName();
 		return invokeResult;
-	}
-
-	public void xtestUseClassLoader() throws ClassNotFoundException {
-		// TODO
-		ClassLoader classLoader = new ClassLoader() {};
-		Object proxyForInterface = Delegator.proxyFor(Iterator.class, this);
-		assertEquals(classLoader, proxyForInterface.getClass().getClassLoader());
-		Object proxyForClass = Delegator.proxyFor(HashMap.class, this);
-		assertEquals(classLoader, proxyForClass.getClass().getClassLoader().getParent());
 	}
 
 	public void testDelegateInterface() {
@@ -76,9 +68,12 @@ public class DelegatorTest extends TestCase implements InvocationHandler {
 	}
 
 	public void testSelfMixin() {
-		Object mixin = Delegator.extend(A1.class, new Class[] {A2.class});
-		assertEquals("A1", ((A1) mixin).f2());
-		Object result = ((A1) mixin).f1();
+		Self a2 = new Self(A2.class);
+		Self mixin = a2.extend(A1.class);
+		//Object mixin = Delegator.extend(A1.class, new Class[] {A2.class});
+		A1 a1 = (A1) mixin.cast(A1.class);
+		assertEquals("A1", a1.f2());
+		Object result = a1.f1();
 		assertEquals("A1", result);
 	}
 

@@ -8,12 +8,12 @@ import java.util.HashMap;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.Delegator;
+import org.cq2.delegator.handlers.ISelf;
 import org.cq2.delegator.handlers.Self;
 
 public class TypeRefinementTest extends TestCase {
-	public static Self createMap() {
-		return Delegator.create(HashMap.class, new Object[0]);
+	public static ISelf createMap() {
+		return new Self(HashMap.class);
 	}
 
 	interface DateMap {

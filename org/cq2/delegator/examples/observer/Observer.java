@@ -6,6 +6,7 @@
  */
 package org.cq2.delegator.examples.observer;
 
+
 public interface Observer {
 	void notifyChanged(Object implementation);
 }

@@ -5,11 +5,11 @@ package org.cq2.delegator.examples.ComposedDocument;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.Delegator;
+import org.cq2.delegator.handlers.ISelf;
 import org.cq2.delegator.handlers.Self;
 
 public class ComposedDocumentTest extends TestCase {
-	interface Document extends Self {
+	interface Document extends ISelf {
 		String getName();
 		String getUrl();
 		String toHtml();
@@ -18,10 +18,10 @@ public class ComposedDocumentTest extends TestCase {
 	}
 
 	public void testCreateDocument() {
-		Document doc = (Document) Delegator.newObject().cast(Document.class);
-		doc.add(Delegator.create(TextDocument.class, new Object[] {"Best trips in Town", "bla bla bla..."}));
-		doc.add(Delegator.create(Context.class, new Object[] {"book1", "http://books.com/besttrips"}));
-		doc.add(Delegator.create(TextView.class, new Object[0]));
+		Document doc = (Document) new Self(Document.class).cast(Document.class);
+		doc.add(TextDocument.class, new Object[] {"Best trips in Town", "bla bla bla..."});
+		doc.add(Context.class, new Object[] {"book1", "http://books.com/besttrips"});
+		doc.add(TextView.class);
 		String name = doc.getName();
 		String url = doc.getUrl();
 		String title = doc.getTitle();

@@ -6,6 +6,6 @@
  */
 package org.cq2.delegator.classgenerator;
 
-import org.cq2.delegator.handlers.Self;
+import org.cq2.delegator.handlers.ISelf;
 
-public abstract class SubClass implements Self{}
+public abstract class SubClass implements ISelf{}

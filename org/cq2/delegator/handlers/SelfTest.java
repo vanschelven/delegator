@@ -5,7 +5,6 @@
 package org.cq2.delegator.handlers;
 
 import java.io.DataInput;
-import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Comparator;
@@ -16,14 +15,12 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 import org.cq2.delegator.Delegator;
-import org.cq2.delegator.classgenerator.DObject;
-import org.cq2.delegator.util.MethodFilter;
 
 /**
  * @author ejgroene
  *
  */
-public class ComposerTest extends TestCase {
+public class SelfTest extends TestCase {
 	private Object keyRef = null;
 	private Object valueRef = null;
 	private Object returnVal = new Object();
@@ -127,16 +124,27 @@ public class ComposerTest extends TestCase {
 		catch (Error e) {}
 	}
 
-	interface I extends Self {}
+	interface I extends ISelf {}
 	
 	public void testCast() {
-		Composer c = new Composer(new MethodFilter() {
-			public boolean filter(Method method) {
-				return true;
-			}
-		}, new DObject() {});
+		Self c = new Self();
 		I i = (I) c.cast(I.class);
 		assertNotNull(i);
 		assertNotNull(i.cast(Map.class));
+	}
+	
+	public static abstract class TestCastISelf {
+		ISelf self = (ISelf)this;
+		public Object testCast() {
+			return ((ISelf)this).self();
+		}
+	}
+	
+	public void testCastISelf() {
+		Self self = new Self(TestCastISelf.class);
+		TestCastISelf obj = (TestCastISelf) self.cast(TestCastISelf.class);
+		assertSame(self, obj.testCast());
+		// or:
+		assertSame(self, ((ISelf)obj).self());
 	}
 }

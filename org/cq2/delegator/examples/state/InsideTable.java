@@ -23,9 +23,9 @@
  */
 package org.cq2.delegator.examples.state;
 
-import org.cq2.delegator.handlers.Self;
+import org.cq2.delegator.handlers.ISelf;
 
-public abstract class InsideTable implements ParseState , Self{
+public abstract class InsideTable implements ParseState , ISelf{
 
 	public void renderHeading(String text) {
 		addToResult(text);

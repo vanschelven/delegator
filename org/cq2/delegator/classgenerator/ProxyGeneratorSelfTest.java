@@ -21,7 +21,7 @@ public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandle
 			(ProxyGeneratorSelfTestClass) ProxyGenerator.newProxyInstance(
 				ClassLoader.getSystemClassLoader(),
 				ProxyGeneratorSelfTestClass.class,
-				null, Delegator.defaultMethodFilter());
+				null, Delegator.defaultMethodFilter(), null);
 	}
 
 	public void testSuperObjectVoid() throws Exception {
