@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -70,7 +71,8 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 				.newProxyInstance(ClassLoader.getSystemClassLoader(),
 						ProxyGeneratorDelegateTestClass.class, this, Delegator
 								.defaultMethodFilter(), null);
-		Field delegate = testProxy.getClass().getDeclaredField("delegate");
+		Field delegate = testProxy.getClass().getDeclaredField("self");
+		assertTrue(Modifier.isTransient(delegate.getModifiers()));
 		assertNotNull(delegate);
 		delegate.setAccessible(true);
 		Object delegateObj = delegate.get(testProxy);

@@ -14,8 +14,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
 import org.cq2.delegator.Delegator;
 import org.cq2.delegator.MethodFilterNonFinalNonPrivate;
+import org.cq2.delegator.classgenerator.ClassInjector;
 import org.cq2.delegator.classgenerator.DObject;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.handlers.Binder.Binding;
@@ -24,36 +26,33 @@ import org.cq2.delegator.util.MethodFilter;
 import org.cq2.delegator.util.Util;
 
 public class Self implements InvocationHandler, ISelf {
-	private final static ClassLoader classLoader = ClassLoader.getSystemClassLoader();
-	private final Binder binder = new SuperClassBinder(this);
-	private final Map bindings = new TreeMap(new MethodComparator());
+	public final static ClassLoader classLoader = ClassInjector.create(ClassLoader.getSystemClassLoader());
+	private final transient Binder binder = new SuperClassBinder(this);
+	private transient Map bindings;
 	private final static InvocationHandler nullHandler = new InvocationHandler() {
 		public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
 			throw new NullPointerException("Delegator: Object has no SELF pointer.");
 		}
 	};
 	private List delegates;
-	private Object caller; // TODO threadsafe!
-	private MethodFilter methodFilter;
+	private transient Object caller; // TODO threadsafe!
+	private transient MethodFilter methodFilter;
 
 	private Self(MethodFilter methodFilter, DObject object) {
 		this.delegates = new ArrayList();
 		delegates.add(object);
 		this.methodFilter = methodFilter;
-		createBindings();
 	}
 
 	public Self() {
 		this.delegates = new ArrayList();
 		this.methodFilter = new MethodFilterNonFinalNonPrivate();
-		createBindings();
 	}
 
 	public Self(Class firstComponentClass) {
 		this.delegates = new ArrayList();
 		this.methodFilter = new MethodFilterNonFinalNonPrivate();
-		delegates.add(newDObject(firstComponentClass, null));
-		createBindings();
+		delegates.add(newComponent(firstComponentClass, null));
 	}
 
 	/**
@@ -61,15 +60,27 @@ public class Self implements InvocationHandler, ISelf {
 	 */
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		this.caller = proxy;
-		Binding binding = (Binding) bindings.get(method);
+		Binding binding = (Binding) getBindings().get(method);
 		if (binding == null) {
 			throw new NoSuchMethodError(method.toString());
 		}
 		return binding.invoke(args);
 	}
 
+	private Map getBindings() {
+		if (bindings == null) {
+			createBindings();
+		}
+		return bindings;
+	}
+
 	private void createBindings() {
-		bindings.clear();
+		if (bindings == null) {
+			bindings = new TreeMap(new MethodComparator());
+		}
+		else {
+			bindings.clear();
+		}
 		addBinding("cast", new Class[]{Class.class});
 		addBinding("add", new Class[]{ISelf.class});
 		addBinding("add", new Class[]{Class.class});
@@ -136,10 +147,10 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public void become(Class clas) {
-		ISelf newDelegate = new Self(clas);
+		Object newComponent = newComponent(clas, null); 
 		for (ListIterator iter = delegates.listIterator(); iter.hasNext();) {
 			if (iter.next() == caller)
-				iter.set(newDelegate.component(0));
+				iter.set(newComponent);
 		}
 		createBindings();
 	}
@@ -160,7 +171,7 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public void add(Class clas) {
-		delegates.add(newDObject(clas, null));
+		delegates.add(newComponent(clas, null));
 		createBindings();
 	}
 
@@ -169,17 +180,17 @@ public class Self implements InvocationHandler, ISelf {
 	}
 
 	public void add(Class componentType, Object[] ctorArgs) {
-		delegates.add(newDObject(componentType, ctorArgs));
+		delegates.add(newComponent(componentType, ctorArgs));
 		createBindings();
 	}
 
-	private DObject newDObject(Class clas, Object[] ctorArgs) {
-		return ProxyGenerator.newProxyInstance(classLoader, clas, nullHandler, methodFilter,
+	private DObject newComponent(Class clas, Object[] ctorArgs) {
+		return ProxyGenerator.newComponentInstance(classLoader, clas, nullHandler, methodFilter,
 				ctorArgs);
 	}
 
 	public Self extend(Class class1) {
-		Self newSelf = new Self(methodFilter, newDObject(class1, null));
+		Self newSelf = new Self(methodFilter, newComponent(class1, null));
 		newSelf.add(this);
 		return newSelf;
 	}

@@ -10,6 +10,7 @@ import junit.textui.TestRunner;
 
 import org.cq2.delegator.classgenerator.ProxyGeneratorDelegateTest;
 import org.cq2.delegator.classgenerator.ProxyGeneratorSelfTest;
+import org.cq2.delegator.classgenerator.ProxyGeneratorTest;
 import org.cq2.delegator.examples.HashMapExtensionTest;
 import org.cq2.delegator.examples.ComposedDocument.ComposedDocumentTest;
 import org.cq2.delegator.examples.mixin.MixinTest;
@@ -43,6 +44,7 @@ public class AllDelegatorTests {
 		suite.addTestSuite(MixinTest.class);
 		suite.addTestSuite(MethodComparatorTest.class);		
 		suite.addTestSuite(DynamicBinderTest.class);
+		suite.addTestSuite(ProxyGeneratorTest.class);
 		return suite;
 	}
 }

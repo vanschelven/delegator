@@ -17,7 +17,7 @@ import org.cq2.delegator.util.MethodFilter;
  * @author ejgroene
  */
 public class Delegator {
-	private final static ClassLoader classLoader = ClassLoader.getSystemClassLoader();
+	private final static ClassLoader classLoader = Self.classLoader;
 	private final static MethodFilter methodFilter = new MethodFilterNonFinalNonPrivate();
 /*	private final static InvocationHandler nullHandler = new InvocationHandler() {
 		public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
