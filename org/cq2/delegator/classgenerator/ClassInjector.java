@@ -41,6 +41,6 @@ public class ClassInjector extends ClassLoader {
 		else if (classname.startsWith("proxy$")) {
 			return ProxyGenerator.injectProxyClass(this, loadClass(classname.substring(6)));
 		}
-		throw new ClassNotFoundException();
+		throw new ClassNotFoundException(classname);
 	}
 }
