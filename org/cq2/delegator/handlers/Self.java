@@ -76,6 +76,7 @@ public class Self implements InvocationHandler, ISelf {
 		addBinding("become", new Class[]{Class.class});
 		addBinding("self", new Class[]{});
 		addBinding("toString", new Class[]{});
+		addBinding("hashCode", new Class[] {});
 		Method[] methods = collectMethods();
 		for (int ifNr = 0; ifNr < methods.length; ifNr++) {
 			Method method = methods[ifNr];
@@ -188,11 +189,11 @@ public class Self implements InvocationHandler, ISelf {
 		return this;
 	}
 
-	public String toString() {
-		return super.toString();
-	}
-
 	public String toString(InvocationHandler h) {
-		return super.toString();
+		return toString();
 	}
+	
+	public int hashCode(InvocationHandler self) {
+		return hashCode();
+	}	
 }

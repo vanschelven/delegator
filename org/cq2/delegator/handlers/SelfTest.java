@@ -5,11 +5,9 @@
 package org.cq2.delegator.handlers;
 
 import java.io.DataInput;
-import java.lang.reflect.InvocationHandler;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -117,7 +115,7 @@ public class SelfTest extends TestCase {
 		return 1;
 	}
 
-	public void testHashCode() {
+	public void testListHasNoHashCode() {
 		List list = (List) Delegator.forInterface(List.class, this);
 		try {
 			list.hashCode();
@@ -152,17 +150,51 @@ public class SelfTest extends TestCase {
 	}
 
 	public void testToString() {
-		Self self = new Self(TestCastISelf.class) {
-			public String toString(InvocationHandler h) {
-				return "aap";
-			}
+		Self self = newModifiedSelf(Object.class);
+		assertEquals("modifiedSelf", self.toString());
+	}
+
+	private Self newModifiedSelf(Class a) {
+		Self self = new Self(a) {
 			public String toString() {
-				return "aap";
+				return "modifiedSelf";
+			}
+			public int hashCode() {
+				return 99;
 			}
 		};
-		Object obj = self.cast(HashMap.class);
-		assertEquals("aap", self.toString());
-		assertEquals("aap", obj.toString());
-		// TODO same for equals and hashCode() (See doc for java.lang.reflext.Proxy)
+		return self;
+	}
+
+	public static class A {
+		public String toString() {
+			return "A";
+		}
+		public int hashCode() {
+			return 28;
+		}
+	}
+	
+	public static class B extends A {}
+	
+	public static class C {}
+
+	public void testToString2() {
+		Object objA = newModifiedSelf(A.class).cast(Object.class);
+		assertEquals("A", objA.toString());
+		Object objB =newModifiedSelf(B.class).cast(Object.class);
+		assertEquals("A", objB.toString());
+		Object objC = newModifiedSelf(C.class).cast(Object.class);
+		assertEquals("modifiedSelf", objC.toString());
+	}
+	
+	public void testHashCode() {
+		Object objA = newModifiedSelf(A.class).cast(Object.class);
+		assertEquals(28, objA.hashCode());
+		Object objB =newModifiedSelf(B.class).cast(Object.class);
+		assertEquals(28, objB.hashCode());
+		Object objC = newModifiedSelf(C.class).cast(Object.class);
+		assertEquals(99, objC.hashCode());
+		// TODO same for equals (See doc for java.lang.reflext.Proxy)
 	}
 }
