@@ -29,7 +29,7 @@ import org.apache.bcel.generic.Type;
 import org.cq2.delegator.util.MethodFilter;
 import org.cq2.delegator.util.Util;
 
-import state.Self;
+import org.cq2.delegator.handlers.Self;
 
 public class ProxyGenerator extends ClassLoader implements Constants {
 	private static final ObjectType CLASS = new ObjectType("java.lang.Class");

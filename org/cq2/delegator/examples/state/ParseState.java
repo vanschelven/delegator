@@ -21,7 +21,14 @@
  * the archive of this library for complete text of license.
  * Created on Mar 29, 2004
  */
-package state;
-public interface ParseState {
+package org.cq2.delegator.examples.state;
 
-	String renderHeading(String text);}
+import org.cq2.delegator.handlers.Self;
+
+public interface ParseState extends Self {
+
+	void renderHeading(String text);
+	void startTable();
+	void endTable();
+	void addToResult(String result);
+}

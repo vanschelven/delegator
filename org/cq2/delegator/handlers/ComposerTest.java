@@ -5,23 +5,22 @@
 package org.cq2.delegator.handlers;
 
 import java.io.DataInput;
+import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import junit.framework.TestCase;
-
 import org.cq2.delegator.Delegator;
+import org.cq2.delegator.util.MethodFilter;
 
 /**
  * @author ejgroene
  *
  */
 public class ComposerTest extends TestCase {
-
 	private Object keyRef = null;
 	private Object valueRef = null;
 	private Object returnVal = new Object();
@@ -47,7 +46,8 @@ public class ComposerTest extends TestCase {
 		try {
 			set.clear();
 			fail("Should throw NoSuchMethodError()");
-		} catch (NoSuchMethodError e) {}
+		}
+		catch (NoSuchMethodError e) {}
 	}
 
 	public boolean execute(String query) throws SQLException {
@@ -59,7 +59,9 @@ public class ComposerTest extends TestCase {
 		try {
 			statement.execute("niks");
 			fail();
-		} catch (SQLException e) {} catch (Throwable e) {
+		}
+		catch (SQLException e) {}
+		catch (Throwable e) {
 			e.printStackTrace();
 			fail("Invalid exception!");
 		}
@@ -70,7 +72,8 @@ public class ComposerTest extends TestCase {
 		try {
 			comp.compare(null, null);
 			fail();
-		} catch (NoSuchMethodError e) {}
+		}
+		catch (NoSuchMethodError e) {}
 	}
 
 	/**
@@ -85,7 +88,8 @@ public class ComposerTest extends TestCase {
 		try {
 			input.readByte();
 			fail("exception types should not match");
-		} catch (NoSuchMethodError e) {}
+		}
+		catch (NoSuchMethodError e) {}
 	}
 
 	/**
@@ -100,7 +104,8 @@ public class ComposerTest extends TestCase {
 		try {
 			list.add(new Object());
 			fail();
-		} catch (NoSuchMethodError e) {}
+		}
+		catch (NoSuchMethodError e) {}
 	}
 
 	public void addBatch(String query) { // should throws SQLException
@@ -115,6 +120,28 @@ public class ComposerTest extends TestCase {
 		try {
 			list.hashCode();
 			fail();
-		} catch (Error e) {}
+		}
+		catch (Error e) {}
+	}
+
+	public static class ClassA {
+		Object delegate;
+	}
+	public static class ClassB {
+		Object delegate;
+	
+	}
+
+	public void testCast() {
+		Object a = new ClassA();
+		Object b = new ClassB();
+		Composer composer = new Composer(new Object[]{a, b}, new MethodFilter() {
+			public boolean filter(Method method) {
+				return true;
+			}
+		});
+		
+		assertSame(a, composer.cast(ClassA.class));
+		assertSame(b, composer.cast(ClassB.class));
 	}
 }

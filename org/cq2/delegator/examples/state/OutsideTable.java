@@ -21,9 +21,22 @@
  * the archive of this library for complete text of license.
  * Created on Mar 29, 2004
  */
-package state;
-public interface Self {
-	Object cast(Class clas);
+package org.cq2.delegator.examples.state;
 
-	void assimilate(Object extension);
+import org.cq2.delegator.handlers.Self;
+
+public abstract class OutsideTable implements ParseState, Self {
+	
+	
+	public void renderHeading(String text) {
+		addToResult( "<h1>"+text+"</h1>");
+	
+	}
+	public void startTable() {
+		addToResult("<table>");
+		become(InsideTable.class);
+	}
+	
+
+
 }

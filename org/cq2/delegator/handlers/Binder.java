@@ -11,8 +11,7 @@ abstract class Binder {
 
 	public interface Binding {
 		Object invoke(Object[] args) throws Throwable;
-		boolean matches(Class claz);
-		Object getDelegate();
+		
 	}
 
 	private class BindingImpl implements Binding {
@@ -30,14 +29,6 @@ abstract class Binder {
 			} catch (InvocationTargetException e) {
 				throw e.getTargetException();
 			}
-		}
-
-		public boolean matches(Class claz) {
-			return claz.equals(delegate.getClass().getSuperclass());
-		}
-
-		public Object getDelegate() {
-			return delegate;
 		}
 	}
 
