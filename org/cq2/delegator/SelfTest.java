@@ -274,9 +274,8 @@ public class SelfTest extends TestCase {
 	public static Object mymap_key;
 
 	public static class MyMap {
-		public Object put(Object key, Object value) {
+		public void put(Object key, Object value) {
 			mymap_key = key;
-			return key;
 		}
 	}
 
@@ -285,20 +284,10 @@ public class SelfTest extends TestCase {
 		Self self = new Self();
 		self.add(HashMap.class);
 		self.add(MyMap.class);
-//		self.add(HashMap.class);
-		Map map = (Map) self.cast(Map.class);
-		map.put("duck", "erik");
+		MyMap mymap = (MyMap) self.cast(MyMap.class);
+		mymap.put("duck", "erik");
 		assertNull(mymap_key);
+		Map map = (Map) self.cast(Map.class);
 		assertEquals("erik", map.get("duck"));
 	}
-//	public void testSelf2WithAllKindsofClasses() {
-//		mymap_key=null;
-//		Self self = new Self();
-//		self.add(MyMap.class);
-//		self.add(HashMap.class);
-//		Map map = (Map) self.cast(Map.class);
-//		map.put("duck", "erik");
-//		assertEquals("duck",mymap_key);
-//		assertNull(map.get("duck"));
-//	}
 }
