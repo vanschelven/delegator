@@ -10,6 +10,8 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Vector;
+
 import junit.framework.TestCase;
 
 public class DelegatorTest extends TestCase implements InvocationHandler {
@@ -101,4 +103,52 @@ public class DelegatorTest extends TestCase implements InvocationHandler {
 			assertEquals("Interfaces are not supported, use java.lang.reflect.Proxy.", e.getCause().getMessage());
 		}
 	}
+	
+	public class InnerClass {
+		private void privateMethod() {
+		}
+	}
+	
+	public void testPrivateMethodsCanBeAccessed() {
+		new InnerClass().privateMethod();
+	}
+	
+	public static abstract class ExtendedVector {
+		
+		public static Vector createVector() {
+			ISelf result = new Self(ExtendedVector.class);
+			result.add(Vector.class);
+			return (Vector) result.cast(Vector.class);
+		}
+		
+		public static ExtendedVector createExtendedVector() {
+			return (ExtendedVector) Delegator.extend(ExtendedVector.class, new Class[]{Vector.class});
+		}
+		
+		private boolean add(Object o) {
+			//note: if ExtendedVector would really extend Vector this wouldn't compile
+			reached = true;
+			return false;
+		}
+		
+	}
+	
+	private static boolean reached;
+
+	public void testPrivateMethodsCannotBeReachedIfSeenAsVector() {
+		Vector vector = ExtendedVector.createVector();
+		reached = false;
+		vector.add("");
+		assertFalse(reached);
+	}
+	
+	public void testPrivateMethodsCanStillBeReached() {
+		ExtendedVector extendedVector = ExtendedVector.createExtendedVector();
+		reached = false;
+		extendedVector.add("");
+		assertTrue(reached);
+	}
+
+
+	
 }
