@@ -58,6 +58,9 @@ public class Self implements InvocationHandler, ISelf {
 			catch (NoSuchMethodException e) {
 				continue;
 			}
+//			catch (InvocationTargetException e) {
+//				throw e.getTargetException();
+//			}
 		}
 		if ("cast".equals(name))
 			return cast((Class) args[0]);

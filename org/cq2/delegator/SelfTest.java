@@ -9,6 +9,7 @@ import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -233,7 +234,7 @@ public class SelfTest extends TestCase {
 		assertTrue(a1.equals(self1.cast(HashMap.class)));
 	}
 
-	public static class Nr1{
+	public static class Nr1 {
 		public String aMethod() {
 			return "nr1";
 		}
@@ -242,11 +243,12 @@ public class SelfTest extends TestCase {
 		public String aMethod() {
 			return "nr2";
 		}
+
 		public String method2() {
 			return "nr2";
 		}
 	}
-	public static interface Nr3{
+	public static interface Nr3 {
 		String aMethod();
 	}
 
@@ -271,8 +273,8 @@ public class SelfTest extends TestCase {
 		}
 		catch (NoSuchMethodError nsme) {}
 	}
-	
-	public void testRespondsToClass(){
+
+	public void testRespondsToClass() {
 		Self self = new Self(Nr2.class);
 		assertTrue(self.respondsTo(Nr2.class));
 		assertTrue(self.respondsTo(Object.class));
@@ -280,9 +282,9 @@ public class SelfTest extends TestCase {
 		assertTrue(self.respondsTo(Nr1.class));
 		self = new Self(Nr1.class);
 		Nr2 nr2 = (Nr2) self.cast(Nr2.class);
-		assertTrue(((ISelf)nr2).respondsTo(Nr1.class));
-		assertFalse(((ISelf)nr2).respondsTo(Nr2.class));
-		assertTrue(((ISelf)nr2).respondsTo(Nr3.class));
+		assertTrue(((ISelf) nr2).respondsTo(Nr1.class));
+		assertFalse(((ISelf) nr2).respondsTo(Nr2.class));
+		assertTrue(((ISelf) nr2).respondsTo(Nr3.class));
 	}
 
 	public static Object mymap_key;
@@ -294,7 +296,7 @@ public class SelfTest extends TestCase {
 	}
 
 	public void testSelfWithAllKindsofClasses() {
-		mymap_key=null;
+		mymap_key = null;
 		Self self = new Self();
 		self.add(HashMap.class);
 		self.add(MyMap.class);
@@ -303,5 +305,40 @@ public class SelfTest extends TestCase {
 		assertNull(mymap_key);
 		Map map = (Map) self.cast(Map.class);
 		assertEquals("erik", map.get("duck"));
+	}
+
+	public static class DeclaredException extends Exception {}
+	public static class ThrowException {
+		void throwException() throws DeclaredException {
+			throw new DeclaredException();
+		}
+
+		void throwUnexpectedException() {
+			throw new Error();
+		}
+	}
+	public static abstract class ehhh{
+		abstract void throwException() ;
+		abstract void throwUnexpectedException();
+	}
+
+	public void testTargetException() {
+		Self self = new Self(ThrowException.class);
+		ehhh te = (ehhh) self.cast(ehhh.class);
+		System.out.println(Arrays.asList(te.getClass().getMethods()));
+//		ThrowException te = (ThrowException) self.cast(ThrowException.class);
+		try {
+			te.throwException();
+			fail();
+		}
+		catch (Exception de) {}
+		try {
+			te.throwUnexpectedException();
+			fail();
+		}
+		catch (Error e) {
+			e.printStackTrace();
+		}
+
 	}
 }

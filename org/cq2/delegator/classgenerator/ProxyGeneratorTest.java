@@ -5,13 +5,15 @@ package org.cq2.delegator.classgenerator;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import junit.framework.TestCase;
 import org.cq2.delegator.Component;
 import org.cq2.delegator.Proxy;
 import org.cq2.delegator.Self;
 
-public class ProxyGeneratorTest extends TestCase {
+public class ProxyGeneratorTest extends TestCase implements InvocationHandler{
 
 	public void testCreateProxyForJDKClass() throws Exception {
 		Object p = ProxyGenerator.newProxyInstance(HashMap.class, null);
@@ -82,5 +84,35 @@ public class ProxyGeneratorTest extends TestCase {
 		Object c1 = self.cast(ProxyGeneratorTest.class);
 		Object c2 = self.cast(ProxyGeneratorTest.class);
 		assertSame(c1.getClass(), c2.getClass());
+	}
+	
+	public static abstract class B {
+		 abstract void method();
+	}
+	public void testAbstractNonPublicMethods() throws Exception {
+		B b = (B) ProxyGenerator.newProxyInstance(B.class, this);
+		Method declaredMethod = b.getClass().getDeclaredMethod("method", null);
+		assertNotNull(declaredMethod);
+		assertFalse(Modifier.isAbstract(declaredMethod.getModifiers()));
+		//assertTrue(Modifier.isPublic(declaredMethod.getModifiers()));
+		declaredMethod.setAccessible(true);
+		declaredMethod.invoke(b,null);
+		Method abstractMethod = B.class.getDeclaredMethod("method", null);
+		assertTrue(Modifier.isAbstract(abstractMethod.getModifiers()));
+		assertFalse(Modifier.isPrivate(abstractMethod.getModifiers()));
+		assertFalse(Modifier.isPublic(abstractMethod.getModifiers()));
+		b.method();
+	}
+
+	public static class B2 extends B {
+		public void method() { }
+	}
+	public void testAbstract() {
+		new B2().method();
+	}
+	
+	public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
