@@ -5,6 +5,7 @@
 package org.cq2.delegator;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,15 +53,16 @@ public class Self implements InvocationHandler, ISelf {
 			try {
 				Method delegateMethod = component.getClass().getDeclaredMethod(name,
 						(Class[]) argTypeList.toArray(new Class[]{}));
+				delegateMethod.setAccessible(true);
 				self.set(this);
 				return delegateMethod.invoke(component, mapArgs(args));
 			}
 			catch (NoSuchMethodException e) {
 				continue;
 			}
-//			catch (InvocationTargetException e) {
-//				throw e.getTargetException();
-//			}
+			catch (InvocationTargetException e) {
+				throw e.getTargetException();
+			}
 		}
 		if ("cast".equals(name))
 			return cast((Class) args[0]);

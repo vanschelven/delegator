@@ -15,9 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import junit.framework.TestCase;
-
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 /**
@@ -309,36 +307,36 @@ public class SelfTest extends TestCase {
 
 	public static class DeclaredException extends Exception {}
 	public static class ThrowException {
-		void throwException() throws DeclaredException {
+		protected void throwException() throws DeclaredException {
 			throw new DeclaredException();
 		}
 
-		void throwUnexpectedException() {
-			throw new Error();
+		protected void throwUnexpectedException() {
+			throw new Error("oops");
 		}
 	}
-	public static abstract class ehhh{
-		abstract void throwException() ;
-		abstract void throwUnexpectedException();
+	public static abstract class ehhh {
+		public abstract void throwException() throws DeclaredException;
+
+		protected abstract void throwUnexpectedException();
 	}
 
 	public void testTargetException() {
 		Self self = new Self(ThrowException.class);
 		ehhh te = (ehhh) self.cast(ehhh.class);
 		System.out.println(Arrays.asList(te.getClass().getMethods()));
-//		ThrowException te = (ThrowException) self.cast(ThrowException.class);
+		//		ThrowException te = (ThrowException) self.cast(ThrowException.class);
 		try {
 			te.throwException();
 			fail();
 		}
-		catch (Exception de) {}
+		catch (DeclaredException de) {}
 		try {
 			te.throwUnexpectedException();
 			fail();
 		}
 		catch (Error e) {
-			e.printStackTrace();
+			assertEquals("oops", e.getMessage());
 		}
-
 	}
 }
