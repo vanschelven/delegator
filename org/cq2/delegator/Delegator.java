@@ -49,6 +49,10 @@ public class Delegator {
 		}
 		return extension.cast(subclass);
 	}
+	
+	public static Object extend(Class subclass, Class superclass) {
+	    return extend(subclass, new Class[]{superclass});
+	}
 
 	public static ClassLoader configureClassLoader(ClassLoader loader) {
 		return ProxyGenerator.configureClassLoader(loader);
