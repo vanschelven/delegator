@@ -7,6 +7,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.util.HashMap;
 import junit.framework.TestCase;
+
+import org.cq2.delegator.*;
 import org.cq2.delegator.Self;
 import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 

@@ -27,7 +27,7 @@ public class Delegator {
 */
 	public static Object proxyFor(Class theInterface, InvocationHandler handler) {
 		if (theInterface.isInterface()) {
-			return Proxy.newProxyInstance(injector, new Class[]{theInterface}, handler);
+			return Proxy.newProxyInstance(injector, new Class[]{theInterface, ISelf.class}, handler);
 		}
 		else {
 			return ProxyGenerator

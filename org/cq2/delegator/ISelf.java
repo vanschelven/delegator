@@ -1,12 +1,13 @@
 package org.cq2.delegator;
 
+
 public interface ISelf {
 	Object cast(Class type);
 	void become(Class componentType);
 	// add must become extend()
 	void add(Self self);
 	void add(Class componentType);
-	void add(Class componentType, Object[] ctorArgs);
+	void add(Component component);
 	//void remove();
 	//void remove(Object object);
 	//void remove(int component)

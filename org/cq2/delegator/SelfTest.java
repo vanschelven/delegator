@@ -7,14 +7,17 @@ package org.cq2.delegator;
 import java.io.DataInput;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import junit.framework.TestCase;
-
+import org.cq2.delegator.classgenerator.ClassInjector;
+import org.cq2.delegator.classgenerator.ProxyGenerator;
+import org.cq2.delegator.method.MethodFilter;
+import org.cq2.delegator.method.MethodFilterNonFinalNonPrivate;
 
 /**
  * @author ejgroene
@@ -39,6 +42,15 @@ public class SelfTest extends TestCase {
 		assertEquals(key, keyRef);
 		assertEquals(value, valueRef);
 		assertEquals(result, returnVal);
+	}
+
+	public void testAddComponent() {
+		ClassInjector injector = new ClassInjector(ClassLoader.getSystemClassLoader());
+		MethodFilter filter = new MethodFilterNonFinalNonPrivate();
+		Self self = new Self();
+		Component c = ProxyGenerator.newComponentInstance(injector, ArrayList.class, filter, null);
+		self.add(c);
+		assertSame(c, self.component(0));
 	}
 
 	public void testNoSuchMethod() {
@@ -159,6 +171,7 @@ public class SelfTest extends TestCase {
 			public String toString() {
 				return "modifiedSelf";
 			}
+
 			public int hashCode() {
 				return 99;
 			}
@@ -170,40 +183,40 @@ public class SelfTest extends TestCase {
 		public String toString() {
 			return "A";
 		}
+
 		// hashCode cannot be redefined
 		public int hashCode() {
 			fail();
 			return 28;
 		}
+
 		public boolean equals(Object arg0) {
 			fail();
 			return true;
 		}
 	}
-	
 	public static class B extends A {}
-	
 	public static class C {}
 
 	public void testToString2() {
 		Object objA = newModifiedSelf(A.class).cast(Object.class);
 		assertEquals("A", objA.toString());
-		Object objB =newModifiedSelf(B.class).cast(Object.class);
+		Object objB = newModifiedSelf(B.class).cast(Object.class);
 		assertEquals("A", objB.toString());
 		Object objC = newModifiedSelf(C.class).cast(Object.class);
 		assertEquals("modifiedSelf", objC.toString());
 	}
-	
+
 	public void testHashCodeCannotBeRedefined() {
 		Object objA = newModifiedSelf(A.class).cast(Object.class);
 		assertEquals(99, objA.hashCode());
-		Object objB =newModifiedSelf(B.class).cast(Object.class);
+		Object objB = newModifiedSelf(B.class).cast(Object.class);
 		assertEquals(99, objB.hashCode());
 		Object objC = newModifiedSelf(C.class).cast(Object.class);
 		assertEquals(99, objC.hashCode());
 	}
-	
-	public void testEqualsCannotBeRedifined(){
+
+	public void testEqualsCannotBeRedifined() {
 		Self self1 = new Self();
 		Self self2 = new Self();
 		assertFalse(self1.equals(self2));

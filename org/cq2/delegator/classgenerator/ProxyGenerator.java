@@ -28,6 +28,7 @@ import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.ReferenceType;
 import org.apache.bcel.generic.Type;
+import org.cq2.delegator.*;
 import org.cq2.delegator.ISelf;
 import org.cq2.delegator.method.MethodComparator;
 import org.cq2.delegator.method.MethodFilter;

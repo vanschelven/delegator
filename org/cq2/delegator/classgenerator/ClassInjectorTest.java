@@ -3,6 +3,8 @@
  */
 package org.cq2.delegator.classgenerator;
 
+import org.cq2.delegator.*;
+
 import junit.framework.TestCase;
 
 public class ClassInjectorTest extends TestCase {

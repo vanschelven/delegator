@@ -18,7 +18,6 @@ import java.util.TreeSet;
 import org.cq2.delegator.binders.Binder;
 import org.cq2.delegator.binders.SuperClassBinder;
 import org.cq2.delegator.binders.Binder.Binding;
-import org.cq2.delegator.classgenerator.Component;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.method.MethodComparator;
 import org.cq2.delegator.method.MethodFilter;
@@ -78,11 +77,13 @@ public class Self implements InvocationHandler, ISelf {
 			bindings.clear();
 		}
 		addBinding("cast", new Class[]{Class.class});
-		addBinding("add", new Class[]{ISelf.class});
+		addBinding("add", new Class[]{Self.class});
+		addBinding("add", new Class[]{Component.class});
 		addBinding("add", new Class[]{Class.class});
 		addBinding("become", new Class[]{Class.class});
 		addBinding("self", new Class[]{});
 		addBinding("toString", new Class[]{});
+		addBinding("component", new Class[] {Integer.TYPE});
 		Method[] methods = collectMethods();
 		for (int ifNr = 0; ifNr < methods.length; ifNr++) {
 			Method method = methods[ifNr];
@@ -164,19 +165,22 @@ public class Self implements InvocationHandler, ISelf {
 	public Object component(int component) {
 		return delegates.get(component);
 	}
+	
+	public Object component(InvocationHandler h, int component) {
+		return component(component);
+	}
 
 	public void add(Class clas) {
-		delegates.add(newComponent(clas));
+		add(newComponent(clas));
+	}
+
+	public void add(Component component) {
+		delegates.add(component);
 		createBindings();
 	}
 
 	public void add(InvocationHandler self, Class clas) {
 		add(clas);
-	}
-
-	public void add(Class componentType, Object[] ctorArgs) {
-		delegates.add(newComponent(componentType));
-		createBindings();
 	}
 
 	private Component newComponent(Class clas) {
