@@ -8,6 +8,7 @@ import java.io.DataInput;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -170,8 +171,14 @@ public class SelfTest extends TestCase {
 		public String toString() {
 			return "A";
 		}
+		// hashCode cannot be redefined
 		public int hashCode() {
+			fail();
 			return 28;
+		}
+		public boolean equals(Object arg0) {
+			fail();
+			return true;
 		}
 	}
 	
@@ -188,13 +195,32 @@ public class SelfTest extends TestCase {
 		assertEquals("modifiedSelf", objC.toString());
 	}
 	
-	public void testHashCode() {
+	public void testHashCodeCannotBeRedefined() {
 		Object objA = newModifiedSelf(A.class).cast(Object.class);
-		assertEquals(28, objA.hashCode());
+		assertEquals(99, objA.hashCode());
 		Object objB =newModifiedSelf(B.class).cast(Object.class);
-		assertEquals(28, objB.hashCode());
+		assertEquals(99, objB.hashCode());
 		Object objC = newModifiedSelf(C.class).cast(Object.class);
 		assertEquals(99, objC.hashCode());
 		// TODO same for equals (See doc for java.lang.reflext.Proxy)
+	}
+	
+	public void testEqualsCannotBeRedifined(){
+		Self self1 = new Self();
+		Self self2 = new Self();
+		assertFalse(self1.equals(self2));
+		assertTrue(self1.equals(self1));
+		self1.add(A.class);
+		self2.add(A.class);
+		assertFalse(self1.equals(self2));
+		assertTrue(self1.equals(self1));
+		A a1 = (A) self1.cast(A.class);
+		A a2 = (A) self2.cast(A.class);
+		assertFalse(a1.equals(a2));
+		assertTrue(a1.equals(a1));
+		assertFalse(a1.equals(null));
+		assertFalse(a1.equals(new Object()));
+		assertFalse(new Object().equals(a1));
+		assertTrue(a1.equals(self1.cast(HashMap.class)));
 	}
 }
