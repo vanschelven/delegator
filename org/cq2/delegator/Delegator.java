@@ -12,9 +12,9 @@ import java.lang.reflect.Proxy;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.handlers.Composer;
 import org.cq2.delegator.handlers.Link;
+import org.cq2.delegator.handlers.Self;
 import org.cq2.delegator.util.MethodFilter;
 
-import state.Self;
 
 
 /**
@@ -22,7 +22,10 @@ import state.Self;
  */
 public class Delegator {
 
-	private ClassLoader classLoader;
+	private static ClassLoader classLoader;
+	static {
+		classLoader = ClassLoader.getSystemClassLoader();
+	}
 	
 	final MethodFilter methodFilter = new MethodFilter() {
 		public boolean filter(Method method) {
@@ -36,11 +39,7 @@ public class Delegator {
 		classLoader = ClassLoader.getSystemClassLoader();
 	}
 
-	public Delegator(ClassLoader classLoader) {
-		this.classLoader = classLoader;
-	}
-
-	public Object proxyFor(Class theInterface, InvocationHandler handler) {
+	public static Object proxyFor(Class theInterface, InvocationHandler handler) {
 		if (theInterface.isInterface()) {
 			return Proxy.newProxyInstance(classLoader, new Class[] { theInterface }, handler);
 		} else {
@@ -67,12 +66,12 @@ public class Delegator {
 	public static Self extend(Class subclass, Class[] superclasses) {
 		Delegator delegator = new Delegator();
 		
-		Self extension = delegator.create(subclass);
+		Self extension = Delegator.create(subclass);
 		Object[] prototypes = new Object[superclasses.length +1 ];
 		prototypes[0] = extension;
 		
 		for (int i = 0; i < superclasses.length; i++) {
-			Object prototype = delegator.create(superclasses[i]);
+			Object prototype = Delegator.create(superclasses[i]);
 			prototypes[i+1] = prototype;
 		}
 		
@@ -86,7 +85,7 @@ public class Delegator {
 		
 	}
 
-	private Self create(Class clas) {
+   public static Self create(Class clas) {
 		return (Self) ProxyGenerator.newProxyInstance(classLoader, clas, null);
 	
 	}
