@@ -18,7 +18,7 @@ public class ComposedDocumentTest extends TestCase {
 	}
 
 	public void testCreateDocument() {
-		Document doc = (Document) new Self(Document.class).cast(Document.class);
+		Document doc = (Document) new Self().cast(Document.class);
 		doc.add(TextDocument.class, new Object[] {"Best trips in Town", "bla bla bla..."});
 		doc.add(Context.class, new Object[] {"book1", "http://books.com/besttrips"});
 		doc.add(TextView.class);

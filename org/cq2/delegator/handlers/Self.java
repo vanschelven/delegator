@@ -72,6 +72,7 @@ public class Self implements InvocationHandler, ISelf {
 		bindings.clear();
 		addBinding("cast", new Class[]{Class.class});
 		addBinding("add", new Class[]{ISelf.class});
+		addBinding("add", new Class[]{Class.class});
 		addBinding("become", new Class[]{Class.class});
 		addBinding("self", new Class[]{});
 		addBinding("toString", new Class[]{});
@@ -119,11 +120,13 @@ public class Self implements InvocationHandler, ISelf {
 		return (Method[]) methods.toArray(new Method[]{});
 	}
 
+	// For each method that is added using addBinding, there is a second version
+	// with an additional arg "InvocationHandler self", because the binder will
+	// add this arg before calling the method.
 	public Object cast(Class clas) {
 		return Delegator.proxyFor(clas, this);
 	}
 
-	// You don't wanna know why this method is here
 	public Object cast(InvocationHandler self, Class clas) {
 		return cast(clas);
 	}
@@ -155,6 +158,10 @@ public class Self implements InvocationHandler, ISelf {
 	public void add(Class clas) {
 		delegates.add(newDObject(clas, null));
 		createBindings();
+	}
+	
+	public void add(InvocationHandler self, Class clas) {
+		add(clas);
 	}
 
 	public void add(Class componentType, Object[] ctorArgs) {
