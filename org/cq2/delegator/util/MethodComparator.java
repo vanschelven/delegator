@@ -12,12 +12,8 @@ public class MethodComparator implements Comparator {
 	public int compare(Object arg0, Object arg1) {
 		Method lhs = (Method) arg0;
 		Method rhs = (Method) arg1;
-		int result = lhs.getName().compareTo(rhs.getName());
-		if (result == 0) {
-			Class[] lhsArgTypes = lhs.getParameterTypes();
-			Class[] rhsArgTypes = rhs.getParameterTypes();
-			return Arrays.equals(lhsArgTypes, rhsArgTypes) ? 0 : -1;
-		}
-		return result;
+		String lhsSignature = lhs.getName() + Arrays.asList(lhs.getParameterTypes()).toString();
+		String rhsSiganture = rhs.getName() + Arrays.asList(rhs.getParameterTypes()).toString();
+		return lhsSignature.compareTo(rhsSiganture);
 	}
 }

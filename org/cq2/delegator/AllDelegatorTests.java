@@ -15,6 +15,7 @@ import org.cq2.delegator.examples.mixin.MixinTest;
 import org.cq2.delegator.examples.observer.ObservableWithDelegatorTest;
 import org.cq2.delegator.handlers.ComposerTest;
 import org.cq2.delegator.handlers.LinkTest;
+import org.cq2.delegator.util.MethodComparatorTest;
 
 import org.cq2.delegator.examples.state.StateTest;
 
@@ -37,8 +38,7 @@ public class AllDelegatorTests {
 		suite.addTestSuite(StateTest.class);
 		suite.addTestSuite(ObservableWithDelegatorTest.class);
 		suite.addTestSuite(MixinTest.class);
-		
-		
+		suite.addTestSuite(MethodComparatorTest.class);		
 		return suite;
 	}
 }
