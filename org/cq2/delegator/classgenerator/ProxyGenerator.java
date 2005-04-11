@@ -127,7 +127,8 @@ public class ProxyGenerator implements Constants {
 
     private static Cache proxyClassCache = new Cache("proxy");
 
-    ProxyGenerator(String className, Class superClass, Class marker) {
+    //TODO set this back to default scope
+    public ProxyGenerator(String className, Class superClass, Class marker) {
         String[] extraInterfaces = new String[] { marker.getName(), ISelf.class.getName() };
         int modifiers = (Modifier.isPublic(superClass.getModifiers()) ? ACC_PUBLIC : 0) | ACC_SUPER;
         classGen = new ClassGen(className, superClass.getName(), "", modifiers, extraInterfaces);
@@ -348,7 +349,7 @@ public class ProxyGenerator implements Constants {
     }
     
     private void createCallToInvocationHandler(Method method, boolean useSelf) {
-        //createSystemOutPrintln(method.getName());
+       // createSystemOutPrintln(method.toString());
         createLoadThis();
         if (useSelf) {
             // this.>delegate<.invoke( ...
