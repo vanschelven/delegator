@@ -16,7 +16,6 @@ import org.cq2.delegator.Delegator;
 import org.cq2.delegator.Proxy;
 import org.cq2.delegator.Self;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
-import org.cq2.delegator.test.subpackage.BInSubPackage;
 
 public class ScopeTest extends TestCase implements InvocationHandler {
     public void setUp() {
@@ -119,14 +118,16 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     }
 
     public void testPackageMethod() throws Exception {
-        PackageMethod m = cons1();
+        PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(
+        PackageMethod.class, this);
         m.method();
         assertFalse(packageMethodCalled);
         assertEquals("method", invokedMethod);
     }
 
     public void testPackageMethodUsingReflection() throws Exception {
-        PackageMethod m = cons1();
+        PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(
+        PackageMethod.class, this);
         Method proxyMethod = m.getClass().getDeclaredMethod("method", null);
         proxyMethod.invoke(m, null);
         assertFalse(packageMethodCalled);
@@ -134,7 +135,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     }
 
     public void testPackageMethodRegularJava() {
-        PackageMethod m = cons2();
+        PackageMethod m = new ExtendedPackageMethod();
         m.method();
         assertFalse(packageMethodCalled);
         //true: extendedPackageMethodCalled
@@ -174,37 +175,6 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         }
     }
 
-    public void testPackages() {
-        //See generated compiler messages in the subpackage for the idea behind
-        // this test...
-        PackageMethod d = new BInSubPackage();
-        d.method();
-        BInSubPackage d2 = new BInSubPackage();
-        d2.method();
-    }
-
-    private PackageMethod cons1() {
-        PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(
-                PackageMethod.class, this);
-        return m;
-    }
-
-    private PackageMethod cons2() {
-        return new ExtendedPackageMethod();
-    }
-
-    public void test1() {
-        PackageMethod m = cons1();
-        m.method();
-        assertFalse(packageMethodCalled);
-    }
-
-    public void test2() {
-        PackageMethod m = cons2();
-        m.method();
-        assertFalse(packageMethodCalled);
-    }
-
     static class MyClassLoader extends ClassLoader {
 
         private Class inject(String className, byte[] classDef, ProtectionDomain domain) {
@@ -214,14 +184,14 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         protected Class findClass(String name) throws ClassNotFoundException {
             String className = "org.cq2.delegator.test.ScopeTest$PackageMethod$proxy";
             byte[] classDef = new ProxyGenerator(className, PackageMethod.class, Proxy.class).generateProxy();
-            return inject(/*className*/null, classDef, PackageMethod.class.getProtectionDomain());
+            return inject(null, classDef, PackageMethod.class.getProtectionDomain());
         }
                 
     }
 
     public void testClassLoader() throws ClassNotFoundException,
             InstantiationException, IllegalAccessException {
-        Class clazz = new MyClassLoader().loadClass("blaat");
+        Class clazz = new MyClassLoader().loadClass("SomeOtherClassNameToMakeSureTheOriginalClassLoaderIsNotUsed");
         PackageMethod m = (PackageMethod) clazz.newInstance();
         m.method();
         assertFalse(packageMethodCalled);
