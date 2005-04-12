@@ -26,6 +26,8 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         privateMethodCalled = false;
         protectedMethodCalled = false;
         publicMethodCalled = false;
+        m1Called = false;
+        m2Called = false;
     }
 
     private String invokedMethod;
@@ -287,9 +289,31 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 //          e.printStackTrace();
 //      }  
 //    }
-    
 
+    private static boolean m1Called;
+    private static boolean m2Called;
     
+    //is dit apart noodzakelijk? Is er verschil? zijn meer tests nodig? voorlopig niet!
+    public static class SelfCallingClass {
+        
+        protected void m1() {
+            m1Called = true;
+            m2();
+        }
+        
+        protected void m2() {
+            m2Called = true;
+        }
+        
+    }
+    
+    public void testScopingWithinComponent() {
+        Self self = new Self(SelfCallingClass.class);
+        SelfCallingClass s = (SelfCallingClass) self.cast(SelfCallingClass.class);
+        s.m1();
+        assertTrue(m1Called);
+        assertTrue(m2Called);
+    }
     
    
 
