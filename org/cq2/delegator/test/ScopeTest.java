@@ -24,6 +24,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         invokeResult = null;
         packageMethodCalled = false;
         privateMethodCalled = false;
+        protectedMethodCalled = false;
         publicMethodCalled = false;
     }
 
@@ -31,6 +32,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     private Object invokeResult;
     private static boolean packageMethodCalled;
 	private static boolean privateMethodCalled;
+	private static boolean protectedMethodCalled;
 	private static boolean publicMethodCalled;
 
     public Object invoke(Object proxy, Method method, Object[] args)
@@ -86,6 +88,29 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 		assertFalse(privateMethodCalled);
 		assertTrue(publicMethodCalled);
 	}
+	
+	public void testPublicMethodExtendsProtectedMethod() {
+	    PublicMethod m = (PublicMethod) Delegator.extend(PublicMethod.class, ProtectedMethod.class);
+	    m.method();
+	    assertFalse(protectedMethodCalled);
+	    assertTrue(publicMethodCalled);
+	}
+
+	public void testProtectedMethodExtendsPublicMethod() {
+	    ProtectedMethod m = (ProtectedMethod) Delegator.extend(ProtectedMethod.class, PublicMethod.class);
+	    m.method();
+	    assertTrue(protectedMethodCalled);
+	    assertFalse(publicMethodCalled);
+	}
+
+	public void testProtectedExtendsPublicCastToPublic() {
+		ISelf result = new Self(ProtectedMethod.class);
+		result.add(PublicMethod.class);
+		PublicMethod m = (PublicMethod) result.cast(PublicMethod.class);
+		m.method();
+		assertFalse(protectedMethodCalled);
+		assertTrue(publicMethodCalled);
+    }
 	
     public void testDelegateSubclass() {
         Map map = (Map) Delegator.proxyFor(HashMap.class, this);
@@ -161,6 +186,15 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 
         void method() {
             packageMethodCalled = true;
+        }
+
+    }
+
+
+    public static class ProtectedMethod {
+
+        protected void method() {
+            protectedMethodCalled = true;
         }
 
     }
@@ -254,7 +288,9 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 //      }  
 //    }
     
+
     
     
+   
 
 }

@@ -253,7 +253,7 @@ public class ProxyGenerator implements Constants {
         }
         int newMods = method.getModifiers()
                 & ~(Modifier.NATIVE | Modifier.ABSTRACT | Modifier.PRIVATE | Modifier.PROTECTED)
-                | Modifier.PUBLIC;
+               | Modifier.PUBLIC;
         MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
                 .toArray(new Type[] {}), generateParameterNames(types.size()), method.getName(),
                 classGen.getClassName(), instrList, constPool);

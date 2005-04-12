@@ -8,6 +8,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -65,11 +66,17 @@ public class Self implements InvocationHandler, ISelf {
         List argTypeList = new ArrayList();
         argTypeList.add(InvocationHandler.class);
         argTypeList.addAll(Arrays.asList(method.getParameterTypes()));
+        List argTypeListExludingInvocationHandler = new ArrayList();
+        argTypeListExludingInvocationHandler.addAll(Arrays.asList(method.getParameterTypes()));
         for (; i < nrOfComponents; i++) {
             try {
                 Method delegateMethod = MethodUtil.getDeclaredMethod(
                         components[i].getClass(), name, (Class[]) argTypeList
                                 .toArray(new Class[] {}));
+                Method superDelegateMethod = MethodUtil.getDeclaredMethod(
+                        components[i].getClass().getSuperclass(), name, (Class[]) argTypeListExludingInvocationHandler.toArray(new Class[] {}));
+                boolean proxyMethodIsProtected = (delegateMethod != null) && (superDelegateMethod == null);
+                
                 if (delegateMethod != null) {
                     delegateMethod.setAccessible(true);
                     Stack stack = ((Stack) self.get());
