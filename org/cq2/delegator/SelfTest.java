@@ -44,6 +44,11 @@ public class SelfTest extends TestCase {
 	private Object valueRef = null;
 	private Object returnVal = new Object();
 
+	protected void setUp() throws Exception {
+	    originalAddCalled = 0;
+	    subClassAddCalled = 0;
+    }
+	
 	public Object put(Object key, Object value) {
 		keyRef = key;
 		valueRef = value;
@@ -446,6 +451,9 @@ public class SelfTest extends TestCase {
 		assertNotSame(clone.self(), original.self());
 	}
 	
+	private static int originalAddCalled;
+	private static int subClassAddCalled;
+	
 	public static abstract class OriginalList {
 	    
 	    public void addAll(Collection c) {
@@ -454,11 +462,8 @@ public class SelfTest extends TestCase {
             }
         }
 	    
-	    //lelijk maar het casten lukt me niet goed
-	    public List list = new Vector();
-	    
 	    public void add(Object o) {
-	        list.add(o);
+	        originalAddCalled++;
 	    }
 	    
 	}
@@ -472,9 +477,7 @@ public class SelfTest extends TestCase {
 	    }
 	    
 	    public void add(Object o) {
-	        become(OriginalList.class);
-	        add("placeholder");
-	        become(PlaceholderList.class);
+	        subClassAddCalled++;
 	    }
 	    
 	    public abstract void addAll(Collection c); 
@@ -483,10 +486,9 @@ public class SelfTest extends TestCase {
 	
 	public void testPlaceholderList() {
 	    PlaceholderList list = PlaceholderList.create();
-	    list.add("bla");
-	    OriginalList original = (OriginalList) list.cast(OriginalList.class);
-	    assertEquals(1, original.list.size());
-	    assertEquals("placeholder", original.list.get(0));
+	    list.add("");
+	    assertEquals(1, subClassAddCalled);
+	    assertEquals(0, originalAddCalled);
 	}
 	
 	
@@ -496,9 +498,7 @@ public class SelfTest extends TestCase {
 	    twoItems.add("one");
 	    twoItems.add("two");
         list.addAll(twoItems);
-	    OriginalList original = (OriginalList) list.cast(OriginalList.class);
-        assertEquals(2, original.list.size());
-	    assertEquals("placeholder", original.list.get(0));
-	    assertEquals("placeholder", original.list.get(1));
+	    assertEquals(2, subClassAddCalled);
+	    assertEquals(0, originalAddCalled);
 	}
 }
