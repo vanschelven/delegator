@@ -116,20 +116,20 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         assertEquals(5, result);
     }
 
-    public abstract static class B {
+    public abstract static class AbstractPackageMethod {
         abstract void method();
     }
 
 //    public void testAbstractPackageMethod() throws Exception {
 //        //this doesn't work because testPackageMethod fails
-//        B b = (B) ProxyGenerator.newProxyInstance(B.class, this);
+//        AbstractPackageMethod b = (AbstractPackageMethod) ProxyGenerator.newProxyInstance(AbstractPackageMethod.class, this);
 //        Method declaredMethod = b.getClass().getDeclaredMethod("method", null);
 //        assertNotNull(declaredMethod);
 //        assertFalse(Modifier.isAbstract(declaredMethod.getModifiers()));
 //        //assertTrue(Modifier.isPublic(declaredMethod.getModifiers()));
 //        //declaredMethod.setAccessible(true);
 //        declaredMethod.invoke(b, null);
-//        Method abstractMethod = B.class.getDeclaredMethod("method", null);
+//        Method abstractMethod = AbstractPackageMethod.class.getDeclaredMethod("method", null);
 //        assertTrue(Modifier.isAbstract(abstractMethod.getModifiers()));
 //        assertFalse(Modifier.isPrivate(abstractMethod.getModifiers()));
 //        assertFalse(Modifier.isPublic(abstractMethod.getModifiers()));
@@ -165,14 +165,6 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 
     }
 
-    public static class ExtendedPackageMethod extends PackageMethod {
-
-        void method() {
-            System.out.println("pop");
-        }
-
-    }
-
     public void testPackageMethod() throws Exception {
         PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(
         PackageMethod.class, this);
@@ -188,13 +180,6 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         proxyMethod.invoke(m, null);
         assertFalse(packageMethodCalled);
         assertEquals("method", invokedMethod);
-    }
-
-    public void testPackageMethodRegularJava() {
-        PackageMethod m = new ExtendedPackageMethod();
-        m.method();
-        assertFalse(packageMethodCalled);
-        //true: extendedPackageMethodCalled
     }
 
     //de volgende test hoort elders thuis...
@@ -268,6 +253,8 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 //          e.printStackTrace();
 //      }  
 //    }
+    
+    
     
 
 }

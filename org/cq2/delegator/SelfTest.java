@@ -10,17 +10,34 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
+
 import junit.framework.TestCase;
+
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 /**
  * @author ejgroene
  *
+ */
+/**
+ * @author klaas
+ *
+ * TODO To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Style - Code Templates
+ */
+/**
+ * @author klaas
+ *
+ * TODO To change the template for this generated type comment go to
+ * Window - Preferences - Java - Code Style - Code Templates
  */
 public class SelfTest extends TestCase {
 	private Object keyRef = null;
@@ -427,5 +444,61 @@ public class SelfTest extends TestCase {
 		assertSame(clone.component(1), original.component(1));
 		assertSame(clone.component(2), original.component(2));
 		assertNotSame(clone.self(), original.self());
+	}
+	
+	public static abstract class OriginalList {
+	    
+	    public void addAll(Collection c) {
+	        for (Iterator iter = c.iterator(); iter.hasNext();) {
+                add(iter.next());
+            }
+        }
+	    
+	    //lelijk maar het casten lukt me niet goed
+	    public List list = new Vector();
+	    
+	    public void add(Object o) {
+	        list.add(o);
+	    }
+	    
+	}
+	
+	public static abstract class PlaceholderList implements ISelf {
+	    
+	    public static PlaceholderList create() {
+	        Self result = new Self(PlaceholderList.class);
+	        result.add(OriginalList.class);
+	        return (PlaceholderList) result.cast(PlaceholderList.class);
+	    }
+	    
+	    public void add(Object o) {
+	        become(OriginalList.class);
+	        add("placeholder");
+	        become(PlaceholderList.class);
+	    }
+	    
+	    public abstract void addAll(Collection c); 
+	    
+	}
+	
+	public void testPlaceholderList() {
+	    PlaceholderList list = PlaceholderList.create();
+	    list.add("bla");
+	    OriginalList original = (OriginalList) list.cast(OriginalList.class);
+	    assertEquals(1, original.list.size());
+	    assertEquals("placeholder", original.list.get(0));
+	}
+	
+	
+	public void testSelfProblem() {
+	    PlaceholderList list = PlaceholderList.create();
+	    Collection twoItems = new Vector();
+	    twoItems.add("one");
+	    twoItems.add("two");
+        list.addAll(twoItems);
+	    OriginalList original = (OriginalList) list.cast(OriginalList.class);
+        assertEquals(2, original.list.size());
+	    assertEquals("placeholder", original.list.get(0));
+	    assertEquals("placeholder", original.list.get(1));
 	}
 }
