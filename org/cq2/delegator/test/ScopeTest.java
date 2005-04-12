@@ -207,14 +207,14 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         assertNull(invokedMethod);
     }
 
-    public void testPackageMethodUsingReflection() throws Exception {
-        PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(
-        PackageMethod.class, this);
-        Method proxyMethod = m.getClass().getDeclaredMethod("method", null);
-        proxyMethod.invoke(m, null);
-        assertFalse(packageMethodCalled);
-        assertEquals("method", invokedMethod);
-    }
+//    public void testPackageMethodUsingReflection() throws Exception {
+//        PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(
+//        PackageMethod.class, this);
+//        Method proxyMethod = m.getClass().getDeclaredMethod("method", null);
+//        proxyMethod.invoke(m, null);
+//        assertFalse(packageMethodCalled);
+//        assertEquals("method", invokedMethod);
+//    }
 
     //de volgende test hoort elders thuis...
     public void testMethodSignaturesMatch() throws Exception {

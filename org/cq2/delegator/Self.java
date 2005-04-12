@@ -66,8 +66,10 @@ public class Self implements InvocationHandler, ISelf {
         List argTypeList = new ArrayList();
         argTypeList.add(InvocationHandler.class);
         argTypeList.addAll(Arrays.asList(method.getParameterTypes()));
+        
         List argTypeListExludingInvocationHandler = new ArrayList();
         argTypeListExludingInvocationHandler.addAll(Arrays.asList(method.getParameterTypes()));
+
         for (; i < nrOfComponents; i++) {
             try {
                 Method delegateMethod = MethodUtil.getDeclaredMethod(
@@ -75,9 +77,8 @@ public class Self implements InvocationHandler, ISelf {
                                 .toArray(new Class[] {}));
                 Method superDelegateMethod = MethodUtil.getDeclaredMethod(
                         components[i].getClass().getSuperclass(), name, (Class[]) argTypeListExludingInvocationHandler.toArray(new Class[] {}));
-                boolean proxyMethodIsProtected = (delegateMethod != null) && (superDelegateMethod == null);
-                
-                if (delegateMethod != null) {
+                boolean componentMethodIsProtected = (delegateMethod != null) && (superDelegateMethod == null);
+                if (delegateMethod != null && (!componentMethodIsProtected || Modifier.isProtected(method.getModifiers()))) {
                     delegateMethod.setAccessible(true);
                     Stack stack = ((Stack) self.get());
                     stack.push(this);
@@ -124,7 +125,7 @@ public class Self implements InvocationHandler, ISelf {
         }
         throw new NoSuchMethodError(method.toString());
     }
-
+    
     private Object[] mapArgs(Object[] args) {
         List argList = new ArrayList();
         argList.add(this);

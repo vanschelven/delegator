@@ -221,14 +221,14 @@ public class ProxyGenerator implements Constants {
 
     private void addDelegationMethod(Method method, boolean useSelf) {
         Type returnType = Type.getType(method.getReturnType());
-        MethodGen methodGen = addMethodHeader(method, returnType, null);
+        MethodGen methodGen = addMethodHeader(method, returnType, null, false);
         createCallToInvocationHandler(method, useSelf);
         addMethodTrailer(returnType, methodGen);
     }
 
     private void addSuperCallMethod(Method method) {
         Type returnType = Type.getType(method.getReturnType());
-        MethodGen methodGen = addMethodHeader(method, returnType, InvocationHandler.class);
+        MethodGen methodGen = addMethodHeader(method, returnType, InvocationHandler.class, true);
         //createBindSelf(1);
         createCallToSuper(method, returnType, 2);
         addMethodTrailer(returnType, methodGen);
@@ -245,15 +245,15 @@ public class ProxyGenerator implements Constants {
     // Constants.PUTFIELD));
     //}
     
-    private MethodGen addMethodHeader(Method method, Type returnType, Class firstArg) {
+    private MethodGen addMethodHeader(Method method, Type returnType, Class firstArg, boolean publicAccessor) {
         List types = new ArrayList();
         types.addAll(Arrays.asList(getArgumentTypes(method)));
         if (firstArg != null) {
             types.add(0, Type.getType(firstArg));
         }
         int newMods = method.getModifiers()
-                & ~(Modifier.NATIVE | Modifier.ABSTRACT | Modifier.PRIVATE | Modifier.PROTECTED)
-               | Modifier.PUBLIC;
+                & ~(Modifier.NATIVE | Modifier.ABSTRACT);
+        if (publicAccessor) newMods = newMods & ~(Modifier.PRIVATE | Modifier.PROTECTED) | Modifier.PUBLIC;
         MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
                 .toArray(new Type[] {}), generateParameterNames(types.size()), method.getName(),
                 classGen.getClassName(), instrList, constPool);

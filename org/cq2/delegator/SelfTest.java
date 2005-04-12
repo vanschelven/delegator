@@ -330,7 +330,7 @@ public class SelfTest extends TestCase {
 		}
 	}
 	public static abstract class ehhh {
-		public abstract void throwException() throws DeclaredException;
+		protected abstract void throwException() throws DeclaredException;
 
 		protected abstract void throwUnexpectedException();
 	}
