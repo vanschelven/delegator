@@ -5,7 +5,6 @@ package org.cq2.delegator.test;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
@@ -91,6 +90,85 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 		assertTrue(publicMethodCalled);
 	}
 	
+	public static class PrivateSelfCallingClass {
+	    
+	    private void m1() {
+	        m1Called = true;
+	        m2();
+	    }
+
+        private void m2() {
+            m2Called = true;
+        }
+	    
+	}
+	
+	public void testPrivateSelfCall() {
+        Self self = new Self(PrivateSelfCallingClass.class);
+        PrivateSelfCallingClass s = (PrivateSelfCallingClass) self.cast(PrivateSelfCallingClass.class);
+        s.m1();
+        assertTrue(m1Called);
+        assertTrue(m2Called);
+    }
+	
+	public static class ComplicatedOnPurpose {
+	    
+	    private boolean called = false;
+
+        private void m1() {
+	        //deze twee regels kunnen wel samen in de Delegator (of is dat te loos en moet het in de tests?) worden bijgeplaatst
+	        Self self = new Self(ComplicatedOnPurpose.class);
+	        ComplicatedOnPurpose complicated = (ComplicatedOnPurpose) self.cast(ComplicatedOnPurpose.class);
+	        complicated.m2();
+	        assertTrue(complicated.called);
+	        assertTrue(complicated.isCalled());
+	    }
+
+        private void m2() {
+            called = true;
+        }
+        
+        public boolean isCalled() {
+            return called;
+        }
+	    
+	}
+	
+// This is to show what doesn't work!
+//	public void testIReallyWantToMakeThingsComplicated() {
+//        ComplicatedOnPurpose complicated = new ComplicatedOnPurpose();
+//	    complicated.m1();
+//        assertFalse(complicated.isCalled());
+//	}
+	
+	public static class ForwardingClass {
+	    
+	    private boolean called = false;
+
+        private void m1() {
+            ForwardingClass forwardingClass = new ForwardingClass();
+            forwardingClass.m2();
+	        assertTrue(forwardingClass.isCalled());
+	    }
+
+        private void m2() {
+            called = true;
+        }
+        
+        public boolean isCalled() {
+            return called;
+        }
+	    
+	}
+	
+	public void testForwardingClass() {
+        Self self = new Self(ForwardingClass.class);
+        ForwardingClass clazz = (ForwardingClass) self.cast(ForwardingClass.class);
+        clazz.m1();
+        assertFalse(clazz.isCalled());
+	}
+	
+	
 	public void testPublicMethodExtendsProtectedMethod() {
 	    PublicMethod m = (PublicMethod) Delegator.extend(PublicMethod.class, ProtectedMethod.class);
 	    m.method();
@@ -112,6 +190,15 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 		m.method();
 		assertFalse(protectedMethodCalled);
 		assertTrue(publicMethodCalled);
+    }
+	
+	public void testPublicExtendsProtectedCastToProtected() {
+		ISelf result = new Self(PublicMethod.class);
+		result.add(ProtectedMethod.class);
+		ProtectedMethod m = (ProtectedMethod) result.cast(ProtectedMethod.class);
+		m.method();
+	    assertFalse(protectedMethodCalled);
+	    assertTrue(publicMethodCalled);
     }
 	
     public void testDelegateSubclass() {
@@ -294,7 +381,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     private static boolean m2Called;
     
     //is dit apart noodzakelijk? Is er verschil? zijn meer tests nodig? voorlopig niet!
-    public static class SelfCallingClass {
+    public static class ProtectedSelfCallingClass {
         
         protected void m1() {
             m1Called = true;
@@ -308,8 +395,8 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     }
     
     public void testScopingWithinComponent() {
-        Self self = new Self(SelfCallingClass.class);
-        SelfCallingClass s = (SelfCallingClass) self.cast(SelfCallingClass.class);
+        Self self = new Self(ProtectedSelfCallingClass.class);
+        ProtectedSelfCallingClass s = (ProtectedSelfCallingClass) self.cast(ProtectedSelfCallingClass.class);
         s.m1();
         assertTrue(m1Called);
         assertTrue(m2Called);
