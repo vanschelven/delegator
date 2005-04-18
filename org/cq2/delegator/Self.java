@@ -139,6 +139,7 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     public void become(Class clas) {
+        System.out.println(caller);
         Object newComponent = newComponent(clas);
         for (int i = 0; i < components.length; i++) {
             if (components[i] == caller)
