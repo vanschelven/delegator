@@ -90,37 +90,15 @@ public class Self implements InvocationHandler, ISelf {
                 throw e.getTargetException();
             }
         }
-        if ("cast".equals(name))
-            return cast((Class) args[0]);
-        else if ("add".equals(name)) {
-            if (args[0] instanceof Class)
-                add((Class) args[0]);
-            else if (args[0] instanceof Self)
-                add((Self) args[0]);
-            else if (args[0] instanceof Component)
-                add((Component) args[0]);
-            return null;
-        } else if ("become".equals(name)) {
-            become((Class) args[0], proxy);
-            return null;
-        } else if ("toString".equals(name))
-            return toString();
-        else if ("respondsTo".equals(name)) {
-            if (args[0] instanceof Method)
-                return Boolean.valueOf(respondsTo((Method) args[0]));
-            return Boolean.valueOf(respondsTo((Class) args[0]));
-        } else if ("component".equals(name))
-            return component(((Number) args[0]).intValue());
-        else if ("self".equals(name))
-            return self();
-        else if ("insert".equals(name) && args[0] instanceof Class) {
-            insert((Class) args[0]);
-            return null;
-        } else if ("decorate".equals(name) && args[0] instanceof Class) {
-            decorate((Class) args[0]);
-            return null;
-        }
-        throw new NoSuchMethodError(method.toString());
+       if ("become".equals(name)) {
+           become((Class) args[0], proxy);
+           return null;
+       } 
+       Method delegateMethod = MethodUtil.getDeclaredMethod(Self.class, name, (Class[]) argTypeListExludingInvocationHandler
+               .toArray(new Class[] {}));
+       if (delegateMethod != null)
+           return delegateMethod.invoke(this, args);
+       throw new NoSuchMethodError(method.toString());
     }
     
     private Object[] mapArgs(Object[] args) {

@@ -244,8 +244,6 @@ public class MultiThreadTest extends TestCase {
         vector.add("key");
     }
 
-    //ga hiermee verder zodrag de bugs zijn opgelost:
-    
 //    public void testManipulatedSelf3() {
 //        Self self = new Self(HashMap.class);
 //        Vector vector = (Vector) self.cast(Vector.class);

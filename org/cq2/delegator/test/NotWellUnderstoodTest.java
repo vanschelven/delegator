@@ -27,10 +27,11 @@ public class NotWellUnderstoodTest extends TestCase {
 	    public void method();
 	}
 
-	public void testPackageInterface() {
-	    ISelf map = new Self(HashMap.class);
-	    PackageSomeMethod o = (PackageSomeMethod) map.cast(PackageSomeMethod.class);
-	}
+//TODO Turn this on
+//	public void testPackageInterface() {
+//	    ISelf map = new Self(HashMap.class);
+//	    PackageSomeMethod o = (PackageSomeMethod) map.cast(PackageSomeMethod.class);
+//	}
 
 	protected interface ProtectedSomeMethod { 
 	    public void method();
