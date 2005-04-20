@@ -1,5 +1,6 @@
 package org.cq2.delegator.test;
 
+import java.util.HashMap;
 import java.util.Vector;
 
 import junit.framework.TestCase;
@@ -10,8 +11,7 @@ import org.cq2.delegator.Self;
 /**
  * @author klaas
  * 
- * TODO To change the template for this generated type comment go to Window -
- * Preferences - Java - Code Style - Code Templates
+ * De tests voor Become zijn in feite bugtests voor hoe het eerst was...
  */
 public class MultiThreadTest extends TestCase {
 
@@ -21,34 +21,12 @@ public class MultiThreadTest extends TestCase {
         becomeCounter = 0;
     }
 
-    // dit ding laten crashen kan veel simpeler
-    //    public class SelfManipulator extends Thread {
-    //        
-    //        private boolean stopped = false;
-    //        private Self self;
-    //
-    //        public SelfManipulator(Self self) {
-    //            this.self = self;
-    //        }
-    //        
-    //        public void run() {
-    //            while (!stopped) {
-    //                self.add("");
-    //            }
-    //        }
-    //        
-    //        public void stopRunning() {
-    //            stopped = true;
-    //        }
-    //        
-    //    }
-
     public class MyThread extends Thread {
 
         private int counter;
 
         private final static int NUMLOOPS = 200;
- 
+
         private boolean locksAreReleased;
 
         public synchronized void waitFor() throws InterruptedException {
@@ -68,7 +46,7 @@ public class MultiThreadTest extends TestCase {
             // hook
         }
 
-        private synchronized void releaseLocks() {
+        protected synchronized void releaseLocks() {
             locksAreReleased = true;
             notifyAll();
         }
@@ -96,7 +74,6 @@ public class MultiThreadTest extends TestCase {
         protected void interestingBit() {
             Vector vector = (Vector) self.cast(Vector.class);
             vector.add("a");
-            //System.out.println(this + " " + vector.toString());
         }
 
     }
@@ -123,7 +100,6 @@ public class MultiThreadTest extends TestCase {
     public abstract static class A1 implements A, ISelf {
 
         public void m() {
-            System.out.println(this.toString() + "    " + becomeCounter);
             becomeCounter++;
             if (becomeCounter < MAXBECOMES) {
                 become(A2.class);
@@ -135,7 +111,6 @@ public class MultiThreadTest extends TestCase {
     public abstract static class A2 implements A, ISelf {
 
         public void m() {
-            System.out.println(this.toString() + "    " + becomeCounter);
             becomeCounter++;
             if (becomeCounter < MAXBECOMES) {
                 become(A1.class);
@@ -147,8 +122,6 @@ public class MultiThreadTest extends TestCase {
     public static class B {
 
         public void n() {
-            //nothing here.
-            System.out.println(this + "   n");
         }
 
     }
@@ -189,6 +162,7 @@ public class MultiThreadTest extends TestCase {
     public class CComponentUser extends MyThread {
 
         private ISelf self;
+
         private Exception exception;
 
         public CComponentUser(ISelf self) {
@@ -197,23 +171,23 @@ public class MultiThreadTest extends TestCase {
 
         public void run() {
             try {
-            C c = (C) self.cast(C.class);
-            c.n(20);
+                C c = (C) self.cast(C.class);
+                c.n(20);
             } catch (Exception e) {
                 exception = e;
             }
+            releaseLocks();
         }
 
     }
 
     public static class C {
-        
+
         public void n(int i) {
-            System.out.println(i);
             if (i > 0)
                 n(i - 1);
         }
-        
+
     }
 
     public void testBecomeUsingTwoThreads2() throws InterruptedException {
@@ -226,5 +200,68 @@ public class MultiThreadTest extends TestCase {
         thread.waitFor();
         assertNull(thread.exception);
     }
+
+    //is deze manier van werken niet veel handiger dan de eerste manier?!
+    public class SelfManipulator extends Thread {
+
+        private boolean stopped = false;
+
+        private Self self;
+
+        public SelfManipulator(Self self) {
+            this.self = self;
+        }
+
+        public void run() {
+            while (!stopped) {
+                self.add(Vector.class);
+                self.remove(Vector.class);
+            }
+        }
+
+        public void stopRunning() {
+            stopped = true;
+        }
+
+    }
+
+    public void testManipulatedSelf() {
+        Self self = new Self(HashMap.class);
+        HashMap map = (HashMap) self.cast(HashMap.class);
+        SelfManipulator thread = new SelfManipulator(self);
+        thread.start();
+        for (int i = 0; i < 1000; i++) {
+            map.put("key" + i, "value" + i);
+        }
+        thread.stopRunning();
+    }
+
+    public void testManipulatedSelf2() {
+        Self self = new Self(HashMap.class);
+        Vector vector = (Vector) self.cast(Vector.class);
+        self.remove(Vector.class);
+        self.add(Vector.class);
+        vector.add("key");
+    }
+
+    //ga hiermee verder zodrag de bugs zijn opgelost:
+    
+//    public void testManipulatedSelf3() {
+//        Self self = new Self(HashMap.class);
+//        Vector vector = (Vector) self.cast(Vector.class);
+//        SelfManipulator thread = new SelfManipulator(self);
+//        thread.start();
+//        for (int i = 0; i < 1000; i++) {
+//            vector.add("key" + i);
+//        }
+//        thread.stopRunning();
+//    }
+//
+//    public void testManipulatedSelf4() { //this is where nr. 3 goes wrong
+//        Self self = new Self(Vector.class);
+//        Vector vector = (Vector) self.cast(Vector.class);
+//        self.remove(Vector.class);
+//        vector.add("key");
+//    }
 
 }

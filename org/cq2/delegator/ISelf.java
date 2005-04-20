@@ -5,7 +5,7 @@ import java.lang.reflect.Method;
 
 public interface ISelf {
 	Object cast(Class type);
-	void become(Class componentType);
+	void become(Class componentType) throws DelegatorException;
 	// add must become extend()
 	void add(Self self);
 	void add(Class componentType);
@@ -14,7 +14,7 @@ public interface ISelf {
 	//void remove();
 	//void remove(Object object);
 	//void remove(int component)
-	//void remove(Class c)
+	void remove(Class c);
 	Object component(int component);
 	// Object component(Class c);
 	// Object component();

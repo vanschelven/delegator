@@ -26,8 +26,6 @@ public class Self implements InvocationHandler, ISelf {
 
     private Object[] components;
 
-    private transient Object caller; // TODO threadsafe!
-
     private int nrOfComponents = 0;
 
     private Self(Component object) {
@@ -49,7 +47,6 @@ public class Self implements InvocationHandler, ISelf {
      */
     public Object invoke(Object proxy, Method method, Object[] args)
             throws Throwable {
-        this.caller = proxy;
         String name = method.getName();
         if ("equals".equals(name))
             return Boolean.valueOf(equals(args[0]));
@@ -70,7 +67,7 @@ public class Self implements InvocationHandler, ISelf {
         List argTypeListExludingInvocationHandler = new ArrayList();
         argTypeListExludingInvocationHandler.addAll(Arrays.asList(method.getParameterTypes()));
 
-        for (; i < nrOfComponents; i++) {
+       for (; i < nrOfComponents; i++) {
             try {
                 Method delegateMethod = MethodUtil.getDeclaredMethod(
                         components[i].getClass(), name, (Class[]) argTypeList
@@ -104,7 +101,7 @@ public class Self implements InvocationHandler, ISelf {
                 add((Component) args[0]);
             return null;
         } else if ("become".equals(name)) {
-            become((Class) args[0]);
+            become((Class) args[0], proxy);
             return null;
         } else if ("toString".equals(name))
             return toString();
@@ -138,14 +135,19 @@ public class Self implements InvocationHandler, ISelf {
         return Delegator.proxyFor(clas, this);
     }
 
-    public void become(Class clas) {
-        System.out.println(caller);
+    public void become(Class clas) throws DelegatorException {
+        throw new DelegatorException("Become may only be called from within components of self");
+    }
+    
+    private void become(Class clas, Object caller) {
         Object newComponent = newComponent(clas);
-        for (int i = 0; i < components.length; i++) {
-            if (components[i] == caller)
+        for (int i = 0; i < nrOfComponents; i++) {
+            if (components[i] == caller) {
                 components[i] = newComponent;
-            // break?
+                return;
+            }
         }
+        throw new DelegatorException("Become may only be called from within parts of self (is this ever reached???)");
     }
 
     public void add(Self object) {
@@ -253,5 +255,16 @@ public class Self implements InvocationHandler, ISelf {
         Self clone = new Self();
         clone.add(((ISelf) object).self());
         return (ISelf) clone.cast(object.getClass().getSuperclass());
+    }
+
+    public void remove(Class c) {
+        for (int i = 0; i < nrOfComponents; i++) {
+            if (components[i].getClass().getSuperclass().equals(c)) {
+                for (int j = i + 1; j < nrOfComponents; j++)
+                    components[j - 1] = components[j];
+                nrOfComponents--;
+                return;
+            }
+        }
     }
 }

@@ -23,30 +23,16 @@ import junit.framework.TestCase;
 
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
-/**
- * @author ejgroene
- *
- */
-/**
- * @author klaas
- *
- * TODO To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Style - Code Templates
- */
-/**
- * @author klaas
- *
- * TODO To change the template for this generated type comment go to
- * Window - Preferences - Java - Code Style - Code Templates
- */
 public class SelfTest extends TestCase {
 	private Object keyRef = null;
 	private Object valueRef = null;
 	private Object returnVal = new Object();
+	private static boolean component2MethodCalled;
 
 	protected void setUp() throws Exception {
 	    originalAddCalled = 0;
 	    subClassAddCalled = 0;
+	    component2MethodCalled = false;
     }
 	
 	public Object put(Object key, Object value) {
@@ -219,6 +205,9 @@ public class SelfTest extends TestCase {
 		assertEquals("modifiedSelf", objC.toString());
 	}
 
+	public void testEquals() {
+        
+    }
 	public void testHashCodeCannotBeRedefined() {
 		Object objA = newModifiedSelf(A.class).cast(Object.class);
 		assertEquals(99, objA.hashCode());
@@ -501,4 +490,77 @@ public class SelfTest extends TestCase {
 	    assertEquals(2, subClassAddCalled);
 	    assertEquals(0, originalAddCalled);
 	}
+	
+	public abstract static class Component1 implements ISelf {
+	    
+	    public void method() {
+	        become(Component2.class);
+	        method();
+	    }
+	    
+	}
+	
+	public static class Component2 {
+	    
+	    public void method() {
+	        component2MethodCalled = true;
+	    }
+	    
+	}
+
+	public void testBecome() {
+	    Self self = new Self(Component1.class);
+	    Component1 component = (Component1) self.cast(Component1.class);
+	    component.method();
+	    assertTrue(component2MethodCalled);
+	}
+	
+	public void testBecomeCanOnlyBeCalledFromWithin() {
+	    Self self = new Self(Component1.class);
+	    try {
+	        self.become(Component2.class);
+	        fail();
+	    } catch (Exception e) {
+	    }
+	}
+
+	public void testBecomeCanOnlyBeCalledFromWithin2() {
+	    Self self = new Self(Component1.class);
+	    Self proxy = (Self) self.cast(Self.class);
+	    try {
+	        proxy.become(Component2.class);
+	        fail();
+	    } catch (Exception e) {
+	    }
+	}
+	
+	public void testRemove() {
+	    Self self = new Self();
+	    self.add(Vector.class);
+	    self.add(HashMap.class);
+	    assertTrue(self.respondsTo(Vector.class));
+	    assertTrue(self.respondsTo(HashMap.class));
+	    self.remove(Vector.class);
+	    assertFalse(self.respondsTo(Vector.class));
+	    self.remove(HashMap.class);
+	    assertFalse(self.respondsTo(HashMap.class));
+	}
+	
+	public static class ResemblingSelf {
+	    
+	    public void add(){}
+	    
+	}
+	
+	public void testSelfResemblingStuffBug() {
+        Self self = new Self();
+        ResemblingSelf resemblingSelf = (ResemblingSelf) self.cast(ResemblingSelf.class);
+        try {
+        	resemblingSelf.add();
+        	fail();
+        } catch (NoSuchMethodError e) { 
+        } catch (Exception e) {
+            fail(e + " thrown in stead of a NoSuchMethodError");
+        }
+    }
 }
