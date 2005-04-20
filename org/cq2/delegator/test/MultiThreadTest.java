@@ -2,10 +2,12 @@ package org.cq2.delegator.test;
 
 import java.util.HashMap;
 import java.util.Vector;
+import java.util.concurrent.Semaphore;
 
 import junit.framework.TestCase;
 
 import org.cq2.delegator.ISelf;
+import org.cq2.delegator.ISemaphore;
 import org.cq2.delegator.Self;
 
 /**
@@ -236,30 +238,192 @@ public class MultiThreadTest extends TestCase {
         thread.stopRunning();
     }
 
-    public void testManipulatedSelf2() {
-        Self self = new Self(HashMap.class);
-        Vector vector = (Vector) self.cast(Vector.class);
-        self.remove(Vector.class);
-        self.add(Vector.class);
-        vector.add("key");
+    public class SelfManipulator2 extends Thread {
+
+        private boolean stopped = false;
+
+        private Self self;
+
+        private Class clas;
+
+        public SelfManipulator2(Self self, Class clas) {
+            this.self = self;
+            this.clas = clas;
+        }
+
+        public void run() {
+            while (!stopped) {
+                self.decorate(clas);
+                self.remove(clas);
+            }
+        }
+
+        public void stopRunning() {
+            stopped = true;
+        }
+
     }
 
-//    public void testManipulatedSelf3() {
-//        Self self = new Self(HashMap.class);
-//        Vector vector = (Vector) self.cast(Vector.class);
-//        SelfManipulator thread = new SelfManipulator(self);
-//        thread.start();
-//        for (int i = 0; i < 1000; i++) {
-//            vector.add("key" + i);
-//        }
-//        thread.stopRunning();
-//    }
-//
-//    public void testManipulatedSelf4() { //this is where nr. 3 goes wrong
-//        Self self = new Self(Vector.class);
-//        Vector vector = (Vector) self.cast(Vector.class);
-//        self.remove(Vector.class);
-//        vector.add("key");
-//    }
+    public void testManipulatedSelf2() {
+        Self self = new Self(HashMap.class);
+        HashMap map = (HashMap) self.cast(HashMap.class);
+        SelfManipulator2 thread = new SelfManipulator2(self, Vector.class);
+        thread.start();
+        for (int i = 0; i < 1000; i++) {
+            map.put("key" + i, "value" + i);
+        }
+        thread.stopRunning();
+    }
+
+    public static class X {
+
+        public void m() {
+        }
+
+    }
+
+    public static class Y {
+
+        public void m() {
+        }
+
+    }
+
+    public void testSameMethodRemoveOne() {
+        Self self = new Self(X.class);
+        X x = (X) self.cast(X.class);
+        SelfManipulator2 thread = new SelfManipulator2(self, Y.class);
+        thread.start();
+        for (int i = 0; i < 1000; i++) {
+            x.m();
+        }
+        thread.stopRunning();
+    }
+
+    //dit zou wel kunnen met synchronized spul
+    public void testSemaphore() throws InterruptedException {
+        java.util.concurrent.Semaphore semaphore = new java.util.concurrent.Semaphore(
+                1);
+        //semaphore.acquire();
+        semaphore.acquire();
+        //semaphore.release();
+        semaphore.release();
+    }
+
+    private void n(org.cq2.delegator.Semaphore s, int i)
+            throws InterruptedException {
+        s.acquire();
+        if (i > 0)
+            n(s, i - 1);
+        s.release();
+    }
+
+    public void testDelegatorSemaphoreCanDealWithRecursiveStuff()
+            throws InterruptedException {
+        org.cq2.delegator.Semaphore semaphore = new org.cq2.delegator.Semaphore();
+        n(semaphore, 10);
+    }
+
+    private org.cq2.delegator.Semaphore semaphore;
+
+    private boolean b = false;
+
+    public class BlaaaaThread extends Thread {
+
+        private boolean stopped = false;
+
+        public void run() {
+            while (!stopped) {
+                try {
+                    semaphore.acquire();
+                    assertFalse(b);
+                    b = true;
+                    b = false;
+                    semaphore.release();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+
+        public void stopRunning() {
+            stopped = true;
+        }
+
+    }
+
+    public void testDelegatorSemaphoreReallyIsASemaphore() {
+        semaphore = new org.cq2.delegator.Semaphore();
+        BlaaaaThread thread1 = new BlaaaaThread(); thread1.start();
+        BlaaaaThread thread2 = new BlaaaaThread(); thread2.start();
+        BlaaaaThread thread3 = new BlaaaaThread(); thread3.start();
+        for(int i = 0; i< 10000; i++) {
+            //do nothing but wait for the other threads;
+        }
+        thread1.stopRunning();
+        thread2.stopRunning();
+        thread3.stopRunning();
+    }
+    
+    public abstract static class Counter implements ISemaphore {
+
+        private int value = 0;
+
+        public int inc() throws InterruptedException {
+            acquire();
+            value++;
+            int localValue = value;
+            release();
+            return localValue;
+        }
+        
+        protected void setValue(int i) {
+            value = i;
+        }
+        
+        public int getValue() {
+            return value;
+        }
+
+    }
+
+    public abstract static class ForwardingCounter implements ISemaphore {
+        
+        public abstract int getValue();
+        public abstract void setValue(int i);
+        
+        public int doubleValue() throws InterruptedException {
+            acquire();
+            setValue(getValue() * 2);
+            int localValue = getValue(); //aaaaarrggg!! dit is erg lelijk.
+            release();
+            return localValue;
+        }
+        
+    }
+    
+    private Vector list;
+    private Counter counter;
+    
+    public class CounterThread extends MyThread {
+        
+        protected void interestingBit() {
+            try {
+                list.add(new Integer(counter.inc()));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        
+    }
+    
+    public void testExampleFromProposal1() {
+        list = new Vector();
+        Self self = new Self(Counter.class);
+        counter = (Counter) self.cast(Counter.class);
+        new CounterThread().start();
+        new CounterThread().start();
+        
+    }
 
 }

@@ -563,4 +563,9 @@ public class SelfTest extends TestCase {
             fail(e + " thrown in stead of a NoSuchMethodError");
         }
     }
+	
+	public void testCastingIsUnsafe() {
+        new Self().cast(Vector.class);
+    }
+	
 }
