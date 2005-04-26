@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
-import java.util.Vector;
 
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.method.MethodUtil;
@@ -74,11 +73,11 @@ public class Self implements InvocationHandler, ISelf {
                     Object component = components[i];
                     Method delegateMethod = MethodUtil.getDeclaredMethod(
                             component.getClass(), name, (Class[]) argTypeList
-                                    .toArray(new Class[] {}));
+                                    .toArray(new Class[] {}), method.getExceptionTypes());
                     Method superDelegateMethod = MethodUtil.getDeclaredMethod(
                             component.getClass().getSuperclass(), name,
                             (Class[]) argTypeListExludingInvocationHandler
-                                    .toArray(new Class[] {}));
+                                    .toArray(new Class[] {}), method.getExceptionTypes());
                     boolean componentMethodIsProtected = (delegateMethod != null)
                             && (superDelegateMethod == null);
                     if (delegateMethod != null
@@ -106,7 +105,7 @@ public class Self implements InvocationHandler, ISelf {
 
         Method delegateMethod = MethodUtil.getDeclaredMethod(Self.class, name,
                 (Class[]) argTypeListExludingInvocationHandler
-                        .toArray(new Class[] {}));
+                        .toArray(new Class[] {}), method.getExceptionTypes());
         if (delegateMethod != null)
             return delegateMethod.invoke(this, args);
         throw new NoSuchMethodError(method.toString());
@@ -138,7 +137,7 @@ public class Self implements InvocationHandler, ISelf {
             }
         }
         throw new DelegatorException(
-                "Become may only be called from within parts of self (is this ever reached???)");
+                "Become may only be called from within parts of self");
     }
 
     public void add(Self object) {

@@ -257,6 +257,10 @@ public class ProxyGenerator implements Constants {
         MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
                 .toArray(new Type[] {}), generateParameterNames(types.size()), method.getName(),
                 classGen.getClassName(), instrList, constPool);
+        Class[] exceptionTypes = method.getExceptionTypes();
+        for (int i = 0; i < exceptionTypes.length; i++) {
+            methodGen.addException(exceptionTypes[i].getName());
+        }
         return methodGen;
     }
 

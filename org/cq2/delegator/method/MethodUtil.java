@@ -7,8 +7,6 @@ package org.cq2.delegator.method;
 import java.lang.reflect.Method;
 import java.util.Set;
 
-import org.apache.bcel.generic.Type;
-
 import sun.reflect.ReflectionFactory;
 
 public class MethodUtil {
@@ -31,14 +29,13 @@ public class MethodUtil {
 
     //differs from class.getDeclaredMethod in the acceptance of less specific
     // types as well
-    public static Method getDeclaredMethod(Class clazz, String name,
-            Class[] parameterTypes) throws SecurityException {
-        Method method = searchMethods(clazz.getMethods(), name, parameterTypes);
+    public static Method getDeclaredMethod(Class clazz, String name, Class[] parameterTypes, Class[] exceptionTypes) {
+        Method method = searchMethods(clazz.getMethods(), name, parameterTypes, exceptionTypes);
         return method;
     }
-
+    
     private static Method searchMethods(Method[] methods,
-            String name, Class[] parameterTypes) {
+            String name, Class[] parameterTypes, Class[] exceptionTypes) {
         Method res = null;
         String internedName = name.intern();
         for (int i = 0; i < methods.length; i++) {
@@ -46,12 +43,35 @@ public class MethodUtil {
             if (m.getName() == internedName
                     && parameterTypesMatch(parameterTypes, m
                             .getParameterTypes())
+                    && exceptionTypesMatch(exceptionTypes, m.getExceptionTypes())
                     && (res == null || res.getReturnType().isAssignableFrom(
                             m.getReturnType())))
                 res = m;
         }
 
         return (res == null ? res : getReflectionFactory().copyMethod(res));
+    }
+
+    private static boolean exceptionTypesMatch(Class[] desiredExceptionTypes, Class[] actualExceptionTypes) {
+        if (desiredExceptionTypes == null) {
+            return actualExceptionTypes == null || actualExceptionTypes.length == 0;
+        }
+
+        if (actualExceptionTypes == null) {
+            return true;
+        }
+
+        for (int i = 0; i < actualExceptionTypes.length; i++) {
+            boolean found = false;
+            for (int j = 0; j < desiredExceptionTypes.length; j++) {
+                if (desiredExceptionTypes[j].isAssignableFrom(actualExceptionTypes[i])) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) return false;
+        }
+        return true;
     }
 
     // Fetches the factory for reflective objects

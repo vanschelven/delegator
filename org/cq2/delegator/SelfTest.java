@@ -9,7 +9,6 @@ import java.lang.reflect.Method;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -110,7 +109,88 @@ public class SelfTest extends TestCase {
 	public byte readByte() {
 		return 0;
 	}
+	
+	public static class X {
+	    
+	    public void m() throws DelegatorException, SQLException {
+	        
+	    }
+	    
+	}
+	
+	public static class Y {
+	    
+	    public void m() {
+	        
+	    }
+	    
+	}
+	
+	public static class Z {
+	    
+	    public void m() throws SQLException, DelegatorException {
+	        
+	    }
+	    
+	}
+	
+	public void testMissingExceptionForClasses() throws DelegatorException, SQLException, SecurityException, NoSuchMethodException {
+	    Y y = (Y) new Self(X.class).cast(Y.class);
+	    try {
+	        y.m();
+	        fail();
+	    } catch (NoSuchMethodError e) {  }
+	    
+	}
 
+	public void testExceptionsInWrongOrder() throws DelegatorException, SQLException, SecurityException, NoSuchMethodException {
+	    X x = (X) new Self(Z.class).cast(X.class);
+        x.m();
+	}
+	
+	//deze interface & 2 classes laten java's gedrag zien...
+	public interface IWithException {
+	    
+	    public void m() throws Exception;
+	    
+	}
+	
+	public class WithSubclassException {
+	    
+	    public void m() throws SQLException {
+	        
+	    }
+	}
+	
+	public class WithoutException implements IWithException {
+
+        public void m() {
+            
+        }
+	    
+	}
+
+	public void testExceptionsMayBeLeftOut() throws DelegatorException, SQLException {
+	    X x = (X) new Self(Y.class).cast(X.class);
+        x.m();
+	}
+	
+	public class DelegatorException2 extends DelegatorException {
+
+        public DelegatorException2(String string) {
+            super(string);
+        }}
+	
+	public static class X2 {
+	    
+	    public void m() throws SQLException, DelegatorException2 {}
+	}
+	
+	public void testExceptionsMayBeMoreSpecific() throws DelegatorException, SQLException {
+	    X x = (X) new Self(X2.class).cast(X.class);
+        x.m();
+	}
+	
 	public void testPublicOnly() {
 		List list = (List) Delegator.forInterface(List.class, this);
 		try {
@@ -327,7 +407,6 @@ public class SelfTest extends TestCase {
 	public void testTargetException() {
 		Self self = new Self(ThrowException.class);
 		ehhh te = (ehhh) self.cast(ehhh.class);
-		System.out.println(Arrays.asList(te.getClass().getMethods()));
 		//		ThrowException te = (ThrowException) self.cast(ThrowException.class);
 		try {
 			te.throwException();

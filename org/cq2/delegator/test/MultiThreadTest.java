@@ -2,7 +2,6 @@ package org.cq2.delegator.test;
 
 import java.util.HashMap;
 import java.util.Vector;
-import java.util.concurrent.Semaphore;
 
 import junit.framework.TestCase;
 
@@ -264,7 +263,6 @@ public class MultiThreadTest extends TestCase {
 
     }
 
-    //deze heeft een paar keer een phase of the moon bug (rood) gegeven
     public void testManipulatedSelf2() {
         Self self = new Self(HashMap.class);
         HashMap map = (HashMap) self.cast(HashMap.class);
@@ -433,6 +431,19 @@ public class MultiThreadTest extends TestCase {
             assertTrue(list.contains(new Integer(i)));
         }
     }
+    
+//    public void testExampleFromProposalSingleThread() throws InterruptedException {
+//        list = new Vector();
+//        Self self = new Self(Counter.class);
+//        self.add(org.cq2.delegator.Semaphore.class);
+//        counter = (Counter) self.cast(Counter.class);
+//        for (int i = 1; i <= 400; i++) {
+//            list.add(new Integer(counter.inc()));
+//        }
+//        for (int i = 1; i <= 400; i++) {
+//            assertTrue(list.contains(new Integer(i)));
+//        }
+//    }
     
     
 

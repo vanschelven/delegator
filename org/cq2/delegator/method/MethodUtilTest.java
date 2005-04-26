@@ -6,12 +6,15 @@ package org.cq2.delegator.method;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Vector;
 
 import junit.framework.TestCase;
+
+import org.cq2.delegator.DelegatorException;
 
 
 public class MethodUtilTest extends TestCase {
@@ -61,34 +64,66 @@ public class MethodUtilTest extends TestCase {
 	}
 	
 	public void testGetMethod() throws SecurityException, NoSuchMethodException {
-        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Object.class});
+        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Object.class}, null);
         assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Object.class}), result);
     }
 	
 	public void testGetMethodRefined() throws SecurityException, NoSuchMethodException {
-        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Integer.class});
+        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Integer.class}, null);
         assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Object.class}), result);
     }
 	
 	public void testGetMethodUnrefined() throws SecurityException {
-        Method result = MethodUtil.getDeclaredMethod(Vector.class, "addAll", new Class[]{Object.class});
+        Method result = MethodUtil.getDeclaredMethod(Vector.class, "addAll", new Class[]{Object.class}, null);
         assertNull(result);
     }
 	
 	public void testGetMethodPrimitiveType() throws SecurityException, NoSuchMethodException {
-        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Integer.TYPE, Object.class});
+        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Integer.TYPE, Object.class}, null);
         assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Integer.TYPE, Object.class}), result);
 	}
 	
 	public void testBoxing() throws SecurityException, NoSuchMethodException {
-        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Integer.TYPE});
+        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Integer.TYPE}, null);
         assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Object.class}), result);
 	}
 	
 	public void testBoxing2() throws SecurityException, NoSuchMethodException {
-        Method result = MethodUtil.getDeclaredMethod(Vector.class, "addAll", new Class[]{Integer.TYPE});
+        Method result = MethodUtil.getDeclaredMethod(Vector.class, "addAll", new Class[]{Integer.TYPE}, null);
         assertNull(result);
 	}
+	
+	public class X {
+	    
+	    public void m() throws DelegatorException {
+	        
+	    }
+	    
+	}
+	
+	public void testExceptionsMatch() throws SecurityException, NoSuchMethodException {
+	    Method result = MethodUtil.getDeclaredMethod(X.class, "m", new Class[]{}, new Class[]{DelegatorException.class});
+	    assertEquals(X.class.getDeclaredMethod("m", new Class[]{}), result);
+	}
+	
+	public void testExceptionsDoNotMatch() throws SecurityException, NoSuchMethodException {
+	    Method result = MethodUtil.getDeclaredMethod(X.class, "m", new Class[]{}, new Class[]{});
+	    assertNull(result);
+	}
+	
+	public class Y {
+	    
+	    public void m() throws SQLException, DelegatorException {
+	        
+	    }
+	}
+	
+	public void testExceptionOrderIsIrrelevant() throws SecurityException, NoSuchMethodException {
+	    Method result = MethodUtil.getDeclaredMethod(Y.class, "m", new Class[]{}, new Class[]{DelegatorException.class, SQLException.class});
+	    assertEquals(Y.class.getDeclaredMethod("m", new Class[]{}), result);
+	}
+	
+
 	
 	public class A {
 	    private void privateMethod() {
@@ -97,7 +132,7 @@ public class MethodUtilTest extends TestCase {
 	}
 	
 	public void testGetPrivateMethod() throws SecurityException, NoSuchMethodException {
-        Method result = MethodUtil.getDeclaredMethod(A.class, "privateMethod", new Class[]{});
+        Method result = MethodUtil.getDeclaredMethod(A.class, "privateMethod", new Class[]{}, null);
         assertNull(result);
     }
 

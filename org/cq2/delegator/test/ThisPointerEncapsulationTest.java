@@ -1,10 +1,6 @@
 package org.cq2.delegator.test;
 
-import java.util.Vector;
-
 import junit.framework.TestCase;
-
-import org.cq2.delegator.Delegator;
 
 public class ThisPointerEncapsulationTest extends TestCase {
 
