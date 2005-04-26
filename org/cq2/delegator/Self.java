@@ -6,13 +6,13 @@ package org.cq2.delegator;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
+import java.util.Vector;
 
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.method.MethodUtil;
@@ -177,7 +177,7 @@ public class Self implements InvocationHandler, ISelf {
         add(clas);
     }
 
-    public void insert(Class componentType) {
+    public synchronized void insert(Class componentType) {
         Object[] newComponents = new Object[components.length + 1];
         newComponents[0] = newComponent(componentType);
         System.arraycopy(components, 0, newComponents, 1, nrOfComponents);
