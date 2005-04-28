@@ -229,8 +229,9 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     public static Object self(Object obj) {
-        return obj instanceof Component ? ((ISelf) obj).cast(obj.getClass()
-                .getSuperclass()) : obj;
+        return obj instanceof Component ? 
+                ((ISelf) obj).cast(obj.getClass().getSuperclass()) :
+                   obj;
     }
 
     public void decorate(Class decorator) {

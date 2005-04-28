@@ -360,6 +360,7 @@ public class ProxyGenerator implements Constants {
             instrList.append(instrFact.createFieldAccess(classGen.getClassName(), "self",
                     new ObjectType("java.lang.reflect.InvocationHandler"), Constants.GETFIELD));
         } else {
+            // ((Stack)(org.cq2.delegator.Self.self.get()).peek()
             instrList.append(instrFact.createFieldAccess("org.cq2.delegator.Self", "self",
                     new ObjectType("java.lang.ThreadLocal"), Constants.GETSTATIC));
             instrList.append(instrFact.createInvoke("java.lang.ThreadLocal", "get", Type.OBJECT,

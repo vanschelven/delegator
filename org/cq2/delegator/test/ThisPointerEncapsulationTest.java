@@ -2,6 +2,8 @@ package org.cq2.delegator.test;
 
 import junit.framework.TestCase;
 
+import org.cq2.delegator.Self;
+
 public class ThisPointerEncapsulationTest extends TestCase {
 
     public class SelfPointingClass {
@@ -25,7 +27,42 @@ public class ThisPointerEncapsulationTest extends TestCase {
                 
     }
     
-//TODO Turn this on
+    public static class Node {
+        
+        Document document;
+        
+        public Node(Document document) {
+            this.document = document;
+        }
+        
+        public Document getDocument() {
+            return document;
+        }
+        
+    }
+    
+    public static class Document {
+        
+        public Node createNode() {
+            return new Node(this);
+        }
+        
+    }
+    
+    public void testExampleFromThesisRegularJava() {
+        Document document = new Document();
+        Node node = document.createNode();
+        assertEquals(document, node.getDocument());
+    }
+    
+    public void testExampleFromThesis() {
+        Self self = new Self(Document.class);
+        Document document = (Document) self.cast(Document.class);
+        Node node = document.createNode();
+        assertEquals(document, node.getDocument());
+    }
+    
+// TODO Turn this on: the final test
 //    public void testDelegation() {
 //        DelegatingSelfPointingClass a1 = (DelegatingSelfPointingClass) Delegator.extend(DelegatingSelfPointingClass.class, Vector.class);
 //        DelegatingSelfPointingClass a2 = a1.returnThis();

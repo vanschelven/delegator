@@ -286,8 +286,9 @@ public class SelfTest extends TestCase {
 	}
 
 	public void testEquals() {
-        
+        //TODO!!!!!
     }
+	
 	public void testHashCodeCannotBeRedefined() {
 		Object objA = newModifiedSelf(A.class).cast(Object.class);
 		assertEquals(99, objA.hashCode());
@@ -297,7 +298,7 @@ public class SelfTest extends TestCase {
 		assertEquals(99, objC.hashCode());
 	}
 
-	public void testEqualsCannotBeRedifined() {
+	public void testEqualsCannotBeRedefined() {
 		Self self1 = new Self();
 		Self self2 = new Self();
 		assertFalse(self1.equals(self2));
