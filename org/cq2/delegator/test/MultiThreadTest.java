@@ -5,8 +5,10 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
+import org.cq2.delegator.IMonitor;
 import org.cq2.delegator.ISelf;
 import org.cq2.delegator.ISemaphore;
+import org.cq2.delegator.Monitor;
 import org.cq2.delegator.Self;
 
 /**
@@ -353,17 +355,20 @@ public class MultiThreadTest extends TestCase {
 
     public void testDelegatorSemaphoreReallyIsASemaphore() {
         semaphore = new org.cq2.delegator.Semaphore();
-        BlaaaaThread thread1 = new BlaaaaThread(); thread1.start();
-        BlaaaaThread thread2 = new BlaaaaThread(); thread2.start();
-        BlaaaaThread thread3 = new BlaaaaThread(); thread3.start();
-        for(int i = 0; i< 10000; i++) {
+        BlaaaaThread thread1 = new BlaaaaThread();
+        thread1.start();
+        BlaaaaThread thread2 = new BlaaaaThread();
+        thread2.start();
+        BlaaaaThread thread3 = new BlaaaaThread();
+        thread3.start();
+        for (int i = 0; i < 10000; i++) {
             //do nothing but wait for the other threads;
         }
         thread1.stopRunning();
         thread2.stopRunning();
         thread3.stopRunning();
     }
-    
+
     public abstract static class Counter implements ISemaphore {
 
         private int value = 0;
@@ -375,11 +380,11 @@ public class MultiThreadTest extends TestCase {
             release();
             return localValue;
         }
-        
+
         protected void setValue(int i) {
             value = i;
         }
-        
+
         public int getValue() {
             return value;
         }
@@ -387,10 +392,11 @@ public class MultiThreadTest extends TestCase {
     }
 
     public abstract static class ForwardingCounter implements ISemaphore {
-        
+
         public abstract int getValue();
+
         public abstract void setValue(int i);
-        
+
         public int doubleValue() throws InterruptedException {
             acquire();
             setValue(getValue() * 2);
@@ -398,14 +404,15 @@ public class MultiThreadTest extends TestCase {
             release();
             return localValue;
         }
-        
+
     }
-    
+
     private Vector list;
+
     private Counter counter;
-    
+
     public class CounterThread extends MyThread {
-        
+
         protected void interestingBit() {
             try {
                 list.add(new Integer(counter.inc()));
@@ -413,9 +420,9 @@ public class MultiThreadTest extends TestCase {
                 e.printStackTrace();
             }
         }
-        
+
     }
-    
+
     public void testExampleFromProposal1() throws InterruptedException {
         list = new Vector();
         Self self = new Self(Counter.class);
@@ -431,20 +438,57 @@ public class MultiThreadTest extends TestCase {
             assertTrue(list.contains(new Integer(i)));
         }
     }
-    
-//    public void testExampleFromProposalSingleThread() throws InterruptedException {
-//        list = new Vector();
-//        Self self = new Self(Counter.class);
-//        self.add(org.cq2.delegator.Semaphore.class);
-//        counter = (Counter) self.cast(Counter.class);
-//        for (int i = 1; i <= 400; i++) {
-//            list.add(new Integer(counter.inc()));
-//        }
-//        for (int i = 1; i <= 400; i++) {
-//            assertTrue(list.contains(new Integer(i)));
-//        }
-//    }
-    
-    
+
+    public abstract static class MonitorCounter implements IMonitor {
+
+        private int value = 0;
+
+        public int inc() throws InterruptedException {
+            synchronized (getMonitor()) {
+                value++;
+                return value;
+            }
+        }
+
+        protected void setValue(int i) {
+            value = i;
+        }
+
+        public int getValue() {
+            return value;
+        }
+
+    }
+
+    MonitorCounter monitorCounter;
+
+    public class MonitorCounterThread extends MyThread {
+
+        protected void interestingBit() {
+            try {
+                list.add(new Integer(monitorCounter.inc()));
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public void testExampleFromProposalWithMonitor()
+            throws InterruptedException {
+        list = new Vector();
+        Self self = new Self(MonitorCounter.class);
+        self.add(Monitor.class);
+        monitorCounter = (MonitorCounter) self.cast(MonitorCounter.class);
+        MonitorCounterThread thread1 = new MonitorCounterThread();
+        thread1.start();
+        MonitorCounterThread thread2 = new MonitorCounterThread();
+        thread2.start();
+        thread1.waitFor();
+        thread2.waitFor();
+        for (int i = 1; i <= 400; i++) {
+            assertTrue(list.contains(new Integer(i)));
+        }
+    }
 
 }
