@@ -47,19 +47,36 @@ public class ThisPointerEncapsulationTest extends TestCase {
             return new Node(this);
         }
         
+        public int getOne() {
+            return 1;
+        }
+        
+    }
+    
+    public void testExampleFromProposalRegularJava() {
+        Document document = new Document();
+        Node node = document.createNode();
+        assertEquals(document, node.getDocument());
+    }
+    
+    public void testExampleFromProposal() {
+        Self self = new Self(Document.class);
+        Document document = (Document) self.cast(Document.class);
+        Node node = document.createNode();
+        assertEquals(document, node.getDocument());
     }
     
     public void testExampleFromThesisRegularJava() {
         Document document = new Document();
         Node node = document.createNode();
-        assertEquals(document, node.getDocument());
+        assertEquals(1, node.getDocument().getOne());
     }
     
     public void testExampleFromThesis() {
         Self self = new Self(Document.class);
         Document document = (Document) self.cast(Document.class);
         Node node = document.createNode();
-        assertEquals(document, node.getDocument());
+        assertEquals(1, node.getDocument().getOne());
     }
     
 // TODO Turn this on: the final test
