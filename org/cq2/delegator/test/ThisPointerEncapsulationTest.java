@@ -9,7 +9,9 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import org.apache.bcel.Constants;
 import org.apache.bcel.Repository;
+import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
@@ -19,7 +21,7 @@ import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.Type;
 import org.cq2.delegator.Self;
 
-public class ThisPointerEncapsulationTest extends TestCase {
+public class ThisPointerEncapsulationTest extends TestCase implements Constants {
 
     public class SelfPointingClass {
         
@@ -170,14 +172,15 @@ public class ThisPointerEncapsulationTest extends TestCase {
         return new Nodeeeeee(this);
     }
     
-    public void testImplementationBigTime() throws SecurityException, NoSuchMethodException {
+    public void testImplementationBigTime() throws SecurityException, NoSuchMethodException, InstantiationException, IllegalAccessException, ClassNotFoundException {
         String superClassName = getClass().getName();
         ClassGen classGen = new ClassGen(superClassName + "$component", superClassName, "", Modifier.PUBLIC,
                 null);
         ConstantPoolGen constPool = classGen.getConstantPool();
         InstructionFactory instrFact = new InstructionFactory(classGen, constPool);
         //InstructionList instrList = new InstructionList();
-        
+        addDefaultConstructor(classGen, constPool, instrFact);
+       
         //the method i'm trying to make in the end
         Method method = getClass().getMethod("myCrashingMethod", null);
         //init & add method header (wel reeds aangepast)
@@ -213,21 +216,26 @@ System.out.println(myInstrList);
         }
         
         //add method trailer (met verwijderingen)
-        methodGen.setMaxStack();
-        methodGen.setMaxLocals();
+        methodGen.setMaxStack(superClassMethod.getCode().getMaxStack());
+        final int INVOCATIONHANDLERISLOCAL = 1;
+        methodGen.setMaxLocals(superClassMethod.getCode().getMaxLocals() + INVOCATIONHANDLERISLOCAL);
 
         classGen.addMethod(methodGen.getMethod());
+        byte[] bytes = classGen.getJavaClass().getBytes();
+        Object aap = new SingleClassLoader(bytes).loadClass("aap").newInstance();
+        System.out.println(aap);
         
         //instrList.dispose();
     }
 
-    public void testJustTryToCopy() throws SecurityException, NoSuchMethodException {
+    public void testJustTryToCopy() throws SecurityException, NoSuchMethodException, InstantiationException, IllegalAccessException, ClassNotFoundException {
         String superClassName = getClass().getName();
         ClassGen classGen = new ClassGen(superClassName + "$component", superClassName, "", Modifier.PUBLIC,
                 null);
         ConstantPoolGen constPool = classGen.getConstantPool();
         InstructionFactory instrFact = new InstructionFactory(classGen, constPool);
         //InstructionList instrList = new InstructionList();
+        addDefaultConstructor(classGen, constPool, instrFact);
         
         //the method i'm trying to make in the end
         Method method = getClass().getMethod("myCrashingMethod", null);
@@ -264,22 +272,26 @@ System.out.println(myInstrList);
         }
         
         //add method trailer (met verwijderingen)
-        methodGen.setMaxStack();
-        methodGen.setMaxLocals();
+        methodGen.setMaxStack(superClassMethod.getCode().getMaxStack());
+        final int INVOCATIONHANDLERISLOCAL = 1;
+        methodGen.setMaxLocals(superClassMethod.getCode().getMaxLocals() + INVOCATIONHANDLERISLOCAL);
 
         classGen.addMethod(methodGen.getMethod());
+        byte[] bytes = classGen.getJavaClass().getBytes();
+        Object aap = new SingleClassLoader(bytes).loadClass("aap").newInstance();
+        System.out.println(aap);
         
         //instrList.dispose();
     }
 
-    public void testJustTryToCopy2() throws SecurityException, NoSuchMethodException {
+    public void testJustTryToCopy2() throws SecurityException, NoSuchMethodException, InstantiationException, IllegalAccessException, ClassNotFoundException {
         String superClassName = getClass().getName();
         ClassGen classGen = new ClassGen(superClassName + "$component", superClassName, "", Modifier.PUBLIC,
                 null);
         ConstantPoolGen constPool = classGen.getConstantPool();
         InstructionFactory instrFact = new InstructionFactory(classGen, constPool);
         //InstructionList instrList = new InstructionList();
-        
+        addDefaultConstructor(classGen, constPool, instrFact);
         //the method i'm trying to make in the end
         Method method = getClass().getMethod("myCrashingMethod", null);
         //init & add method header (wel reeds aangepast)
@@ -308,13 +320,31 @@ System.out.println(myInstrList);
         System.out.println(methodGen);
         
         //add method trailer (met verwijderingen)
-        methodGen.setMaxStack();
-        methodGen.setMaxLocals();
+        methodGen.setMaxStack(superClassMethod.getCode().getMaxStack());
+        methodGen.setMaxLocals(superClassMethod.getCode().getMaxLocals());
 
         classGen.addMethod(methodGen.getMethod());
-        
+        byte[] bytes = classGen.getJavaClass().getBytes();
+        Object aap = new SingleClassLoader(bytes).loadClass("aap").newInstance();
+        System.out.println(aap);
         //instrList.dispose();
     }
+    
+    private void addDefaultConstructor(ClassGen classGen, ConstantPoolGen constPool, InstructionFactory instrFact) {
+        InstructionList instrList = new InstructionList();
+        MethodGen methodGen = new MethodGen(ACC_PUBLIC, Type.VOID,
+                Type.NO_ARGS, new String[] {}, "<init>", classGen
+                        .getClassName(), instrList, constPool);
+        instrList.append(InstructionFactory.createLoad(Type.OBJECT, 0));
+        instrList.append(instrFact.createInvoke(classGen.getSuperclassName(),
+                "<init>", Type.VOID, Type.NO_ARGS, Constants.INVOKESPECIAL));
+        instrList.append(InstructionFactory.createReturn(Type.VOID));
+        methodGen.setMaxStack();
+        methodGen.setMaxLocals();
+        classGen.addMethod(methodGen.getMethod());
+        instrList.dispose();
+    }
+
 
     
     private Type[] getArgumentTypes(Method method) {

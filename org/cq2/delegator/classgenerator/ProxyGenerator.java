@@ -284,8 +284,9 @@ System.out.println(myInstrList);
         }
         
         //add method trailer (met verwijderingen)
-        methodGen.setMaxStack();
-        methodGen.setMaxLocals();
+        methodGen.setMaxStack(superClassMethod.getCode().getMaxStack());
+        final int INVOCATIONHANDLERISLOCAL = 1;
+        methodGen.setMaxLocals(superClassMethod.getCode().getMaxLocals() + INVOCATIONHANDLERISLOCAL);
 
         classGen.addMethod(methodGen.getMethod());
         instrList.dispose();
