@@ -1,5 +1,7 @@
 package org.cq2.delegator.test;
 
+import org.cq2.delegator.Self;
+
 public class SimpleClass {
 
     public void method() {
@@ -16,6 +18,14 @@ public class SimpleClass {
     
     public void newObject() {
         new Object();
+    }
+    
+    public SimpleClass returnThis() {
+        return this;
+    }
+    
+    public SimpleClass returnSelf(Self self) {
+        return (SimpleClass) self.cast(getClass());
     }
     
 }
