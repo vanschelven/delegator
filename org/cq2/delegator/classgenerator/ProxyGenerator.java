@@ -270,13 +270,11 @@ public class ProxyGenerator implements Constants {
                 .getMethod(method);
         
         InstructionList myInstrList = new InstructionList(superClassMethod.getCode().getCode());
-System.out.println(myInstrList);
         //        InstructionList myInstrList = new InstructionList(InstructionFactory.createReturn(returnType));
 
         MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
                 .toArray(new Type[] {}), generateParameterNames(types.size()),
                 method.getName(), classGen.getClassName(), myInstrList, constPool);
-        System.out.println(methodGen);
         
         Class[] exceptionTypes = method.getExceptionTypes();
         for (int i = 0; i < exceptionTypes.length; i++) {
