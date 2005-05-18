@@ -1,6 +1,5 @@
 package org.cq2.delegator.test;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -15,6 +14,7 @@ import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.MethodGen;
+import org.apache.bcel.generic.TargetLostException;
 import org.apache.bcel.generic.Type;
 import org.cq2.delegator.Proxy;
 import org.cq2.delegator.Self;
@@ -42,7 +42,7 @@ public class ThisBySelfSubstitutorTest extends TestCase implements Constants {
     
     public static class Aap {
         
-        int x = 0;
+        public int x = 0;
         
         public void emptyMethod() {
             
@@ -62,41 +62,51 @@ public class ThisBySelfSubstitutorTest extends TestCase implements Constants {
             x = 1; 
         }
         
+        public Aap returnThisIndirectly() {
+            Aap this2 = this;
+            return this2;
+        }
+        
     }
     
-    public void testEmptyMethod() throws SecurityException, NoSuchMethodException {
+    public void testEmptyMethod() throws Exception {
         org.apache.bcel.classfile.Method result = generateMethod("emptyMethod");
         assertTrue(Arrays.equals(originalMethod.getCode().getCode(), result.getCode().getCode()));
     }
     
-    public void testLocalVariableAccess() throws SecurityException, NoSuchMethodException {
+    public void testLocalVariableAccess() throws Exception {
         org.apache.bcel.classfile.Method result = generateMethod("localVariableAccess");
         assertTrue(Arrays.equals(originalMethod.getCode().getCode(), result.getCode().getCode()));
     }
 
     //Some simple code understanding: expand this!!!
-    public void testReturnThis() throws SecurityException, NoSuchMethodException {
+    public void testReturnThisCodeInspection() throws Exception {
         org.apache.bcel.classfile.Method result = generateMethod("returnThis");
         assertTrue(originalMethod.getCode().getLength() < result.getCode().getLength());
     }
     
-    public void testReturnThisByRunningIt() throws NoSuchMethodException, InstantiationException, ClassNotFoundException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+    public void testReturnThis() throws Exception {
         Aap result = (Aap) runReplacedMethod("returnThis");
         assertTrue(result instanceof Proxy);
     }
     
-    private Object runReplacedMethod(String methodName) throws NoSuchMethodException, InstantiationException, IllegalAccessException, ClassNotFoundException, InvocationTargetException {
+    private Object runReplacedMethod(String methodName) throws Exception {
         Aap aap = getAapWithReplacedMethod(methodName);
         Method returnThis = aap.getClass().getDeclaredMethod(methodName, new Class[]{Self.class});
         Object resulteeee = returnThis.invoke(aap, new Object[]{new Self()});
         return resulteeee;
     }
     
-    public void testFieldAccess() throws NoSuchMethodException, InstantiationException, IllegalAccessException, ClassNotFoundException, InvocationTargetException {
+    public void testFieldAccess() throws Exception {
         runReplacedMethod("fieldAccess");
     }
 
-    private org.apache.bcel.classfile.Method generateMethod(String methodName) throws NoSuchMethodException {
+    public void testReturnThisIndirectly() throws Exception {
+        Aap result = (Aap) runReplacedMethod("returnThisIndirectly");
+        assertTrue(result instanceof Proxy);
+    }
+    
+    private org.apache.bcel.classfile.Method generateMethod(String methodName) throws NoSuchMethodException, TargetLostException {
         Class[] methodParams = new Class[]{};
         Method method = Aap.class.getMethod(methodName, methodParams);
             
@@ -107,7 +117,7 @@ public class ThisBySelfSubstitutorTest extends TestCase implements Constants {
         return result;
     }
     
-    public Aap getAapWithReplacedMethod(String methodName) throws NoSuchMethodException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+    public Aap getAapWithReplacedMethod(String methodName) throws Exception {
         classGen.addMethod(generateMethod(methodName));
         byte[] bytes = classGen.getJavaClass().getBytes();
         return (Aap) new SingleClassLoader(bytes).loadClass(
@@ -131,6 +141,6 @@ public class ThisBySelfSubstitutorTest extends TestCase implements Constants {
     }
 
 
-    
+    //TODO fields must be copied too
     
 }

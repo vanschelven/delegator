@@ -8,38 +8,38 @@ import java.util.List;
 
 import org.apache.bcel.Constants;
 import org.apache.bcel.Repository;
-import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
-import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InstructionFactory;
+import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.ObjectType;
+import org.apache.bcel.generic.StoreInstruction;
+import org.apache.bcel.generic.TargetLostException;
 import org.apache.bcel.generic.Type;
 import org.cq2.delegator.Self;
 
 public class ThisBySelfSubstitutor implements Constants {
 
     private InstructionFactory instructionFactory;
-
     private ConstantPoolGen constPool;
-
     private ClassGen classGen;
+    private String superclassName;
 
     public ThisBySelfSubstitutor(ClassGen classGen, ConstantPoolGen constPool,
             InstructionFactory instructionFactory) {
         this.classGen = classGen;
         this.constPool = constPool;
         this.instructionFactory = instructionFactory;
+        superclassName = classGen.getSuperclassName();
     }
 
-    public org.apache.bcel.classfile.Method generateMethod(Method method) {
-        String superclassName = classGen.getSuperclassName();
-        JavaClass superJavaClass = Repository.lookupClass(superclassName);
-
+    public org.apache.bcel.classfile.Method generateMethod(Method method) throws TargetLostException {
         Type returnType = Type.getType(method.getReturnType());
-
+        org.apache.bcel.classfile.Method superClassMethod = Repository.lookupClass(superclassName)
+        .getMethod(method);
+        
         List types = new ArrayList();
         types.add(0, Type.getType(Self.class));
         types.addAll(Arrays.asList(getArgumentTypes(method)));
@@ -49,20 +49,10 @@ public class ThisBySelfSubstitutor implements Constants {
         newMods = newMods & ~(Modifier.PRIVATE | Modifier.PROTECTED)
                 | Modifier.PUBLIC;
 
-        org.apache.bcel.classfile.Method superClassMethod = superJavaClass
-                .getMethod(method);
 
-        InstructionList superClassInstructionList = new InstructionList(
-                superClassMethod.getCode().getCode());
-        InstructionList myInstrList;
-        if (containsLoadInstruction(superClassInstructionList)) {
-            myInstrList = new InstructionList();
-            appendLoadSelf(myInstrList, superclassName);
-            myInstrList.append(InstructionFactory.createReturn(new ObjectType(
-                    superclassName)));
-        } else {
-            myInstrList = superClassInstructionList;
-        }
+        InstructionList myInstrList = new InstructionList(superClassMethod
+                .getCode().getCode());
+        replaceSomeThisPointersBySelfPointers(myInstrList);
 
         MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
                 .toArray(new Type[] {}), generateParameterNames(types.size()),
@@ -76,27 +66,38 @@ public class ThisBySelfSubstitutor implements Constants {
         return methodGen.getMethod();
     }
 
-    private void appendLoadSelf(InstructionList myInstrList, String className) {
-        myInstrList.append(InstructionFactory.createLoad(Type.OBJECT, 1));
-        myInstrList.append(InstructionFactory.createLoad(Type.OBJECT, 0));
-        myInstrList.append(instructionFactory.createInvoke(Object.class
-                .getName(), "getClass", new ObjectType(Class.class
-                .getName()), new Type[] {}, INVOKEVIRTUAL));
-        myInstrList.append(instructionFactory.createInvoke(Self.class
-                .getName(), "cast", Type.OBJECT,
-                new Type[] { new ObjectType(Class.class.getName()) },
-                INVOKEVIRTUAL));
-        myInstrList.append(instructionFactory
-                .createCheckCast(new ObjectType(className)));
+    private void replaceSomeThisPointersBySelfPointers(
+            InstructionList myInstrList) throws TargetLostException {
+        InstructionHandle current = myInstrList.getStart();
+        InstructionHandle next = current.getNext();
+        while (next != null) {
+            if ((current.getInstruction().getOpcode() == ALOAD_0)
+                    && ((next.getInstruction().getOpcode() == ARETURN)
+                    || (next.getInstruction() instanceof StoreInstruction))) {
+                myInstrList.insert(current, getLoadSelfList());
+                myInstrList.delete(current);
+            }
+
+            current = next;
+            next = current.getNext();
+        }
+
     }
 
-    private boolean containsLoadInstruction(InstructionList instructionList) {
-        Instruction[] instructions = instructionList.getInstructions();
-        for (int i = 0; i < instructions.length; i++) {
-            if (instructions[i].getOpcode() == ALOAD_0)
-                return true;
-        }
-        return false;
+    private InstructionList getLoadSelfList() {
+        InstructionList result = new InstructionList();
+        result.append(InstructionFactory.createLoad(Type.OBJECT, 1));
+        result.append(InstructionFactory.createLoad(Type.OBJECT, 0));
+        result.append(instructionFactory.createInvoke(Object.class
+                .getName(), "getClass", new ObjectType(Class.class.getName()),
+                new Type[] {}, INVOKEVIRTUAL));
+        result.append(instructionFactory.createInvoke(
+                Self.class.getName(), "cast", Type.OBJECT,
+                new Type[] { new ObjectType(Class.class.getName()) },
+                INVOKEVIRTUAL));
+        result.append(instructionFactory.createCheckCast(new ObjectType(
+                superclassName)));
+        return result;
     }
 
     static String[] generateParameterNames(int nr) {
