@@ -15,6 +15,7 @@ import org.cq2.delegator.Delegator;
 import org.cq2.delegator.ISelf;
 import org.cq2.delegator.Proxy;
 import org.cq2.delegator.Self;
+import org.cq2.delegator.classgenerator.ClassGenerator;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 public class ScopeTest extends TestCase implements InvocationHandler {
@@ -255,7 +256,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     }
     
     public void testAbstractPublicMethod() throws Exception {
-        AbstractPublicMethod m = (AbstractPublicMethod) ProxyGenerator.newProxyInstance(AbstractPublicMethod.class, this);
+        AbstractPublicMethod m = (AbstractPublicMethod) ClassGenerator.newProxyInstance(AbstractPublicMethod.class, this);
         m.method();
         assertEquals("method", invokedMethod);
     }
@@ -265,7 +266,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     }
 
     public void testAbstractProtectedMethod() throws Exception {
-        AbstractProtectedMethod m = (AbstractProtectedMethod) ProxyGenerator
+        AbstractProtectedMethod m = (AbstractProtectedMethod) ClassGenerator
                 .newProxyInstance(AbstractProtectedMethod.class, this);
         m.method();
         assertEquals("method", invokedMethod);
@@ -289,7 +290,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     }
 
     public void testPackageMethod() throws Exception {
-        PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(
+        PackageMethod m = (PackageMethod) ClassGenerator.newProxyInstance(
         PackageMethod.class, this);
         m.method();
         assertTrue(packageMethodCalled);
@@ -307,7 +308,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 
     //de volgende test hoort elders thuis...
     public void testMethodSignaturesMatch() throws Exception {
-        PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(
+        PackageMethod m = (PackageMethod) ClassGenerator.newProxyInstance(
                 PackageMethod.class, this);
         assertEquals(
                 "class org.cq2.delegator.test.ScopeTest$PackageMethod$proxy", m
@@ -349,7 +350,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 
         protected Class findClass(String name) throws ClassNotFoundException {
             String className = "org.cq2.delegator.test.ScopeTest$PackageMethod$proxy";
-            byte[] classDef = new ProxyGenerator(className, PackageMethod.class, Proxy.class).generateProxy();
+            byte[] classDef = new ProxyGenerator(className, PackageMethod.class, Proxy.class).generate();
             return inject(null, classDef, PackageMethod.class.getProtectionDomain());
         }
                 

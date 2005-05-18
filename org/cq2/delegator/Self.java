@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
-import org.cq2.delegator.classgenerator.ProxyGenerator;
+import org.cq2.delegator.classgenerator.ClassGenerator;
 import org.cq2.delegator.method.MethodUtil;
 
 public class Self implements InvocationHandler, ISelf {
@@ -185,7 +185,7 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     private Component newComponent(Class clas) {
-        return ProxyGenerator.newComponentInstance(clas);
+        return ClassGenerator.newComponentInstance(clas);
     }
 
     public Self extend(Class class1) {

@@ -16,9 +16,9 @@ import org.cq2.delegator.Self;
 public class ProxyGeneratorTest extends TestCase {
 
 	public void testCreateProxyForJDKClass() throws Exception {
-		Object p = ProxyGenerator.newProxyInstance(HashMap.class, null);
-		assertTrue(ProxyGenerator.isProxy(p));
-		assertFalse(ProxyGenerator.isComponent(p));
+		Object p = ClassGenerator.newProxyInstance(HashMap.class, null);
+		assertTrue(ClassGenerator.isProxy(p));
+		assertFalse(ClassGenerator.isComponent(p));
 		assertTrue(p instanceof Proxy);
 		assertFalse(p instanceof Component);
 		assertEquals("proxy$java.util.HashMap", p.getClass().getName());
@@ -30,14 +30,14 @@ public class ProxyGeneratorTest extends TestCase {
 	}
 
 	public void testCreateProxyForOwnClass() throws Exception {
-		Object p = ProxyGenerator.newProxyInstance(ProxyGeneratorTest.class, null);
+		Object p = ClassGenerator.newProxyInstance(ProxyGeneratorTest.class, null);
 		assertEquals(ProxyGeneratorTest.class.getName() + "$proxy", p.getClass().getName());
 	}
 
 	public static class A {}
 
 	public void testCreateProxyClass() throws Exception {
-		ClassLoader loader = ProxyGenerator.configureClassLoader(ClassLoader.getSystemClassLoader());
+		ClassLoader loader = ClassGenerator.configureClassLoader(ClassLoader.getSystemClassLoader());
 		Class c = loader
 				.loadClass("org.cq2.delegator.classgenerator.ProxyGeneratorTest$A$component");
 		assertTrue(Component.class.isAssignableFrom(c));
@@ -45,9 +45,9 @@ public class ProxyGeneratorTest extends TestCase {
 	}
 
 	public void testCreateComponent() throws Exception {
-		Object c = ProxyGenerator.newComponentInstance(HashMap.class);
-		assertTrue(ProxyGenerator.isComponent(c));
-		assertFalse(ProxyGenerator.isProxy(c));
+		Object c = ClassGenerator.newComponentInstance(HashMap.class);
+		assertTrue(ClassGenerator.isComponent(c));
+		assertFalse(ClassGenerator.isProxy(c));
 		assertFalse(c instanceof Proxy);
 		assertTrue(c instanceof Component);
 		assertEquals("component$java.util.HashMap", c.getClass().getName());
@@ -68,7 +68,7 @@ public class ProxyGeneratorTest extends TestCase {
 	}
 
 	public void testDirtyProxyFieldZerod() throws Exception {
-		P p = (P) ProxyGenerator.newProxyInstance(P.class, null);
+		P p = (P) ClassGenerator.newProxyInstance(P.class, null);
 		assertNull(p.o);
 		assertNull(p.p);
 		Field f = P.class.getDeclaredField("r");
