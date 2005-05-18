@@ -45,6 +45,8 @@ import org.cq2.delegator.method.ProxyMethodFilter;
 
 public class ClassGenerator implements Constants {
 
+    protected static final MethodFilter componentMethodFilter = new ComponentMethodFilter();
+
     static class ClassInjector extends ClassLoader {
 
         public ClassInjector(ClassLoader parent) {
@@ -90,7 +92,7 @@ public class ClassGenerator implements Constants {
                         "Interfaces are not supported, use java.lang.reflect.Proxy.");
             }
             String className = getClassName(clazz, "component");
-            byte[] classDef = new ComponentGenerator(className, clazz, Component.class)
+            byte[] classDef = new EncapsulatedComponentGenerator(className, clazz, Component.class)
                     .generate();
             return inject(className, classDef, clazz.getProtectionDomain());
         }
@@ -117,7 +119,7 @@ public class ClassGenerator implements Constants {
 
     protected final InstructionList instrList;
 
-    private final ConstantPoolGen constPool;
+    protected final ConstantPoolGen constPool;
 
     protected Set methods;
 

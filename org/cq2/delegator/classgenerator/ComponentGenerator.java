@@ -9,15 +9,12 @@ import org.apache.bcel.Constants;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.Type;
-import org.cq2.delegator.ComponentMethodFilter;
 import org.cq2.delegator.method.MethodFilter;
 
 public class ComponentGenerator extends ClassGenerator {
 
-    private static final MethodFilter componentMethodFilter = new ComponentMethodFilter();
-
     public ComponentGenerator(String className, Class superClass, Class marker) {
-        super(className, superClass, marker, true); //moet dit met een grove kopie van de constant pool? wee'k niet maar het werkt wel zo...
+        super(className, superClass, marker);
     }
     
     public byte[] generate() {
