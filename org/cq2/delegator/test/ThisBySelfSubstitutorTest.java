@@ -40,9 +40,24 @@ public class ThisBySelfSubstitutorTest extends TestCase implements Constants {
         addDefaultConstructor(classGen, constantPool, instructionFactory);
     }
     
+    public static class Noot {
+
+        Aap aap;
+        
+        public Noot(Aap aap) {
+            this.aap = aap;
+        }
+
+        public Noot(Aap aap, int i) {
+            this.aap = aap;
+        }
+        
+    }
+    
     public static class Aap {
         
         public int x = 0;
+        public Aap thisField;
         
         public void emptyMethod() {
             
@@ -67,6 +82,19 @@ public class ThisBySelfSubstitutorTest extends TestCase implements Constants {
             return this2;
         }
         
+        public Noot passAsParam() {
+            return new Noot(this);
+        }
+        
+        public Aap returnThisViaField() {
+            thisField = this;
+            return thisField;
+        }
+
+        public Noot passAsParams() {
+            return new Noot(this, 1);
+        }
+                
     }
     
     public void testEmptyMethod() throws Exception {
@@ -90,11 +118,21 @@ public class ThisBySelfSubstitutorTest extends TestCase implements Constants {
         assertTrue(result instanceof Proxy);
     }
     
-    private Object runReplacedMethod(String methodName) throws Exception {
+    //hhmmm wordt dit gebruikt???? maybe later
+    private Object runReplacedMethod(String methodName, Class[] params) throws Exception {
         Aap aap = getAapWithReplacedMethod(methodName);
-        Method returnThis = aap.getClass().getDeclaredMethod(methodName, new Class[]{Self.class});
-        Object resulteeee = returnThis.invoke(aap, new Object[]{new Self()});
-        return resulteeee;
+        Class[] passedParams = new Class[params.length + 1];
+        passedParams[0] = Self.class;
+        for (int i = 0; i < params.length; i++) {
+            passedParams[i + 1] = params[i];
+        }
+        Method returnThis = aap.getClass().getDeclaredMethod(methodName, passedParams);
+        Object result = returnThis.invoke(aap, new Object[]{new Self()});
+        return result;
+    }
+    
+    private Object runReplacedMethod(String methodName) throws Exception {
+        return runReplacedMethod(methodName, new Class[]{});
     }
     
     public void testFieldAccess() throws Exception {
@@ -105,6 +143,22 @@ public class ThisBySelfSubstitutorTest extends TestCase implements Constants {
         Aap result = (Aap) runReplacedMethod("returnThisIndirectly");
         assertTrue(result instanceof Proxy);
     }
+    
+    public void testPassAsParam() throws Exception {
+        Noot result = (Noot) runReplacedMethod("passAsParam");
+        assertTrue(result.aap instanceof Proxy);
+    }
+    
+    public void testReturnThisViaField() throws Exception {
+        Aap result = (Aap) runReplacedMethod("returnThisViaField");
+        assertTrue(result instanceof Proxy);
+    }
+    
+    public void testPassAsParams() throws Exception {
+        Noot result = (Noot) runReplacedMethod("passAsParams");
+        assertTrue(result.aap instanceof Proxy);
+    }
+
     
     private org.apache.bcel.classfile.Method generateMethod(String methodName) throws NoSuchMethodException, TargetLostException {
         Class[] methodParams = new Class[]{};
@@ -142,5 +196,23 @@ public class ThisBySelfSubstitutorTest extends TestCase implements Constants {
 
 
     //TODO fields must be copied too
+    
+    //TODO bepalen welke this vervangen moet worden is misschien helemaal niet triviaal
+    //bijv als je eerst meerdere laad op de stack en dan weer wat popt!
+    //laten we maar gewoon kijken of we het simpel aan de praat kunnen krijgen.
+    
+    //TODO exception types
+    //TODO replace this pointer with self pointer.
+    //TODO Copy stuff with different scopes
+    //TODO copy the entire chain (but take the top one)
+    //TODO keep in mind special stuff like toSTring
+    //TODO put this stuff in the right place - i.e. productioncode i.s.o. tests
+    
+    //TODO Hoe gaat dit met superclasses? Lijkt me ingewikkelder want
+    //de aanroep naar de superclass laat zich weer heel lastig vertalen naar een
+    //aanroep naar de self!
+    
+    //TODO: mogelijk plan van aanpak: gewoon de bestaande code vervangen en kijken waar het allemaal mis gaat
+    //dan iig dat eerst werkend krijgen voordat ik aan fantasieproblemen begin.
     
 }

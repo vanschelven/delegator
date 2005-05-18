@@ -757,20 +757,7 @@ public class ThisPointerEncapsulationTest extends TestCase implements Constants 
         acceptThis(that);
         acceptThis(this2);
         return this;
-        //TODO Hoe gaat dit met superclasses? Lijkt me ingewikkelder want
-        //de aanroep naar de superclass laat zich weer heel lastig vertalen naar een
-        //aanroep naar de self!
     }
 
-    //TODO bepalen welke this vervangen moet worden is misschien helemaal niet triviaal
-    //bijv als je eerst meerdere laad op de stack en dan weer wat popt!
-    //laten we maar gewoon kijken of we het simpel aan de praat kunnen krijgen.
-    
-    //TODO exception types
-    //TODO replace this pointer with self pointer.
-    //TODO Copy stuff with different scopes
-    //TODO copy the entire chain (but take the top one)
-    //TODO keep in mind special stuff like toSTring
-    //TODO put this stuff in the right place - i.e. productioncode i.s.o. tests
 
 }

@@ -10,11 +10,15 @@ import org.apache.bcel.Constants;
 import org.apache.bcel.Repository;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
+import org.apache.bcel.generic.FieldInstruction;
+import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
+import org.apache.bcel.generic.InvokeInstruction;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.ObjectType;
+import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.StoreInstruction;
 import org.apache.bcel.generic.TargetLostException;
 import org.apache.bcel.generic.Type;
@@ -23,8 +27,11 @@ import org.cq2.delegator.Self;
 public class ThisBySelfSubstitutor implements Constants {
 
     private InstructionFactory instructionFactory;
+
     private ConstantPoolGen constPool;
+
     private ClassGen classGen;
+
     private String superclassName;
 
     public ThisBySelfSubstitutor(ClassGen classGen, ConstantPoolGen constPool,
@@ -35,11 +42,12 @@ public class ThisBySelfSubstitutor implements Constants {
         superclassName = classGen.getSuperclassName();
     }
 
-    public org.apache.bcel.classfile.Method generateMethod(Method method) throws TargetLostException {
+    public org.apache.bcel.classfile.Method generateMethod(Method method)
+            throws TargetLostException {
         Type returnType = Type.getType(method.getReturnType());
-        org.apache.bcel.classfile.Method superClassMethod = Repository.lookupClass(superclassName)
-        .getMethod(method);
-        
+        org.apache.bcel.classfile.Method superClassMethod = Repository
+                .lookupClass(superclassName).getMethod(method);
+
         List types = new ArrayList();
         types.add(0, Type.getType(Self.class));
         types.addAll(Arrays.asList(getArgumentTypes(method)));
@@ -48,7 +56,6 @@ public class ThisBySelfSubstitutor implements Constants {
                 & ~(Modifier.NATIVE | Modifier.ABSTRACT);
         newMods = newMods & ~(Modifier.PRIVATE | Modifier.PROTECTED)
                 | Modifier.PUBLIC;
-
 
         InstructionList myInstrList = new InstructionList(superClassMethod
                 .getCode().getCode());
@@ -72,8 +79,10 @@ public class ThisBySelfSubstitutor implements Constants {
         InstructionHandle next = current.getNext();
         while (next != null) {
             if ((current.getInstruction().getOpcode() == ALOAD_0)
-                    && ((next.getInstruction().getOpcode() == ARETURN)
-                    || (next.getInstruction() instanceof StoreInstruction))) {
+                    && ((next.getInstruction().getOpcode() == ARETURN) ||
+                        (next.getInstruction() instanceof StoreInstruction) ||
+                        (next.getInstruction() instanceof InvokeInstruction) ||
+                        (next.getInstruction() instanceof PUTFIELD))) {
                 myInstrList.insert(current, getLoadSelfList());
                 myInstrList.delete(current);
             }
@@ -88,13 +97,12 @@ public class ThisBySelfSubstitutor implements Constants {
         InstructionList result = new InstructionList();
         result.append(InstructionFactory.createLoad(Type.OBJECT, 1));
         result.append(InstructionFactory.createLoad(Type.OBJECT, 0));
-        result.append(instructionFactory.createInvoke(Object.class
-                .getName(), "getClass", new ObjectType(Class.class.getName()),
+        result.append(instructionFactory.createInvoke(Object.class.getName(),
+                "getClass", new ObjectType(Class.class.getName()),
                 new Type[] {}, INVOKEVIRTUAL));
-        result.append(instructionFactory.createInvoke(
-                Self.class.getName(), "cast", Type.OBJECT,
-                new Type[] { new ObjectType(Class.class.getName()) },
-                INVOKEVIRTUAL));
+        result.append(instructionFactory.createInvoke(Self.class.getName(),
+                "cast", Type.OBJECT, new Type[] { new ObjectType(Class.class
+                        .getName()) }, INVOKEVIRTUAL));
         result.append(instructionFactory.createCheckCast(new ObjectType(
                 superclassName)));
         return result;
