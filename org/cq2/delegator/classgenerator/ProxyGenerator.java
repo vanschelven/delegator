@@ -207,7 +207,7 @@ public class ProxyGenerator implements Constants {
             Method method = (Method) iter.next();
             int modifiers = method.getModifiers();
             if (methodFilter.filter(method) && !Modifier.isAbstract(modifiers)) {
-                addSuperCallMethod(method);
+                copySuperMethod(method);
             }
         }
     }
@@ -250,7 +250,7 @@ public class ProxyGenerator implements Constants {
     //        addMethodTrailer(returnType, methodGen);
     //    }
 
-    private void addSuperCallMethod(Method method) {
+    private void copySuperMethod(Method method) {
         //init & add method header (wel reeds aangepast)
         Type returnType = Type.getType(method.getReturnType());
         

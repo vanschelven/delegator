@@ -570,6 +570,7 @@ public class ThisPointerEncapsulationTest extends TestCase implements Constants 
 
     //we beginnen met het weggooien van de gehele methode en het invullen van
     // de nieuwe goede code
+    // nr.1 is zonder extra param en gaat uit van het bestaan van die param.
     private Object createSubclassWithCopiedMethodWithModifiedSignatureAndReplacedThis1(
             Class superclass, String methodName) throws InstantiationException,
             IllegalAccessException, ClassNotFoundException, SecurityException,
