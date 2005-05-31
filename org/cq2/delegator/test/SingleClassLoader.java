@@ -16,5 +16,9 @@ class SingleClassLoader extends ClassLoader {
     protected Class findClass(String name) throws ClassNotFoundException {
         return defineClass(null, classAsBytes, 0, classAsBytes.length);
     }
+    
+    public Class loadClass() throws ClassNotFoundException {
+        return loadClass("intentional nonsense here");
+    }
             
 }
