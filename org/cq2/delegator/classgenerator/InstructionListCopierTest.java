@@ -63,6 +63,4 @@ public class InstructionListCopierTest extends TestCase {
         runner.runVoid(result);
     }
     
-
-    
 }
