@@ -3,6 +3,7 @@ package org.cq2.delegator.classgenerator;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionList;
+import org.cq2.delegator.test.InstructionListRunner;
 
 import sun.awt.OrientableFlowLayout;
 
@@ -45,19 +46,21 @@ public class InstructionListCopierTest extends TestCase {
         assertEquals(originalConstantPool.toString(), newConstantPool.toString());
     }
     
-    public void testOriginalConstantPoolHasConstantsAlready() {
+    public void testOriginalConstantPoolHasConstantsAlready() throws Exception {
+        InstructionListRunner runner = new InstructionListRunner();
+        
         ConstantPoolGen originalConstantPool = new ConstantPoolGen();
         originalConstantPool.addString("Someconstant that was already present");
         InstructionFactory originalFactory = new InstructionFactory(originalConstantPool);
         InstructionList originalInstructionList = new InstructionList();
         originalInstructionList.append(originalFactory.createPrintln("blabla"));
 
-        ConstantPoolGen newConstantPool = new ConstantPoolGen();
+        ConstantPoolGen newConstantPool = runner.getConstantPool();
         
         InstructionListCopier copier = new InstructionListCopier(originalConstantPool, newConstantPool);
         InstructionList result = copier.copy(originalInstructionList);
         
-        //een of andere slimme test
+        runner.runVoid(result);
     }
     
 
