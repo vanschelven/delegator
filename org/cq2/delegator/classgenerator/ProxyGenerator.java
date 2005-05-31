@@ -2,6 +2,7 @@ package org.cq2.delegator.classgenerator;
 
 import org.apache.bcel.generic.FieldGen;
 import org.apache.bcel.generic.ObjectType;
+import org.cq2.delegator.Proxy;
 import org.cq2.delegator.method.MethodFilter;
 import org.cq2.delegator.method.ProxyMethodFilter;
 
@@ -9,8 +10,8 @@ public class ProxyGenerator extends ClassGenerator {
 
     private static final MethodFilter proxyMethodFilter = new ProxyMethodFilter();
 
-    public ProxyGenerator(String className, Class superClass, Class marker) {
-        super(className, superClass, marker);
+    public ProxyGenerator(String className, Class superClass) {
+        super(className, superClass, Proxy.class);
     }
 
     public byte[] generate() {

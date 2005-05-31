@@ -62,7 +62,7 @@ public class Self implements InvocationHandler, ISelf {
                 //if(!cmps.hasNext())throw new NoSuchMethodError
             }
             List argTypeList = new ArrayList();
-            argTypeList.add(InvocationHandler.class);
+            argTypeList.add(Self.class);
             argTypeList.addAll(Arrays.asList(method.getParameterTypes()));
 
             argTypeListExludingInvocationHandler.addAll(Arrays.asList(method

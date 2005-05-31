@@ -22,10 +22,10 @@ public class ComposedDocumentTest extends TestCase {
 		doc.add(TextDocument.class);
 		doc.add(Context.class);
 		doc.add(TextView.class);
+		String body = doc.getBody();
 		String name = doc.getName();
 		String url = doc.getUrl();
 		String title = doc.getTitle();
-		String body = doc.getBody();
 		String html = doc.toHtml();
 		assertEquals("name", name);
 		assertEquals("title", title);

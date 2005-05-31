@@ -25,7 +25,6 @@ import org.apache.bcel.generic.ArrayType;
 import org.apache.bcel.generic.BasicType;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
-import org.apache.bcel.generic.FieldGen;
 import org.apache.bcel.generic.InstructionConstants;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionList;
@@ -41,7 +40,6 @@ import org.cq2.delegator.Proxy;
 import org.cq2.delegator.method.MethodComparator;
 import org.cq2.delegator.method.MethodFilter;
 import org.cq2.delegator.method.MethodUtil;
-import org.cq2.delegator.method.ProxyMethodFilter;
 
 public class ClassGenerator implements Constants {
 
@@ -83,7 +81,7 @@ public class ClassGenerator implements Constants {
         }
 
         private Class injectProxyClass(Class clazz) {
-            return injectClass(clazz, "proxy", Proxy.class);
+            return injectClass(clazz, "proxy");
         }
 
         private Class injectComponentClass(Class clazz) {
@@ -92,18 +90,18 @@ public class ClassGenerator implements Constants {
                         "Interfaces are not supported, use java.lang.reflect.Proxy.");
             }
             String className = getClassName(clazz, "component");
-            byte[] classDef = new EncapsulatedComponentGenerator(className, clazz, Component.class)
+            byte[] classDef = new EncapsulatedComponentGenerator(className, clazz)
                     .generate();
             return inject(className, classDef, clazz.getProtectionDomain());
         }
 
-        private Class injectClass(Class clazz, String prefix, Class marker) {
+        private Class injectClass(Class clazz, String prefix) {
             if (clazz.isInterface()) {
                 throw new IllegalArgumentException(
                         "Interfaces are not supported, use java.lang.reflect.Proxy.");
             }
             String className = getClassName(clazz, prefix);
-            byte[] classDef = new ProxyGenerator(className, clazz, marker).generate();
+            byte[] classDef = new ProxyGenerator(className, clazz).generate();
             return inject(className, classDef, clazz.getProtectionDomain());
         }
     }

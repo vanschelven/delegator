@@ -726,10 +726,6 @@ public class ThisPointerEncapsulationTest extends TestCase implements Constants 
         return result;
     }
 
-    public void testXXXX() throws NoSuchMethodException {
-        printMethod("differentUsesOfThis", null);
-    }
-    
     private void printMethod(String name, Class[] params)
             throws NoSuchMethodException {
         System.out.println("---------- " + name);

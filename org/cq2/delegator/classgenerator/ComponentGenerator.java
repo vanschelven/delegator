@@ -9,12 +9,13 @@ import org.apache.bcel.Constants;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.Type;
+import org.cq2.delegator.Component;
 import org.cq2.delegator.method.MethodFilter;
 
 public class ComponentGenerator extends ClassGenerator {
 
-    public ComponentGenerator(String className, Class superClass, Class marker) {
-        super(className, superClass, marker);
+    public ComponentGenerator(String className, Class superClass) {
+        super(className, superClass, Component.class);
     }
     
     public byte[] generate() {

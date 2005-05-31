@@ -8,23 +8,26 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.bcel.Repository;
+import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.InvokeInstruction;
+
+import org.apache.bcel.generic.LocalVariableInstruction;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.StoreInstruction;
-import org.apache.bcel.generic.TargetLostException;
 import org.apache.bcel.generic.Type;
+import org.cq2.delegator.Component;
 import org.cq2.delegator.Self;
 import org.cq2.delegator.method.MethodFilter;
 
 public class EncapsulatedComponentGenerator extends ClassGenerator {
 
-    public EncapsulatedComponentGenerator(String className, Class superClass, Class marker) {
-        super(className, superClass, marker, true); //duur om alle constanten te kopieren??!
+    public EncapsulatedComponentGenerator(String className, Class superClass) {
+        super(className, superClass, Component.class, true); //duur om alle constanten te kopieren??!
     }
     
     public byte[] generate() {
@@ -47,9 +50,9 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         // TODO Maak gebruik van addHeader en Trailer
         
         Type returnType = Type.getType(method.getReturnType());
-        org.apache.bcel.classfile.Method superClassMethod = Repository
-                .lookupClass(classGen.getSuperclassName()).getMethod(method);
-
+        org.apache.bcel.classfile.Method superClassMethod =
+            findSuperclassMethod(classGen.getSuperclassName(), method);
+        if (superClassMethod == null) System.out.println("WRONG! "  + method);
         List types = new ArrayList();
         types.add(0, Type.getType(Self.class));
         types.addAll(Arrays.asList(getArgumentTypes(method)));
@@ -61,7 +64,7 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
 
         InstructionList myInstrList = new InstructionList(superClassMethod
                 .getCode().getCode());
-        replaceSomeThisPointersBySelfPointers(myInstrList);
+        modifyInstructions(myInstrList);
 
         MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
                 .toArray(new Type[] {}), generateParameterNames(types.size()),
@@ -77,26 +80,58 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
 
     }
 
-    private void replaceSomeThisPointersBySelfPointers(
+    private org.apache.bcel.classfile.Method findSuperclassMethod(String superclassName, Method method) {
+        JavaClass superclass = Repository.lookupClass(superclassName);
+        org.apache.bcel.classfile.Method result = superclass.getMethod(method);
+        while (result == null) {
+            superclass = superclass.getSuperClass();
+            if (superclass == null) System.out.println("WRONG222");
+            //dit kan fout aflopen maar dan is dat iig op de goede plaats
+            result = superclass.getMethod(method);
+        }
+        return result;
+    }
+
+    private void modifyInstructions(
             InstructionList myInstrList) {
+//        System.out.println("***********");
+//        System.out.println(myInstrList);
+//        System.out.println("$$$$$$$$$$$$");
         InstructionHandle current = myInstrList.getStart();
         InstructionHandle next = current.getNext();
         while (next != null) {
-            if ((current.getInstruction().getOpcode() == ALOAD_0)
-                    && ((next.getInstruction().getOpcode() == ARETURN) ||
-                        (next.getInstruction() instanceof StoreInstruction) ||
-                        (next.getInstruction() instanceof InvokeInstruction) ||
-                        (next.getInstruction() instanceof PUTFIELD))) {
-                myInstrList.insert(current, getLoadSelfList());
-                try {
-                    myInstrList.delete(current);
-                } catch (Exception e) {throw new RuntimeException(e);}
-            }
-
+            reIndexLocalVariables(myInstrList, current);
+            replaceThisPointerBySelf(myInstrList, current, next);
+            
             current = next;
             next = current.getNext();
         }
+//        System.out.println("2***********");
+//        System.out.println(myInstrList);
+//        System.out.println("2$$$$$$$$$$$$");
 
+    }
+
+    private void reIndexLocalVariables(InstructionList myInstrList, InstructionHandle current) {
+        if (current.getInstruction() instanceof LocalVariableInstruction) {
+            LocalVariableInstruction l = (LocalVariableInstruction) current.getInstruction();
+            if (l.getIndex() > 0) {
+                l.setIndex(l.getIndex() + 1);
+            }
+        }
+    }
+
+    private void replaceThisPointerBySelf(InstructionList myInstrList, InstructionHandle current, InstructionHandle next) {
+        if ((current.getInstruction().getOpcode() == ALOAD_0)
+                && ((next.getInstruction().getOpcode() == ARETURN) ||
+                    (next.getInstruction() instanceof StoreInstruction) ||
+                    (next.getInstruction() instanceof InvokeInstruction) ||
+                    (next.getInstruction() instanceof PUTFIELD))) {
+            myInstrList.insert(current, getLoadSelfList());
+            try {
+                myInstrList.delete(current);
+            } catch (Exception e) {throw new RuntimeException(e);}
+        }
     }
 
     private InstructionList getLoadSelfList() {

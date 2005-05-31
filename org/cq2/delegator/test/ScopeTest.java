@@ -350,7 +350,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 
         protected Class findClass(String name) throws ClassNotFoundException {
             String className = "org.cq2.delegator.test.ScopeTest$PackageMethod$proxy";
-            byte[] classDef = new ProxyGenerator(className, PackageMethod.class, Proxy.class).generate();
+            byte[] classDef = new ProxyGenerator(className, PackageMethod.class).generate();
             return inject(null, classDef, PackageMethod.class.getProtectionDomain());
         }
                 
