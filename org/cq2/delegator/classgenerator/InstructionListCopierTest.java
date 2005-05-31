@@ -1,13 +1,12 @@
 package org.cq2.delegator.classgenerator;
 
+import junit.framework.TestCase;
+
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionList;
+import org.apache.bcel.generic.RETURN;
 import org.cq2.delegator.test.InstructionListRunner;
-
-import sun.awt.OrientableFlowLayout;
-
-import junit.framework.TestCase;
 
 public class InstructionListCopierTest extends TestCase {
 
@@ -59,6 +58,7 @@ public class InstructionListCopierTest extends TestCase {
         
         InstructionListCopier copier = new InstructionListCopier(originalConstantPool, newConstantPool);
         InstructionList result = copier.copy(originalInstructionList);
+        result.append(new RETURN());
         
         runner.runVoid(result);
     }

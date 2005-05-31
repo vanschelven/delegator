@@ -44,7 +44,8 @@ public class InstructionListRunner implements Constants {
     }
     
     private Object runMethod(String methodName, InstructionList instructionList) throws Exception {
-        classGen.addMethod(generateMethod(methodName, instructionList));
+        org.apache.bcel.classfile.Method generatedMethod = generateMethod(methodName, instructionList);
+        classGen.addMethod(generatedMethod);
         byte[] classDef = classGen.getJavaClass().getBytes();
         Object object = new SingleClassLoader(classDef).loadClass().newInstance();
         Method method = object.getClass().getDeclaredMethod(methodName, new Class[]{});
