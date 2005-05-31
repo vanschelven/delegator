@@ -132,6 +132,24 @@ public class EncapsulatedComponentGeneratorTest extends TestCase implements Cons
         
     }
     
+    public static class SuperclassWithConstants {
+        
+        public void someMethod() {
+            System.out.println("This is never printed");
+        }
+        
+    }
+    
+    public static class EmtpyIntermediate2 extends SuperclassWithConstants {
+        
+    }
+    
+    public static class Subclass2 extends EmtpyIntermediate2 {
+        
+        public void method() {}
+        
+    }
+    
     public void testEmptyMethod() throws Exception {
         runReplacedMethod(EmptyMethod.class);
     }
@@ -185,6 +203,10 @@ public class EncapsulatedComponentGeneratorTest extends TestCase implements Cons
     
     public void testInheritanceChain() throws Exception {
         runReplacedMethod(Subclass.class);
+    }
+    
+    public void testInheritanceChain2() throws Exception {
+        runReplacedMethod(Subclass2.class);
     }
     
     private Object runReplacedMethod(Class clazz) throws Exception {

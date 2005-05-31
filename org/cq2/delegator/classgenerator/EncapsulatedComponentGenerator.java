@@ -26,6 +26,8 @@ import org.cq2.delegator.method.MethodFilter;
 
 public class EncapsulatedComponentGenerator extends ClassGenerator {
 
+    private org.apache.bcel.classfile.Method superclassMethod;
+
     public EncapsulatedComponentGenerator(String className, Class superClass) {
         super(className, superClass, Component.class, true); //duur om alle constanten te kopieren??!
     }
@@ -50,9 +52,7 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         // TODO Maak gebruik van addHeader en Trailer
         
         Type returnType = Type.getType(method.getReturnType());
-        org.apache.bcel.classfile.Method superClassMethod =
-            findSuperclassMethod(classGen.getSuperclassName(), method);
-        if (superClassMethod == null) System.out.println("WRONG! "  + method);
+        superclassMethod = findSuperclassMethod(classGen.getSuperclassName(), method);
         List types = new ArrayList();
         types.add(0, Type.getType(Self.class));
         types.addAll(Arrays.asList(getArgumentTypes(method)));
@@ -62,9 +62,13 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         newMods = newMods & ~(Modifier.PRIVATE | Modifier.PROTECTED)
                 | Modifier.PUBLIC;
 
-        InstructionList myInstrList = new InstructionList(superClassMethod
+        System.out.println(superclassMethod.getCode());
+        InstructionList myInstrList = new InstructionList(superclassMethod
                 .getCode().getCode());
-        modifyInstructions(myInstrList);
+        System.out.println(myInstrList);
+        System.out.println(constPool);
+        System.out.println(superclassMethod.getConstantPool());
+        //modifyInstructions(myInstrList);
 
         MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
                 .toArray(new Type[] {}), generateParameterNames(types.size()),
@@ -94,22 +98,21 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
 
     private void modifyInstructions(
             InstructionList myInstrList) {
-//        System.out.println("***********");
-//        System.out.println(myInstrList);
-//        System.out.println("$$$$$$$$$$$$");
         InstructionHandle current = myInstrList.getStart();
         InstructionHandle next = current.getNext();
         while (next != null) {
+            reIndexConstants(current);
             reIndexLocalVariables(myInstrList, current);
             replaceThisPointerBySelf(myInstrList, current, next);
             
             current = next;
             next = current.getNext();
         }
-//        System.out.println("2***********");
-//        System.out.println(myInstrList);
-//        System.out.println("2$$$$$$$$$$$$");
+    }
 
+    private void reIndexConstants(InstructionHandle current) {
+//        current.getInstruction().
+//        superclassMethod.getConstantPool();
     }
 
     private void reIndexLocalVariables(InstructionList myInstrList, InstructionHandle current) {
@@ -134,6 +137,7 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         }
     }
 
+    //TODO ev. kan ik hier een zogenaamde compoundinstruction voor gebruiken
     private InstructionList getLoadSelfList() {
         InstructionList result = new InstructionList();
         result.append(InstructionFactory.createLoad(Type.OBJECT, 1));
@@ -149,5 +153,7 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         return result;
     }
 
+    
+    //TODO (op de verkeerde plaats maar ja... gebruik eens de Verifier van BCEL)
     
 }
