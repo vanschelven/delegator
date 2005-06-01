@@ -28,8 +28,11 @@ public class InstructionListCopier {
     
     public InstructionList copy(InstructionList original) {
         for (int i = FIRSTCONSTANTISRESERVEDBYJVM; i < originalConstantPool.getSize(); i++) {
-            int newIndex = constantPool.addConstant(originalConstantPool.getConstant(i), originalConstantPool);
-            constantMap.put(new Integer(i), new Integer(newIndex));
+            Constant constant = originalConstantPool.getConstant(i);
+            if (constant != null) { //TODO apart testen?? echwel!
+                int newIndex = constantPool.addConstant(constant, originalConstantPool);
+                constantMap.put(new Integer(i), new Integer(newIndex));
+            }
         }
         InstructionList result = original.copy();
         InstructionHandle current = result.getStart();

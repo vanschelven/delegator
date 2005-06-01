@@ -246,7 +246,7 @@ public class ClassGenerator implements Constants {
         instrList.dispose();
     }
 
-    private void convertReturnValue(Type returnType) {
+    protected void convertReturnValue(Type returnType) {
         if (returnType.equals(Type.STRING)) {
             instrList.append(instrFact.createCheckCast(Type.STRING));
         } else {

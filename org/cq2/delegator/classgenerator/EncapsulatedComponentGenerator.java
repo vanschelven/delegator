@@ -10,13 +10,10 @@ import java.util.List;
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.generic.ConstantPoolGen;
-import org.apache.bcel.generic.INVOKESPECIAL;
-import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.InstructionTargeter;
-import org.apache.bcel.generic.InvokeInstruction;
 import org.apache.bcel.generic.LocalVariableInstruction;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.ObjectType;
@@ -33,7 +30,7 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
     private org.apache.bcel.classfile.Method superclassMethod;
 
     public EncapsulatedComponentGenerator(String className, Class superClass) {
-        super(className, superClass, Component.class, true); //duur om alle constanten te kopieren??!
+        super(className, superClass, Component.class, true); //duur en nodig om alle constanten te kopieren??!
     }
     
     public byte[] generate() {
@@ -67,17 +64,17 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
                 | Modifier.PUBLIC;
 
         InstructionListCopier copier = new InstructionListCopier(new ConstantPoolGen(superclassMethod.getConstantPool()), constPool);
-        InstructionList myInstrList = copier.copy(new InstructionList(superclassMethod.getCode().getCode()));
-        myInstrList.setPositions();
-        modifyInstructions(myInstrList);
+        instrList.append(copier.copy(new InstructionList(superclassMethod.getCode().getCode())));
+        instrList.setPositions();
+        modifyInstructions();
 
         MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
                 .toArray(new Type[] {}), generateParameterNames(types.size()),
-                method.getName(), classGen.getClassName(), myInstrList,
+                method.getName(), classGen.getClassName(), instrList,
                 constPool);
 
         //add method trailer (met verwijderingen)
-       //hier mist een regel convertReturnValue ofzo
+        convertReturnValue(returnType);
         try {
         methodGen.setMaxStack();
         methodGen.setMaxLocals();
@@ -100,13 +97,12 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         return result;
     }
 
-    private void modifyInstructions(
-            InstructionList myInstrList) {
-        InstructionHandle current = myInstrList.getStart();
+    private void modifyInstructions() {
+        InstructionHandle current = instrList.getStart();
         InstructionHandle next = current.getNext();
         while (next != null) {
             reIndexLocalVariables(current);
-            replaceThisPointerBySelf(myInstrList, current, next);
+            replaceThisPointerBySelf(current, next);
             
             current = next;
             next = current.getNext();
@@ -122,7 +118,7 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         }
     }
 
-    private void replaceThisPointerBySelf(InstructionList myInstrList, InstructionHandle current, InstructionHandle next) {
+    private void replaceThisPointerBySelf(InstructionHandle current, InstructionHandle next) {
         if ((current.getInstruction().getOpcode() == ALOAD_0)
                 && ((next.getInstruction().getOpcode() == ARETURN) ||
                     (next.getInstruction() instanceof StoreInstruction) ||
@@ -131,9 +127,9 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
                     (next.getInstruction() instanceof PUTFIELD))) {
             InstructionList loadSelfList = getLoadSelfList();
             InstructionHandle firstInstruction = loadSelfList.getStart();
-            myInstrList.insert(current, loadSelfList);
+            instrList.insert(current, loadSelfList);
             try {
-                myInstrList.delete(current);
+                instrList.delete(current);
             } catch (TargetLostException e) {
                 updateTargets(e, firstInstruction);
             }
