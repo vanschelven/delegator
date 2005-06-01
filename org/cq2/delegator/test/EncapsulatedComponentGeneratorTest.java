@@ -150,6 +150,25 @@ public class EncapsulatedComponentGeneratorTest extends TestCase implements Cons
         
     }
     
+    public static class IfStatement {
+        
+        public int i;
+
+        public Object method() {
+            if(i == 0) {
+                return this;
+            }
+            return this;
+        }
+    }
+    
+    public static class Supercall {
+        
+        public void method() {
+            super.getClass();
+        }
+    }
+    
     public void testEmptyMethod() throws Exception {
         runReplacedMethod(EmptyMethod.class);
     }
@@ -207,6 +226,14 @@ public class EncapsulatedComponentGeneratorTest extends TestCase implements Cons
     
     public void testInheritanceChain2() throws Exception {
         runReplacedMethod(Subclass2.class);
+    }
+    
+    public void testIfStatement() throws Exception {
+        runReplacedMethod(IfStatement.class);
+    }
+    
+    public void testSupercall() throws Exception {
+        runReplacedMethod(Supercall.class);
     }
     
     private Object runReplacedMethod(Class clazz) throws Exception {

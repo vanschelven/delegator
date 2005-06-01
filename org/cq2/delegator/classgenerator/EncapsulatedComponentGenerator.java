@@ -10,15 +10,19 @@ import java.util.List;
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.generic.ConstantPoolGen;
+import org.apache.bcel.generic.INVOKESPECIAL;
+import org.apache.bcel.generic.Instruction;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
+import org.apache.bcel.generic.InstructionTargeter;
 import org.apache.bcel.generic.InvokeInstruction;
 import org.apache.bcel.generic.LocalVariableInstruction;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.StoreInstruction;
+import org.apache.bcel.generic.TargetLostException;
 import org.apache.bcel.generic.Type;
 import org.cq2.delegator.Component;
 import org.cq2.delegator.Self;
@@ -64,6 +68,7 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
 
         InstructionListCopier copier = new InstructionListCopier(new ConstantPoolGen(superclassMethod.getConstantPool()), constPool);
         InstructionList myInstrList = copier.copy(new InstructionList(superclassMethod.getCode().getCode()));
+        myInstrList.setPositions();
         modifyInstructions(myInstrList);
 
         MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
@@ -73,8 +78,11 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
 
         //add method trailer (met verwijderingen)
        //hier mist een regel convertReturnValue ofzo
+        try {
         methodGen.setMaxStack();
         methodGen.setMaxLocals();
+        } catch (Exception e) {throw new RuntimeException(methodGen.getName(), e); }
+        
         classGen.addMethod(methodGen.getMethod());
         instrList.dispose();
 
@@ -97,7 +105,7 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         InstructionHandle current = myInstrList.getStart();
         InstructionHandle next = current.getNext();
         while (next != null) {
-            reIndexLocalVariables(myInstrList, current);
+            reIndexLocalVariables(current);
             replaceThisPointerBySelf(myInstrList, current, next);
             
             current = next;
@@ -105,7 +113,7 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         }
     }
 
-    private void reIndexLocalVariables(InstructionList myInstrList, InstructionHandle current) {
+    private void reIndexLocalVariables(InstructionHandle current) {
         if (current.getInstruction() instanceof LocalVariableInstruction) {
             LocalVariableInstruction l = (LocalVariableInstruction) current.getInstruction();
             if (l.getIndex() > 0) {
@@ -118,12 +126,28 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         if ((current.getInstruction().getOpcode() == ALOAD_0)
                 && ((next.getInstruction().getOpcode() == ARETURN) ||
                     (next.getInstruction() instanceof StoreInstruction) ||
-                    (next.getInstruction() instanceof InvokeInstruction) ||
+                    //((next.getInstruction() instanceof InvokeInstruction) && !(next.getInstruction() instanceof INVOKESPECIAL)) ||
+                    //(next.getInstruction() instanceof InvokeInstruction) ||
                     (next.getInstruction() instanceof PUTFIELD))) {
-            myInstrList.insert(current, getLoadSelfList());
+            InstructionList loadSelfList = getLoadSelfList();
+            InstructionHandle firstInstruction = loadSelfList.getStart();
+            myInstrList.insert(current, loadSelfList);
             try {
                 myInstrList.delete(current);
-            } catch (Exception e) {throw new RuntimeException(e);}
+            } catch (TargetLostException e) {
+                updateTargets(e, firstInstruction);
+            }
+        }
+    }
+
+    private void updateTargets(TargetLostException e,
+            InstructionHandle newTarget) {
+        InstructionHandle[] targets = e.getTargets();
+        for (int i = 0; i < targets.length; i++) {
+            InstructionTargeter[] targeters = targets[i].getTargeters();
+
+            for (int j = 0; j < targeters.length; j++)
+                targeters[j].updateTarget(targets[i], newTarget);
         }
     }
 
