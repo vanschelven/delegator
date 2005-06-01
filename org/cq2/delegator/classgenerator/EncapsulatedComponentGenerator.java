@@ -9,11 +9,11 @@ import java.util.List;
 
 import org.apache.bcel.Repository;
 import org.apache.bcel.classfile.JavaClass;
+import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.InvokeInstruction;
-
 import org.apache.bcel.generic.LocalVariableInstruction;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.ObjectType;
@@ -62,13 +62,9 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         newMods = newMods & ~(Modifier.PRIVATE | Modifier.PROTECTED)
                 | Modifier.PUBLIC;
 
-        System.out.println(superclassMethod.getCode());
-        InstructionList myInstrList = new InstructionList(superclassMethod
-                .getCode().getCode());
-        System.out.println(myInstrList);
-        System.out.println(constPool);
-        System.out.println(superclassMethod.getConstantPool());
-        //modifyInstructions(myInstrList);
+        InstructionListCopier copier = new InstructionListCopier(new ConstantPoolGen(superclassMethod.getConstantPool()), constPool);
+        InstructionList myInstrList = copier.copy(new InstructionList(superclassMethod.getCode().getCode()));
+        modifyInstructions(myInstrList);
 
         MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
                 .toArray(new Type[] {}), generateParameterNames(types.size()),
@@ -101,18 +97,12 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         InstructionHandle current = myInstrList.getStart();
         InstructionHandle next = current.getNext();
         while (next != null) {
-            reIndexConstants(current);
             reIndexLocalVariables(myInstrList, current);
             replaceThisPointerBySelf(myInstrList, current, next);
             
             current = next;
             next = current.getNext();
         }
-    }
-
-    private void reIndexConstants(InstructionHandle current) {
-//        current.getInstruction().
-//        superclassMethod.getConstantPool();
     }
 
     private void reIndexLocalVariables(InstructionList myInstrList, InstructionHandle current) {
