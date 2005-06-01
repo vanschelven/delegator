@@ -125,7 +125,7 @@ public class ClassGenerator implements Constants {
 
     private static Cache proxyClassCache = new Cache("proxy");
 
-    private JavaClass superJavaClass;
+    protected JavaClass superJavaClass;
 
     ClassGenerator(String className, Class superClass, Class marker, boolean useParentConstPool) {
         String[] extraInterfaces = new String[] { marker.getName(), ISelf.class.getName() };

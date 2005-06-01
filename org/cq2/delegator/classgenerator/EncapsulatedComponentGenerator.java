@@ -8,8 +8,10 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.bcel.Repository;
+import org.apache.bcel.classfile.Field;
 import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.generic.ConstantPoolGen;
+import org.apache.bcel.generic.FieldInstruction;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
@@ -34,9 +36,18 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
     }
     
     public byte[] generate() {
+        addPrivateFields();
         addDelegationMethods(componentMethodFilter, false);
         addCopiesOfSuperMethods(componentMethodFilter);
         return classGen.getJavaClass().getBytes();
+    }
+
+    private void addPrivateFields() {
+        Field[] fields = superJavaClass.getFields();
+        for (int i = 0; i < fields.length; i++) {
+           // if (Modifier.isPrivate(fields[i].getModifiers()))
+                classGen.addField(fields[i]);
+        }
     }
 
     private void addCopiesOfSuperMethods(MethodFilter methodFilter) {
@@ -75,10 +86,8 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
 
         //add method trailer (met verwijderingen)
         convertReturnValue(returnType);
-        try {
         methodGen.setMaxStack();
         methodGen.setMaxLocals();
-        } catch (Exception e) {throw new RuntimeException(methodGen.getName(), e); }
         
         classGen.addMethod(methodGen.getMethod());
         instrList.dispose();
@@ -103,9 +112,18 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         while (next != null) {
             reIndexLocalVariables(current);
             replaceThisPointerBySelf(current, next);
+            replaceFieldAccessesToLocalAccess(current);
             
             current = next;
             next = current.getNext();
+        }
+    }
+
+    private void replaceFieldAccessesToLocalAccess(InstructionHandle current) {
+        if (current.getInstruction() instanceof FieldInstruction) {
+            FieldInstruction instr = (FieldInstruction) current.getInstruction();
+            int index = constPool.addFieldref(classGen.getClassName(), instr.getFieldName(constPool), instr.getSignature(constPool));
+            instr.setIndex(index);
         }
     }
 
@@ -154,6 +172,9 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         result.append(InstructionFactory.createLoad(Type.OBJECT, 0));
         result.append(instrFact.createInvoke(Object.class.getName(),
                 "getClass", new ObjectType(Class.class.getName()),
+                new Type[] {}, INVOKEVIRTUAL));
+        result.append(instrFact.createInvoke(Class.class.getName(),
+                "getSuperclass", new ObjectType(Class.class.getName()),
                 new Type[] {}, INVOKEVIRTUAL));
         result.append(instrFact.createInvoke(Self.class.getName(),
                 "cast", Type.OBJECT, new Type[] { new ObjectType(Class.class

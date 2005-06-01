@@ -120,6 +120,7 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     public Object cast(Class clas) {
+  //      System.out.println("Self.cast(" + clas + ");");
         return Delegator.proxyFor(clas, this);
     }
 
