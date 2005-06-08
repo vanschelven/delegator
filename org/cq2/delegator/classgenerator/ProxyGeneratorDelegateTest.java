@@ -35,12 +35,12 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 		invokeException = null;
 		invokeMethod = null;
 		invokeArgs = null;
-		proxy = (ProxyGeneratorDelegateTestClass) ClassGenerator.newProxyInstance(ProxyGeneratorDelegateTestClass.class,
+		proxy = (ProxyGeneratorDelegateTestClass) ProxyGenerator.newProxyInstance(ProxyGeneratorDelegateTestClass.class,
 				this);
 	}
 
 	public void testGenClass() throws Exception {
-		Object obj = ClassGenerator.newProxyInstance(ProxyGeneratorDelegateTestClass.class,
+		Object obj = ProxyGenerator.newProxyInstance(ProxyGeneratorDelegateTestClass.class,
 				this);
 		assertNotNull(obj);
 		Method objectString = obj.getClass().getMethod("objectString", new Class[]{String.class});
@@ -48,22 +48,22 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 	}
 
 	public void testProxy() throws Exception {
-		Object testProxy = ClassGenerator.newProxyInstance(ProxyGeneratorDelegateTestClass.class,
+		Object testProxy = ProxyGenerator.newProxyInstance(ProxyGeneratorDelegateTestClass.class,
 				this);
 		assertTrue(testProxy instanceof ProxyGeneratorDelegateTestClass);
 	}
 
 	public void testGenerateParametersNames() {
-		String[] args = ClassGenerator.generateParameterNames(1);
+		String[] args = ProxyGenerator.generateParameterNames(1);
 		assertTrue(Arrays.equals(new String[]{"arg0"}, args));
-		args = ClassGenerator.generateParameterNames(0);
+		args = ProxyGenerator.generateParameterNames(0);
 		assertTrue(Arrays.equals(new String[]{}, args));
-		args = ClassGenerator.generateParameterNames(2);
+		args = ProxyGenerator.generateParameterNames(2);
 		assertTrue(Arrays.equals(new String[]{"arg0", "arg1"}, args));
 	}
 
 	public void testDelegate() throws Exception {
-		ProxyGeneratorDelegateTestClass testProxy = (ProxyGeneratorDelegateTestClass) ClassGenerator
+		ProxyGeneratorDelegateTestClass testProxy = (ProxyGeneratorDelegateTestClass) ProxyGenerator
 				.newProxyInstance(ProxyGeneratorDelegateTestClass.class, this);
 		Field delegate = testProxy.getClass().getDeclaredField("self");
 		assertTrue(Modifier.isTransient(delegate.getModifiers()));
@@ -309,13 +309,13 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 	//		assertTrue(invokeCalled == false);
 	//	}
 	public void testProhibitedPackageName() {
-		Object testProxy = ClassGenerator.newProxyInstance(HashMap.class, this);
+		Object testProxy = ProxyGenerator.newProxyInstance(HashMap.class, this);
 		assertNotNull(testProxy);
 	}
 
 	public void testSetdelegate() {
-		Object testProxy = ClassGenerator.newProxyInstance(HashMap.class, this);
-		assertSame(this, ClassGenerator.getInvocationHandler(testProxy));
+		Object testProxy = ProxyGenerator.newProxyInstance(HashMap.class, this);
+		assertSame(this, ProxyGenerator.getInvocationHandler(testProxy));
 	}
 
 	public static class MyClass {
@@ -323,7 +323,7 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 	}
 
 	public void testProtectedMethod() {
-		Object testProxy = ClassGenerator.newProxyInstance(MyClass.class,
+		Object testProxy = ProxyGenerator.newProxyInstance(MyClass.class,
 				this);
 		assertNotNull(testProxy);
 	}

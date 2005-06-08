@@ -16,7 +16,7 @@ public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandle
 	private ProxyGeneratorSelfTestClass proxy;
 
 	protected void setUp() throws Exception {
-		proxy = (ProxyGeneratorSelfTestClass) ClassGenerator
+		proxy = (ProxyGeneratorSelfTestClass) ProxyGenerator
 				.newComponentInstance(ProxyGeneratorSelfTestClass.class);
 	}
 
@@ -40,9 +40,9 @@ public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandle
 	private Object callSuperMethod(String methodName) throws NoSuchMethodException,
 			IllegalAccessException, InvocationTargetException {
 		Method method = proxy.getClass()
-				.getMethod(methodName, new Class[]{Self.class});
+				.getMethod(methodName, new Class[]{InvocationHandler.class});
 		((Stack) Self.self.get()).push(this);
-		Object result = method.invoke(proxy, new Object[]{new Self()});
+		Object result = method.invoke(proxy, new Object[]{this});
 		((Stack) Self.self.get()).pop();
 		return result;
 	}

@@ -81,17 +81,16 @@ public class MultiThreadTest extends TestCase {
 
     }
 
-//TODO als zoveel hier... eerst stabiel dan weer aan    
-//    public void testComponentUser() throws InterruptedException {
-//        Self self = new Self(Vector.class);
-//        VectorComponentUser thread1 = new VectorComponentUser(self);
-//        thread1.start();
-//        VectorComponentUser thread2 = new VectorComponentUser(self);
-//        thread2.start();
-//        thread1.waitFor();
-//        thread2.waitFor();
-//        assertEquals(MyThread.NUMLOOPS - 1, thread1.getCounter());
-//    }
+    public void testComponentUser() throws InterruptedException {
+        Self self = new Self(Vector.class);
+        VectorComponentUser thread1 = new VectorComponentUser(self);
+        thread1.start();
+        VectorComponentUser thread2 = new VectorComponentUser(self);
+        thread2.start();
+        thread1.waitFor();
+        thread2.waitFor();
+        assertEquals(MyThread.NUMLOOPS - 1, thread1.getCounter());
+    }
 
     public interface A {
 
@@ -424,22 +423,21 @@ public class MultiThreadTest extends TestCase {
 
     }
 
-//  TODO aanzetten en zodanig maken dat hij niet vastloopt als het misgaat
-//    public void testExampleFromProposal1() throws InterruptedException {
-//        list = new Vector();
-//        Self self = new Self(Counter.class);
-//        self.add(org.cq2.delegator.Semaphore.class);
-//        counter = (Counter) self.cast(Counter.class);
-//        CounterThread thread1 = new CounterThread();
-//        thread1.start();
-//        CounterThread thread2 = new CounterThread();
-//        thread2.start();
-//        thread1.waitFor();
-//        thread2.waitFor();
-//        for (int i = 1; i <= 400; i++) {
-//            assertTrue(list.contains(new Integer(i)));
-//        }
-//    }
+    public void testExampleFromProposal1() throws InterruptedException {
+        list = new Vector();
+        Self self = new Self(Counter.class);
+        self.add(org.cq2.delegator.Semaphore.class);
+        counter = (Counter) self.cast(Counter.class);
+        CounterThread thread1 = new CounterThread();
+        thread1.start();
+        CounterThread thread2 = new CounterThread();
+        thread2.start();
+        thread1.waitFor();
+        thread2.waitFor();
+        for (int i = 1; i <= 400; i++) {
+            assertTrue(list.contains(new Integer(i)));
+        }
+    }
 
     public abstract static class MonitorCounter implements IMonitor {
 
@@ -476,22 +474,21 @@ public class MultiThreadTest extends TestCase {
 
     }
 
-//TODO aanzetten en zodanig maken dat hij niet vastloopt als het misgaat
-    //    public void testExampleFromProposalWithMonitor()
-//            throws InterruptedException {
-//        list = new Vector();
-//        Self self = new Self(MonitorCounter.class);
-//        self.add(Monitor.class);
-//        monitorCounter = (MonitorCounter) self.cast(MonitorCounter.class);
-//        MonitorCounterThread thread1 = new MonitorCounterThread();
-//        thread1.start();
-//        MonitorCounterThread thread2 = new MonitorCounterThread();
-//        thread2.start();
-//        thread1.waitFor();
-//        thread2.waitFor();
-//        for (int i = 1; i <= 400; i++) {
-//            assertTrue(list.contains(new Integer(i)));
-//        }
-//    }
+    public void testExampleFromProposalWithMonitor()
+            throws InterruptedException {
+        list = new Vector();
+        Self self = new Self(MonitorCounter.class);
+        self.add(Monitor.class);
+        monitorCounter = (MonitorCounter) self.cast(MonitorCounter.class);
+        MonitorCounterThread thread1 = new MonitorCounterThread();
+        thread1.start();
+        MonitorCounterThread thread2 = new MonitorCounterThread();
+        thread2.start();
+        thread1.waitFor();
+        thread2.waitFor();
+        for (int i = 1; i <= 400; i++) {
+            assertTrue(list.contains(new Integer(i)));
+        }
+    }
 
 }

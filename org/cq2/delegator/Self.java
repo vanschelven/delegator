@@ -13,7 +13,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
-import org.cq2.delegator.classgenerator.ClassGenerator;
+import org.cq2.delegator.classgenerator.ProxyGenerator;
 import org.cq2.delegator.method.MethodUtil;
 
 public class Self implements InvocationHandler, ISelf {
@@ -62,7 +62,7 @@ public class Self implements InvocationHandler, ISelf {
                 //if(!cmps.hasNext())throw new NoSuchMethodError
             }
             List argTypeList = new ArrayList();
-            argTypeList.add(Self.class);
+            argTypeList.add(InvocationHandler.class);
             argTypeList.addAll(Arrays.asList(method.getParameterTypes()));
 
             argTypeListExludingInvocationHandler.addAll(Arrays.asList(method
@@ -120,7 +120,6 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     public Object cast(Class clas) {
-  //      System.out.println("Self.cast(" + clas + ");");
         return Delegator.proxyFor(clas, this);
     }
 
@@ -186,7 +185,7 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     private Component newComponent(Class clas) {
-        return ClassGenerator.newComponentInstance(clas);
+        return ProxyGenerator.newComponentInstance(clas);
     }
 
     public Self extend(Class class1) {

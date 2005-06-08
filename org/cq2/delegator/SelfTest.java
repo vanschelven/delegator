@@ -20,7 +20,7 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.classgenerator.ClassGenerator;
+import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 public class SelfTest extends TestCase {
 	private Object keyRef = null;
@@ -52,7 +52,7 @@ public class SelfTest extends TestCase {
 
 	public void testAddComponent() {
 		Self self = new Self();
-		Component c = ClassGenerator.newComponentInstance(ArrayList.class);
+		Component c = ProxyGenerator.newComponentInstance(ArrayList.class);
 		self.add(c);
 		assertSame(c, self.component(0));
 	}

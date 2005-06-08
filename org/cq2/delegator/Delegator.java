@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
 import org.cq2.delegator.binders.Link;
-import org.cq2.delegator.classgenerator.ClassGenerator;
+import org.cq2.delegator.classgenerator.ProxyGenerator;
 
 /**
  * @author ejgroene
@@ -23,10 +23,10 @@ public class Delegator {
 	 */
 	public static Object proxyFor(Class theInterface, InvocationHandler handler) {
 		if (theInterface.isInterface()) {
-			return Proxy.newProxyInstance(ClassGenerator.getClassLoader(), new Class[]{
+			return Proxy.newProxyInstance(ProxyGenerator.getClassLoader(), new Class[]{
 					theInterface, ISelf.class}, handler);
 		}
-		return ClassGenerator.newProxyInstance(theInterface, handler);
+		return ProxyGenerator.newProxyInstance(theInterface, handler);
 	}
 
 	public static Object forInterface(Class theInterface, Object delegate) {
@@ -37,7 +37,7 @@ public class Delegator {
 		InvocationHandler newDynImpl = Link.noSuchMethodInvocationHandler();
 		for (int i = delegates.length - 1; i >= 0; i--)
 			newDynImpl = new Link(delegates[i], newDynImpl);
-		ClassLoader classLoader = ClassGenerator.getClassLoader();
+		ClassLoader classLoader = ProxyGenerator.getClassLoader();
         return Proxy.newProxyInstance(classLoader, new Class[]{theInterface},
 				newDynImpl);
 	}
@@ -55,6 +55,6 @@ public class Delegator {
 	}
 
 	public static ClassLoader configureClassLoader(ClassLoader loader) {
-		return ClassGenerator.configureClassLoader(loader);
+		return ProxyGenerator.configureClassLoader(loader);
 	}
 }
