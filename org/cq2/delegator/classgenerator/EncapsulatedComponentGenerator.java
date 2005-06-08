@@ -37,6 +37,7 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
     
     public byte[] generate() {
         addPrivateFields();
+        //TODO de initialisatie van velden gaat mis omdat de orginele velden worden geinitialiseerd...
         addDelegationMethods(componentMethodFilter, false);
         addCopiesOfSuperMethods(componentMethodFilter);
         return classGen.getJavaClass().getBytes();
@@ -62,6 +63,9 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
 
     private void addCopyOfSuperMethod(Method method) {
         // TODO Maak gebruik van addHeader en Trailer
+        if (method.getName().equals("clone")) return;
+//        if (method.getName().equals("toString")) return;
+        if (method.getName().equals("hashCode")) return; //lelijk als de nacht maar dat volgt nog wel...
         
         Type returnType = Type.getType(method.getReturnType());
         superclassMethod = findSuperclassMethod(classGen.getSuperclassName(), method);
@@ -122,8 +126,10 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
     private void replaceFieldAccessesToLocalAccess(InstructionHandle current) {
         if (current.getInstruction() instanceof FieldInstruction) {
             FieldInstruction instr = (FieldInstruction) current.getInstruction();
-            int index = constPool.addFieldref(classGen.getClassName(), instr.getFieldName(constPool), instr.getSignature(constPool));
-            instr.setIndex(index);
+            if (instr.getClassName(constPool).equals(superJavaClass.getClassName())) {
+                int index = constPool.addFieldref(classGen.getClassName(), instr.getFieldName(constPool), instr.getSignature(constPool));
+                instr.setIndex(index);	
+            }
         }
     }
 
@@ -184,6 +190,7 @@ public class EncapsulatedComponentGenerator extends ClassGenerator {
         return result;
     }
 
+    //TODO (zie "testCreate") anonymous inner classes moeten ook meegekopieerd worden en eigen references krijgen...
     
     //TODO (op de verkeerde plaats maar ja... gebruik eens de Verifier van BCEL)
     

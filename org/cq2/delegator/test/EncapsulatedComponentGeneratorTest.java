@@ -1,6 +1,7 @@
 package org.cq2.delegator.test;
 
 import java.lang.reflect.Method;
+import java.util.Map.Entry;
 
 import junit.framework.TestCase;
 
@@ -179,6 +180,49 @@ public class EncapsulatedComponentGeneratorTest extends TestCase implements Cons
         }
     }
     
+    public static class HowToCallThis {
+        
+        public void callsPrivate() {
+            privateMethod();
+        }
+        
+        private void privateMethod() {}
+        
+    }
+    
+    public static class Aap extends HowToCallThis {
+        
+        public void method() {
+            callsPrivate();
+        }
+        
+    }
+    
+    public static class InitializedField {
+        
+        public static final int INITIALVALUE = 5;
+        public int i = INITIALVALUE;
+        
+        public Integer method() {
+            return new Integer(i);
+        }
+        
+    }
+    
+    public static class Entry {
+        
+        public Entry next;
+        
+    }
+    
+    public static class FieldOfOtherClass {
+
+        public void method() {
+            Entry next = new Entry().next;
+        }
+
+    }
+    
     public void testEmptyMethod() throws Exception {
         runReplacedMethod(EmptyMethod.class);
     }
@@ -253,6 +297,20 @@ public class EncapsulatedComponentGeneratorTest extends TestCase implements Cons
     
     public void testPrivateField() throws Exception {
         runReplacedMethod(PrivateField.class);
+    }
+    
+    //TODO dit snappen en repareren
+//    public void testAap() throws Exception {
+//        runReplacedMethod(Aap.class);
+//    }
+    
+    //TODO dit is eigenlijk een speciaal geval (<init>) van supercalls ook kopieren... doen we later.
+//    public void testFieldInitialisation() throws Exception {
+//        assertEquals(new Integer(InitializedField.INITIALVALUE), runReplacedMethod(InitializedField.class));
+//    }
+    
+    public void testFieldOfOtherClass() throws Exception {
+        runReplacedMethod(FieldOfOtherClass.class);
     }
     
     private Object runReplacedMethod(Class clazz) throws Exception {

@@ -1,6 +1,5 @@
 package org.cq2.delegator.classgenerator;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Iterator;
@@ -10,6 +9,7 @@ import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.Type;
 import org.cq2.delegator.Component;
+import org.cq2.delegator.Self;
 import org.cq2.delegator.method.MethodFilter;
 
 public class ComponentGenerator extends ClassGenerator {
@@ -36,7 +36,7 @@ public class ComponentGenerator extends ClassGenerator {
 
     private void addSuperCallMethod(Method method) {
         Type returnType = Type.getType(method.getReturnType());
-        MethodGen methodGen = addMethodHeader(method, returnType, InvocationHandler.class, true);
+        MethodGen methodGen = addMethodHeader(method, returnType, Self.class, true);
         //createBindSelf(1);
         createCallToSuper(method, returnType, 2);
         //copySuperCodeAndReplaceThisBySelf(method, returnType);
@@ -56,14 +56,5 @@ public class ComponentGenerator extends ClassGenerator {
                 .getName(), returnType, getArgumentTypes(method), Constants.INVOKESPECIAL));
         instrList.append(InstructionFactory.createReturn(returnType));
     }
-    
-//    private void copySuperCodeAndReplaceThisBySelf(Method method, Type returnType) {
-//        Method newMethod = new ThisBySelfSubstitutor(classGen, constPool, instrFact).generateMethod(method);
-//        classGen.addMethod(newMethod);
-//    }
-
-
-
-
     
 }

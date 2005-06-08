@@ -33,6 +33,9 @@ import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.ReferenceType;
 import org.apache.bcel.generic.Type;
+import org.apache.bcel.verifier.VerificationResult;
+import org.apache.bcel.verifier.Verifier;
+import org.apache.bcel.verifier.VerifierFactory;
 import org.cq2.delegator.Component;
 import org.cq2.delegator.ComponentMethodFilter;
 import org.cq2.delegator.ISelf;
@@ -479,10 +482,16 @@ public class ClassGenerator implements Constants {
     }
 
     public static Component newComponentInstance(Class clazz) {
+        Class componentClass = null;
         try {
-            Class componentClass = componentsClassCache.getClass(injector, clazz);
+            componentClass = componentsClassCache.getClass(injector, clazz);
             return (Component) componentClass.newInstance();
-        } catch (Exception e) {
+        } catch (Throwable e) {
+//            Verifier verifier = VerifierFactory.getVerifier(componentClass.getName());
+//            VerificationResult result = verifier.doPass2();
+//            System.out.println("********************");
+//            System.out.println(componentClass.getName());
+//            System.out.println(result);
             throw new RuntimeException(e);
         }
     }
