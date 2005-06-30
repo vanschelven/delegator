@@ -50,9 +50,10 @@ public class SelfTest extends TestCase {
 		assertEquals(result, returnVal);
 	}
 
+	//TODO (hoort elders thuis...) er moet nog een test bij die laat zien hoe gaaf het is dat je componenten kan delen als we dat gedrag willen behouden
 	public void testAddComponent() {
 		Self self = new Self();
-		Component c = ProxyGenerator.newComponentInstance(ArrayList.class);
+		Component c = ProxyGenerator.newComponentInstance(ArrayList.class, self); //TODO dit is in onzin veranderd want het heeft geen zin componenten deelbaar te maken als ze dat niet echt zijn
 		self.add(c);
 		assertSame(c, self.component(0));
 	}

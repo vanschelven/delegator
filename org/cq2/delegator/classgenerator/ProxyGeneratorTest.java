@@ -45,7 +45,7 @@ public class ProxyGeneratorTest extends TestCase {
 	}
 
 	public void testCreateComponent() throws Exception {
-		Object c = ProxyGenerator.newComponentInstance(HashMap.class);
+		Object c = ProxyGenerator.newComponentInstance(HashMap.class, new Self());
 		assertTrue(ProxyGenerator.isComponent(c));
 		assertFalse(ProxyGenerator.isProxy(c));
 		assertFalse(c instanceof Proxy);

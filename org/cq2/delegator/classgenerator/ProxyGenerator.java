@@ -140,7 +140,8 @@ public class ProxyGenerator implements Constants {
     }
 
     public byte[] generateComponent() {
-        addDelegationMethods(componentMethodFilter, false);
+        addSelfField();
+        addDelegationMethods(componentMethodFilter, true);
         addSuperCallMethods(componentMethodFilter);
         return classGen.getJavaClass().getBytes();
     }
@@ -342,16 +343,6 @@ public class ProxyGenerator implements Constants {
         instrList.append(InstructionFactory.createLoad(Type.OBJECT, 0));
     }
 
-    private void createSystemOutPrintln(String s) {
-        instrList.append(instrFact.createFieldAccess("java.lang.System", "out", new ObjectType("java.io.PrintStream"),
-                Constants.GETSTATIC));
-
-        instrList.append(new PUSH(constPool, s));
-        instrList.append(instrFact.createInvoke("java.io.PrintStream", "println", Type.VOID, 
-         new Type[] { Type.STRING },
-         Constants.INVOKEVIRTUAL));
-    }
-    
     private void createCallToInvocationHandler(Method method, boolean useSelf) {
        // createSystemOutPrintln(method.toString());
         createLoadThis();
@@ -533,10 +524,12 @@ public class ProxyGenerator implements Constants {
                 && !field.getType().isPrimitive();
     }
 
-    public static Component newComponentInstance(Class clazz) {
+    public static Component newComponentInstance(Class clazz, InvocationHandler handler) {
         try {
             Class componentClass = componentsClassCache.getClass(injector, clazz);
-            return (Component) componentClass.newInstance();
+            Component result = (Component) componentClass.newInstance();
+            getDelegateField(result).set(result, handler);
+            return result;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

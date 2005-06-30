@@ -185,7 +185,7 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     private Component newComponent(Class clas) {
-        return ProxyGenerator.newComponentInstance(clas);
+        return ProxyGenerator.newComponentInstance(clas, this);
     }
 
     public Self extend(Class class1) {

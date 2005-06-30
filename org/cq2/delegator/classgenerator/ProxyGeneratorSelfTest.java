@@ -17,7 +17,7 @@ public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandle
 
 	protected void setUp() throws Exception {
 		proxy = (ProxyGeneratorSelfTestClass) ProxyGenerator
-				.newComponentInstance(ProxyGeneratorSelfTestClass.class);
+				.newComponentInstance(ProxyGeneratorSelfTestClass.class, this);
 	}
 
 	public void testSuperObjectVoid() throws Exception {
