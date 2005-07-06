@@ -53,6 +53,10 @@ public class Delegator {
 	public static Object extend(Class subclass, Class superclass) {
 	    return extend(subclass, new Class[]{superclass});
 	}
+	
+	public static Object wrap(Class clazz) {
+	    return extend(clazz, new Class[]{});
+	}
 
 	public static ClassLoader configureClassLoader(ClassLoader loader) {
 		return ProxyGenerator.configureClassLoader(loader);

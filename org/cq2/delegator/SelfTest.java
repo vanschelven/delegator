@@ -4,10 +4,7 @@
  */
 package org.cq2.delegator;
 
-import java.io.DataInput;
 import java.lang.reflect.Method;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -66,21 +63,6 @@ public class SelfTest extends TestCase {
 		} catch (NoSuchMethodError e) {}
 	}
 
-	public boolean execute(String query) throws SQLException {
-		throw new SQLException();
-	}
-
-	public void testException() throws SQLException {
-		Statement statement = (Statement) Delegator.forInterface(Statement.class, this);
-		try {
-			statement.execute("niks");
-			fail();
-		} catch (SQLException e) {} catch (Throwable e) {
-			e.printStackTrace();
-			fail("Invalid exception!");
-		}
-	}
-
 	public void testFouteReturnType() {
 		Comparator comp = (Comparator) Delegator.forInterface(Comparator.class, this);
 		try {
@@ -96,102 +78,6 @@ public class SelfTest extends TestCase {
 		return 0;
 	}
 
-	public void testMissingExceptionType() throws Exception {
-		DataInput input = (DataInput) Delegator.forInterface(DataInput.class, this);
-		try {
-			input.readByte();
-			fail("exception types should not match");
-		} catch (NoSuchMethodError e) {}
-	}
-
-	/**
-	 * @see DataInput.readByte()  Intentionally without throws IOException
-	 */
-	public byte readByte() {
-		return 0;
-	}
-	
-	public static class X {
-	    
-	    public void m() throws DelegatorException, SQLException {
-	        
-	    }
-	    
-	}
-	
-	public static class Y {
-	    
-	    public void m() {
-	        
-	    }
-	    
-	}
-	
-	public static class Z {
-	    
-	    public void m() throws SQLException, DelegatorException {
-	        
-	    }
-	    
-	}
-	
-	public void testMissingExceptionForClasses() throws DelegatorException, SQLException, SecurityException, NoSuchMethodException {
-	    Y y = (Y) new Self(X.class).cast(Y.class);
-	    try {
-	        y.m();
-	        fail();
-	    } catch (NoSuchMethodError e) {  }
-	    
-	}
-
-	public void testExceptionsInWrongOrder() throws DelegatorException, SQLException, SecurityException, NoSuchMethodException {
-	    X x = (X) new Self(Z.class).cast(X.class);
-        x.m();
-	}
-	
-	//deze interface & 2 classes laten java's gedrag zien...
-	public interface IWithException {
-	    
-	    public void m() throws Exception;
-	    
-	}
-	
-	public class WithSubclassException {
-	    
-	    public void m() throws SQLException {
-	        
-	    }
-	}
-	
-	public class WithoutException implements IWithException {
-
-        public void m() {
-            
-        }
-	    
-	}
-
-	public void testExceptionsMayBeLeftOut() throws DelegatorException, SQLException {
-	    X x = (X) new Self(Y.class).cast(X.class);
-        x.m();
-	}
-	
-	public class DelegatorException2 extends DelegatorException {
-
-        public DelegatorException2(String string) {
-            super(string);
-        }}
-	
-	public static class X2 {
-	    
-	    public void m() throws SQLException, DelegatorException2 {}
-	}
-	
-	public void testExceptionsMayBeMoreSpecific() throws DelegatorException, SQLException {
-	    X x = (X) new Self(X2.class).cast(X.class);
-        x.m();
-	}
-	
 	public void testPublicOnly() {
 		List list = (List) Delegator.forInterface(List.class, this);
 		try {
@@ -287,8 +173,23 @@ public class SelfTest extends TestCase {
 	}
 
 	public void testEquals() {
-        //TODO!!!!!
-    }
+		Self self1 = new Self();
+		Self self2 = new Self();
+		assertTrue(self1.equals(self2));
+		assertTrue(self1.equals(self1));
+		self1.add(A.class);
+		self2.add(A.class);
+		assertTrue(self1.equals(self2));
+		assertTrue(self1.equals(self1));
+		A a1 = (A) self1.cast(A.class);
+		A a2 = (A) self2.cast(A.class);
+		assertFalse(a1.equals(a2));
+		assertTrue(a1.equals(a1));
+		assertFalse(a1.equals(null));
+		assertFalse(a1.equals(new Object()));
+		assertFalse(new Object().equals(a1));
+		assertTrue(a1.equals(self1.cast(HashMap.class)));
+	}
 	
 	public void testHashCodeCannotBeRedefined() {
 		Object objA = newModifiedSelf(A.class).cast(Object.class);
@@ -300,22 +201,22 @@ public class SelfTest extends TestCase {
 	}
 
 	public void testEqualsCannotBeRedefined() {
-		Self self1 = new Self();
-		Self self2 = new Self();
-		assertFalse(self1.equals(self2));
-		assertTrue(self1.equals(self1));
-		self1.add(A.class);
-		self2.add(A.class);
-		assertFalse(self1.equals(self2));
-		assertTrue(self1.equals(self1));
-		A a1 = (A) self1.cast(A.class);
-		A a2 = (A) self2.cast(A.class);
-		assertFalse(a1.equals(a2));
-		assertTrue(a1.equals(a1));
-		assertFalse(a1.equals(null));
-		assertFalse(a1.equals(new Object()));
-		assertFalse(new Object().equals(a1));
-		assertTrue(a1.equals(self1.cast(HashMap.class)));
+//		Self self1 = new Self();
+//		Self self2 = new Self();
+//		assertFalse(self1.equals(self2));
+//		assertTrue(self1.equals(self1));
+//		self1.add(A.class);
+//		self2.add(A.class);
+//		assertFalse(self1.equals(self2));
+//		assertTrue(self1.equals(self1));
+//		A a1 = (A) self1.cast(A.class);
+//		A a2 = (A) self2.cast(A.class);
+//		assertFalse(a1.equals(a2));
+//		assertTrue(a1.equals(a1));
+//		assertFalse(a1.equals(null));
+//		assertFalse(a1.equals(new Object()));
+//		assertFalse(new Object().equals(a1));
+//		assertTrue(a1.equals(self1.cast(HashMap.class)));
 	}
 
 	public static class Nr1 {

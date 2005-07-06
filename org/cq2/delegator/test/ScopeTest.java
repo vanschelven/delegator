@@ -260,6 +260,37 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     //Other package scope properties are also the same as private scope
     //in fact they are totally analogyous!!
     
+    public static class CallsPackageMethod {
+        
+        private boolean called;
+        
+        public void call() {
+            method();
+        }
+
+        void method() {
+            called = true;
+        }
+        
+    }
+    
+    /**
+     * Test showing a limitation of Delegator: The fact that Delegator doesn't
+     * have the self-problem solved for package methods. If a package method is called 
+     * within a component the component doesn't this to self (which is indicated by 
+     * packageMethodCalled being false) but instead executes it itself (which is indicated by 
+     * callsPackageMethodComponent.called being true).
+     */
+    public void testPackageMethodsHaveSelfProblem() {
+        Self self = new Self(PackageMethod.class);
+        self.add(CallsPackageMethod.class);
+        CallsPackageMethod m = (CallsPackageMethod) self.cast(CallsPackageMethod.class);
+        m.call();
+        assertFalse(packageMethodCalled);
+        CallsPackageMethod callsPackageMethodComponent = ((CallsPackageMethod) self.component(1));
+        assertTrue(callsPackageMethodComponent.called);
+    }
+    
     public static class ProtectedMethod {
 
         protected void method() {

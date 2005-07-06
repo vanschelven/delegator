@@ -4,6 +4,7 @@
  */
 package org.cq2.delegator;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -198,9 +199,34 @@ public class Self implements InvocationHandler, ISelf {
         return this;
     }
 
-    public boolean equals(Object arg0) {
-        return arg0 instanceof Self ? super.equals(arg0) : arg0 != null ? arg0
-                .equals(this) : false;
+    public boolean equals(Object obj) {
+        if (obj == null) return false;
+        if (!(obj instanceof Self || obj instanceof Proxy)) return false;
+        Self other;
+        if (obj instanceof Self)
+            other = (Self) obj;
+        else other = getSelfFromProxy((Proxy) obj);
+
+        if (this.nrOfComponents != other.nrOfComponents) return false; //fix this
+        try {
+            for (int i = 0; i < nrOfComponents; i++) {
+                Method m = this.components[0].getClass().getDeclaredMethod("equals", new Class[]{InvocationHandler.class, Object.class});
+                Boolean result = (Boolean) m.invoke(this.components[0], new Object[]{this, other.components[0]});
+                if (!result.booleanValue()) return false;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return true;
+    }
+
+    private static Self getSelfFromProxy(Proxy proxy) {
+        try {
+            Field selfField = proxy.getClass().getDeclaredField("self");
+            return (Self) selfField.get(proxy);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private Method findMethod(Method m) {

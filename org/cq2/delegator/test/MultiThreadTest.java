@@ -16,6 +16,7 @@ import org.cq2.delegator.Self;
  * 
  * De tests voor Become zijn in feite bugtests voor hoe het eerst was...
  */
+//TODO refactoren
 public class MultiThreadTest extends TestCase {
 
     private final static int MAXBECOMES = 200;
@@ -129,6 +130,7 @@ public class MultiThreadTest extends TestCase {
 
     }
 
+    //TODO dit moet ergens anders heen
     public void testBecomeUsingSingleThread() {
         ISelf self = new Self(A1.class);
         self.add(B.class);

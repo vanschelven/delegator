@@ -62,6 +62,7 @@ public class MethodUtil {
         }
 
         for (int i = 0; i < actualExceptionTypes.length; i++) {
+            if (isUncheckedException(actualExceptionTypes[i])) continue;
             boolean found = false;
             for (int j = 0; j < desiredExceptionTypes.length; j++) {
                 if (desiredExceptionTypes[j].isAssignableFrom(actualExceptionTypes[i])) {
@@ -72,6 +73,10 @@ public class MethodUtil {
             if (!found) return false;
         }
         return true;
+    }
+
+    private static boolean isUncheckedException(Class exception) {
+        return Error.class.isAssignableFrom(exception) || RuntimeException.class.isAssignableFrom(exception);
     }
 
     // Fetches the factory for reflective objects
