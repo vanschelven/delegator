@@ -5,15 +5,11 @@ package org.cq2.delegator.test;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.security.ProtectionDomain;
-import java.util.HashMap;
-import java.util.Map;
 
 import junit.framework.TestCase;
 
 import org.cq2.delegator.Delegator;
 import org.cq2.delegator.ISelf;
-import org.cq2.delegator.Proxy;
 import org.cq2.delegator.Self;
 import org.cq2.delegator.classgenerator.ProxyGenerator;
 
@@ -188,7 +184,16 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         assertFalse(m.isCalled());
     }
     
-
+    private static class PrivateClass {
+        
+    }
+    
+    public void testPrivateClass() {
+        try {
+            new Self(PrivateClass.class);
+            fail();
+        } catch (IllegalAccessError e) { }
+    }
     
     public static class PackageMethod {
 
@@ -290,6 +295,19 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         CallsPackageMethod callsPackageMethodComponent = ((CallsPackageMethod) self.component(1));
         assertTrue(callsPackageMethodComponent.called);
     }
+    
+    private static class PackageClass {
+        
+    }
+    
+    public void testPackageClass() {
+        try {
+            new Self(PackageClass.class);
+            fail();
+        } catch (IllegalAccessError e) { }
+    }
+    
+
     
     public static class ProtectedMethod {
 

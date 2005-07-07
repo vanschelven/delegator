@@ -24,9 +24,11 @@ public class Self implements InvocationHandler, ISelf {
         }
     };
 
-    private Object[] components;
+    private Component[] components;
 
     private int nrOfComponents = 0;
+
+    private Class[] equalsComponents;
 
     private Self(Component object) {
         this();
@@ -34,7 +36,7 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     public Self() {
-        this.components = new Object[4];
+        this.components = new Component[4];
     }
 
     public Self(Class firstComponentClass) {
@@ -130,7 +132,7 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     private void become(Class clas, Object caller) {
-        Object newComponent = newComponent(clas);
+        Component newComponent = newComponent(clas);
         for (int i = 0; i < nrOfComponents; i++) {
             if (components[i] == caller) {
                 components[i] = newComponent;
@@ -150,6 +152,13 @@ public class Self implements InvocationHandler, ISelf {
         return components[component];
     }
 
+    public Component component(Class clazz) {
+        for (int i = 0; i < nrOfComponents; i++) {
+            if (components[i].getClass().getSuperclass().equals(clazz)) return components[i];
+        }
+        return null;
+    }
+
     public Object component(InvocationHandler h, int component) {
         return component(component);
     }
@@ -162,9 +171,9 @@ public class Self implements InvocationHandler, ISelf {
         addComponent(component);
     }
 
-    private synchronized void addComponent(Object component) {
+    private synchronized void addComponent(Component component) {
         if (nrOfComponents >= components.length) {
-            Object[] newComponents = new Object[components.length * 2];
+            Component[] newComponents = new Component[components.length * 2];
             System
                     .arraycopy(components, 0, newComponents, 0,
                             components.length);
@@ -178,7 +187,7 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     public synchronized void insert(Class componentType) {
-        Object[] newComponents = new Object[components.length + 1];
+        Component[] newComponents = new Component[components.length + 1];
         newComponents[0] = newComponent(componentType);
         System.arraycopy(components, 0, newComponents, 1, nrOfComponents);
         components = newComponents;
@@ -207,11 +216,14 @@ public class Self implements InvocationHandler, ISelf {
             other = (Self) obj;
         else other = getSelfFromProxy((Proxy) obj);
 
-        if (this.nrOfComponents != other.nrOfComponents) return false; 
+        Component[] thisComponents = getEqualsComponents();
+        Component[] otherComponents = other.getEqualsComponents();
+        if (thisComponents.length != otherComponents.length) return false; 
+        
         try {
-            for (int i = 0; i < nrOfComponents; i++) {
-                Method m = this.components[0].getClass().getDeclaredMethod("equals", new Class[]{InvocationHandler.class, Object.class});
-                Boolean result = (Boolean) m.invoke(this.components[0], new Object[]{this, other.components[0]});
+            for (int i = 0; i < thisComponents.length; i++) {
+                Method m = thisComponents[i].getClass().getDeclaredMethod("equals", new Class[]{InvocationHandler.class, Object.class});
+                Boolean result = (Boolean) m.invoke(thisComponents[i], new Object[]{this, otherComponents[i]});
                 if (!result.booleanValue()) return false;
             }
         } catch (Exception e) {
@@ -284,6 +296,26 @@ public class Self implements InvocationHandler, ISelf {
                 return;
             }
         }
+    }
+
+    public void setEqualsComponents(Class[] classes) {
+        this.equalsComponents = classes;
+    }
+    
+    private Component[] getEqualsComponents() {
+        Component[] result;
+        if (equalsComponents == null) {
+            result = new Component[nrOfComponents];
+            for (int i = 0; i < result.length; i++) {
+                result[i] = components[i];
+            }
+        } else {
+            result = new Component[equalsComponents.length];
+            for (int i = 0; i < result.length; i++) {
+                result[i] = component(equalsComponents[i]);
+            }
+        }
+        return result;
     }
 
 }

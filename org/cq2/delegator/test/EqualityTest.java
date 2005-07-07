@@ -106,11 +106,13 @@ public class EqualityTest extends TestCase {
         
         selfAB1 = new Self(A.class);
         selfAB1.add(B.class);
+        ((A) selfAB1.cast(A.class)).setI(1);
         selfAB2 = new Self(A.class);
         selfAB2.add(B.class);
+        ((A) selfAB2.cast(A.class)).setI(1);
         selfABDifferentValue = new Self(A.class);
         selfABDifferentValue.add(B.class);
-        ((A) selfABDifferentValue.cast(A.class)).setI(1);
+        ((A) selfABDifferentValue.cast(A.class)).setI(3);
         selfBA = new Self(B.class);
         selfBA.add(A.class);
 
@@ -176,14 +178,13 @@ public class EqualityTest extends TestCase {
         assertFalse(selfAB1.cast(A.class).equals(null));
     }
     
-//TODO misschien later...
-//    public void testEqualsFilter() {
-//        selfAB1.setEqualsComponents(new Class[]{A.class});
-//        assertEquals(selfAB1, self1);
-//        selfAB1.setEqualsComponents(new Class[]{});
-//        assertEquals(selfAB1, new Self());
-//    }
-//    
+    public void testEqualsFilter() {
+        selfAB1.setEqualsComponents(new Class[]{A.class});
+        assertEquals(selfAB1, self1);
+        selfAB1.setEqualsComponents(new Class[]{});
+        assertEquals(selfAB1, new Self());
+    }
+    
 
     public void testWeirdEqualityBetweenOriginalsAndProxies() {
         assertEquals(new A(), proxy1);
