@@ -172,25 +172,6 @@ public class SelfTest extends TestCase {
 		assertEquals("modifiedSelf", objC.toString());
 	}
 
-	public void testEquals() {
-		Self self1 = new Self();
-		Self self2 = new Self();
-		assertTrue(self1.equals(self2));
-		assertTrue(self1.equals(self1));
-		self1.add(A.class);
-		self2.add(A.class);
-		assertTrue(self1.equals(self2));
-		assertTrue(self1.equals(self1));
-		A a1 = (A) self1.cast(A.class);
-		A a2 = (A) self2.cast(A.class);
-		assertFalse(a1.equals(a2));
-		assertTrue(a1.equals(a1));
-		assertFalse(a1.equals(null));
-		assertFalse(a1.equals(new Object()));
-		assertFalse(new Object().equals(a1));
-		assertTrue(a1.equals(self1.cast(HashMap.class)));
-	}
-	
 	public void testHashCodeCannotBeRedefined() {
 		Object objA = newModifiedSelf(A.class).cast(Object.class);
 		assertEquals(99, objA.hashCode());
@@ -198,25 +179,6 @@ public class SelfTest extends TestCase {
 		assertEquals(99, objB.hashCode());
 		Object objC = newModifiedSelf(C.class).cast(Object.class);
 		assertEquals(99, objC.hashCode());
-	}
-
-	public void testEqualsCannotBeRedefined() {
-//		Self self1 = new Self();
-//		Self self2 = new Self();
-//		assertFalse(self1.equals(self2));
-//		assertTrue(self1.equals(self1));
-//		self1.add(A.class);
-//		self2.add(A.class);
-//		assertFalse(self1.equals(self2));
-//		assertTrue(self1.equals(self1));
-//		A a1 = (A) self1.cast(A.class);
-//		A a2 = (A) self2.cast(A.class);
-//		assertFalse(a1.equals(a2));
-//		assertTrue(a1.equals(a1));
-//		assertFalse(a1.equals(null));
-//		assertFalse(a1.equals(new Object()));
-//		assertFalse(new Object().equals(a1));
-//		assertTrue(a1.equals(self1.cast(HashMap.class)));
 	}
 
 	public static class Nr1 {

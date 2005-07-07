@@ -101,16 +101,6 @@ public class MethodUtilTest extends TestCase {
 	    
 	}
 	
-	public void testExceptionsMatch() throws SecurityException, NoSuchMethodException {
-	    Method result = MethodUtil.getDeclaredMethod(X.class, "m", new Class[]{}, new Class[]{DelegatorException.class});
-	    assertEquals(X.class.getDeclaredMethod("m", new Class[]{}), result);
-	}
-	
-	public void testExceptionsDoNotMatch() throws SecurityException, NoSuchMethodException {
-	    Method result = MethodUtil.getDeclaredMethod(X.class, "m", new Class[]{}, new Class[]{});
-	    assertNull(result);
-	}
-	
 	public class Y {
 	    
 	    public void m() throws SQLException, DelegatorException {
