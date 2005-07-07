@@ -1,0 +1,1131 @@
+\documentclass[a4paper,12pt]{book}
+
+\newcommand{\comment}[1]{} 
+
+\title{Delegator: Delegation in Java}
+
+\author{Klaas van Schelven}
+
+%eclipse todo
+%Delegator.extend(Square.class, Point.class); [dit moek nog wel ff maken]
+
+\begin{document}
+\maketitle
+
+%minimaliseer could would may might should we'd, I will
+
+\chapter{introduction}
+Modeling the world plays an important role in current day programming languages. Since the 1980's the Object Oriented paradigm has become increasingly popular as a tool to do so. The most popular Object Oriented Languages, such as Java and C++, take a class based approach, by asking the programmer to define classes before creating objects. In fact, disregarding popularity, half  the number of Object Oriented languages is based on a different approach, that of prototyping and delegation [VanCutsem04]. Some of the languages following this approach are Simula [Birtwistle73], Self [SmithUngar], flavors [flavors], Javascript and Loops.
+
+Delegation has a number of advantages over a class based approach, and is especially powerful when used in combination with a class based approach such as is provided by the Java language. Delegator is an open source package that brings delegation to Java. It does so in the form of an API, as opposed to some language construct that would require a special compiler or precompiler. This thesis describes further research on Delegator, which was available as a proof of concept earlier but still had a significant amount of problems.
+
+What prototype based languages are, and what delegation is will be discussed first. Prototyping will be introduced as a concept and delegation as a powerful way of implementing it. Secondly a number of advantages of delegation and its expressive power will be shown. Delegation will be put forward as an important concept in its own right. It provides for more flexibility and modularity because the ways code can be reused are much more diverse than in a class based approach. Thirdly the state of the art will be examined. A number of alternatives to this thesis research will be analyzed on their strengths and weaknesses. Next Delegator will be introduced. The interface it offers to its users will be explained, along with a number of implementation issues. Finally a number of important improvements to Delegator will be discussed. This thesis describes extensive research on the way Delegator can be made to deal with Javas access modifiers, exceptions, this pointer encapsulation, multi-threading, performance and a number of other issues.
+
+\section*{Class based and prototype based languages}
+The system of inheritance that is used in Java and a number of other Object Oriented Programming languages divides the world into classes. Classes can be subclasses of other classes, inheriting their ancestor's behavior and possibly extending it with their own. Classes usually have fields to store data and methods to manifest some kind of behavior. Instances of the classes, called objects, inherit all their class' behavior.  Different instances of the same class may differ, each of them having its own specific values in the data fields, but having the same methods. If we, for example, have a class \verb|Point| with the fields \verb|x| and verb|y|, all instances of this class will have those fields, but each instance may have their own values for them.
+
+This mechanism induces the programmer to think in a certain way. Say we want to model a zoo. Because every object is the instance of a particular class, a programmer has to describe the classes before she can describe instances of those classes. If she wants to describe a tiger called Anna, she'll first have to invent a class of tigers to describe the properties (a name, claws, speed and striped fur) of all tigers. Only then can she create an instance of that class and assign values to its fields. Other instances of the same class, like a tiger called Bob, are then easily created based on the class description. If, later, she wants to create a bear Chris she has to invent another class for bears that contains the properties of bears (a name, claws, strength and brown fur). She can than deduce some commonalities like the having of claws and a name, put them in a superclass and let both tigers and bears inherit behavior from this class. That way she'll avoid the duplication of the description of these properties.
+
+Though this approach models a natural way of human reasoning quite closely, it has some limitations. In a class based approach, for example, there is no natural way of describing single instances. Even if we have an animal of which there is only one instance in the world, we'd first have to create a separate class of all animals that are like that one animal. Combining properties from different classes is also problematic in a tree shaped hierarchy. Lastly the class hierarchy is statically determined at compile time.
+
+Another way to describe the zoo would be to start with describing the individual instances. So, we'd describe our favorite tiger Anna as having a name (Anna), claws, a high speed and striped fur. Then we consider another animal, and describe it as having all Anna's properties and having a different name: Bob. We then describe a bear named Chris as being like Anna, but having a different name (Chris), no striped but a brown fur and being strong rather than fast.
+
+This way, we describe the actual objects as we see them, rather than as them being instances of a particular class. We call this the prototype-based approach, because rather than reasoning about a  tiger we just take a prototypical tiger (Anna), inherit its behavior and make some adaptations for the other tigers. Rather than describing a class claw-animals to find common behavior between bears and tigers, we just describe one bear as looking like a tiger with some differences. If we need to describe other bears, we can describe them as looking like the first one.
+
+Note that in a purely prototype based approach we can still sneak in class based thinking, if that proves to be more useful at some point. It will always be possible to create an object that represents a class and use that as a prototype. In our example, instead of basing all other tigers on the first tiger Anna, we could also base them all on a special proto-tiger or tiger-class. The same goes for hierarchies: instead of a bear looking like a tiger, we could make both of them look like a claw animal class with some differences.
+
+\section*{Delegation}
+In a class-based language inheritance of behavior follows the superclass/subclass relationships. When a method is called on a certain object, it is first looked up in the class of that object. If it isn't found there the message is looked up in its superclass, and so on until a root-class is reached.
+
+Prototype based languages are most often, though not always, implemented using delegation. Whenever a new object is created based on a prototype it delegates to that prototype. Every message sent to an object that isn't dealt with by the object itself is automatically forwarded to its delegatee. In fact, in delegation, it is often possible to choose more than one delegatee per object, in that case there is some mechanism to determine which order the delegatees are tried. Delegation provides a number of advantages over class based inheritance. Firstly, the delegatees may be dynamically added and removed. Secondly the message forwarding mechanism makes it possible to let multiple objects share data. Finally delegation makes separation of concerns easier and provides a mechanism for multiple inheritance.
+
+Lastly a word on notation. A number of authors, when writing about delegation, refer to it as inheritance and speak of child and parent object. Strictly speaking they have a point: behavior is inherited from another object. In this paper however, we will show how delegation can be added to Java, a language with only class based inheritance. To keep the separation strict, we will speak only of inheritance when referring to Java's class-based, built in system.
+
+\section*{Advantages}
+\subsection*{Sharing of data}
+In a system of class-based inheritance reuse between objects is limited to methods. Functionality can be reused, whereas state can't. Consider a drawing application. Suppose we want to draw squares and circles on the screen based on their center. Using inheritance we could make both the class \verb|Square| and the class \verb|Circle| a subclass of the class \verb|Point|. The metods \verb|getX()|, \verb|getY()|, \verb|setX()| and \verb|setY()| would be inherited by both circles and squares. The actual values of the fields \verb|x| and \verb|y| would, however, not be shared between squares and circles, or even between instances of \verb|Square|.
+
+Now suppose we want to connect a square and a circle by giving them a common center. Using delegation an instance of a \verb|Square| and an instance of a \verb|Circle| can share a common instance of \verb|Point|. Instead of inheriting from the class \verb|Point| we let the instances of a \verb|Square| and a \verb|Circle| delegate to the same instance of a \verb|Point|. Now every time these instances are drawn, based on the values of \verb|getX()| and \verb|getY()|, these methods will be delegated to the same point.
+
+\subsection*{Delegation vs. Message forwarding}
+The above problem can be solved in a language without delegation, albeit less elegantly. This solution is to use message forwarding, similar to the solutions of the Decorator, State and the Strategy pattern proposed in [Gamma95]. Unfortunately, a number of authors refer to message forwarding as delegation, whereas it isn't true delegation. 
+
+Message forwarding is the explicit forwarding of messages to another object (see Illustration 1). Whereas in delegation unimplemented methods are automatically looked for in the delegatee, in message forwarding the forwarding relationships are explicitly programmed by the user. All methods that need to be forwarded to another object need to be implemented in the original.
+
+Lets consider the example of the \verb|Square| and the \verb|Circle| sharing one point in a context using forwarding. In that case we pass the point to forward to as a parameter of the \verb|Square| and \verb|Circle|. The methods \verb|getX()|, \verb|getY()|, etc. are implemented in the various classes with a message call to \verb|point.getX()|, \verb|point.getY()| etc.
+
+Using true delegation, on the other hand, it is not necessary to have any references to the delegate in the delegating class. A \verb|Square| object can have a method \verb|draw()| with a reference to a method \verb|getX()| that doesn't exist in the same class. The mechanism of delegation, which is established at runtime, ensures that a method will be invoked on an object of the class \verb|Point| (see Illustration ).
+
+\subsection*{Multiple inheritance}
+Delegation, if it allows multiple delegatees, provides a way to implement multiple inheritance. One simply instructs one object to delegate to a number of others, indicating an order. Methods that can't be dealt with by the delegator will then be tried on the delegatees in that order. The classic diamond problem of multiple inheritance, i.e. unclarity about which of the superclasses should be used if a method is implemented by both, is solved because the order of the delegates is made explicit.
+
+\subsection*{Static vs. dynamic}
+In the case of class based inheritance all chains of inheritance are determined statically, i.e. at compile time. A Java \verb|Button| will always be a subclass of a \verb|Component| and a \verb|Component| will always be a subclass of \verb|Object|. One may change this in the code, but it isn't possible to swap these subclass relationships during execution, for example to make \verb|Button| a subclass of \verb|MyComponent|.
+
+Delegation, on the other hand, is dynamic. This adds more possibilities to reuse code. Not only can we separate concerns more easily this way, but also replace any of the objects representing one of these concerns at runtime. 
+
+\subsection*{Separation of concerns}
+Because of the joint advantages of multiple inheritance and dynamic adaption of inheritance chains, delegation allows for a much stricter separation of concerns between different objects. Consider this example. Suppose we want certain objects in some example application to be notified of changes in others using the Observer pattern. Several objects implement the interface \verb|Observer|, meaning that they have a method \verb|notifyChanged()|. There are also objects that can be observed: they implement the interface \verb|Observable|. This interface provides methods to add and remove \verb|Observer|s. The idea is that whenever something of interest changes in the \verb|Observable|, the \verb|Observer|s that are added to that \verb|Observable| are notified of the change. Our example application needs to observe changes in objects of multiple classes, let's say of type \verb|Vector| and \verb|TreeNode|.
+
+We could create a subclass for each of the observable classes, changing them in such a way that they notify the \verb|Observer|s in case of a relevant change. This however, results in code duplication between these different subclasses. All of them need code for the addition and removal of \verb|Observer|s and code to loop over all \verb|Observer|s and call \verb|notifyChanged()| on all of them.
+
+Delegation provides a way out. The methods that actually change \verb|Observable|s in an interesting way are extended with calls to the method \verb|changed()|. This method, however, isn't implemented in those classes. We instead make sure all \verb|Observable|s delegate to an instance of the class \verb|ObservableImpl|, that also contains the implementation of addition and removing \verb|Observer|s (see Illustration 3). In fact, this solution is already provided by systems that allow for multiple inheritance (which Java doesn't). 
+
+However, with Delegation we can go even further in the dynamic composition of components and choose an entirely different model for observing. In this new model we make the instance of the observing object a delegate of the \verb|Observable|. The \verb|ObservableVector| could then directly call \verb|notifyChanged()|, that is implemented by the observer. This would do away altogether with the code to maintain multiple observers, albeit at the cost of not being able to maintain multiple observers. An elegant solution that combines the best of both worlds would be to rename \verb|ObservableImpl|'s method \verb|changed()| to \verb|notifyChanged()|. In this case we could use the \verb|ObservableImpl| if multiple \verb|Observer|s are necessary and leave it out if thats not the case.
+ 
+\subsection*{The implicit Self parameter saves trouble}
+Solutions that try to mimic delegation using message forwarding have trouble encapsulating well and at the same time enable close cooperation between the object playing the role of delegate and the one playing the role of a delegator.
+
+Let's take a look at a design pattern that could much more elegantly be implemented using delegation: State. In Gamma's example a \verb|TCPConnection| maintains a reference to a \verb|TCPState|. The methods \verb|open()|, \verb|close()| and \verb|acknowledge()| on the connection are forwarded (manually) to a subclass of TCPState which implements specific behavior for the state the connection is in.
+
+This is where Gamma ends his discussion, and the following problem isn't adressed by Gamma. Say a \verb|TCPConnection| has a number of properties independent of the rest of it state, like a port number. In fact this is very likely, because if \verb|TCPConnection| would have no behavior of its own there wouldnt be much reason to have it in the first place. These properties will be represented as fields of the \verb|TCPConnection|. Now say these fields can be changed in different ways in the different states. This poses a problem: how does the delegatee access the delegators fields? A few options are available. We could pass the fields that may be manipulated as parameters, pass the delegator (\verb|TCPConnection|) as a parameter or instantiate the delegatee (\verb|TCPState|) with a reference to the delegator (\verb|TCPConnection|).
+
+None of the available options seem desirable. If we pass only the necessary fields to the delegatee, we have to treat all delegatees in the same way, even though some delegatee classes may not require any of these parameters. Furthermore we violate the principle of encapsulation because to know which fields to pass the delegator needs information on the delegatees possible functionality. If we try to access the delegators fields via a reference to the delegator (the latter two options) we cannot encapsulate the fields anymore - the delegatee has to be able to access them. In delegation we can make it so that the delegatee can access the delegators protected methods as if they where its own.
+
+Another main advantage of using delegation is that it eases the adaptation of existing code.There may be many parts of a program that can not easily be adapted. Code may for example be impossible to adapt because the source code isnt available or not editable in the case of a standard library. In other cases source code may be undesirable to edit because the legacy code is considered too unstable to do so.
+
+Using delegation it is possible to add new functionality to existing code in a much cleaner fashion than without. The new functionality can simply be put in some delegator which forwards all other behavior to the original, the delegatee.
+
+\section*{A note on notation}
+The word Java will be used as short for the Java language.
+
+At a number of points code examples and diagrams will be provided; additionally there will inevitably be some Java in the main text. The reader is expected to be familiar with (class based) Object Oriented Programming in general and as such to be able to understand the code examples provided. The way Java specifically deals with a number of issues, such as access modifiers and synchronization, will be explained in the relevant sections. 
+
+We will adopt the common convention that classes will be identified by names that start with an uppercase character, whereas instances start their names in lowercase. Whenever a instance identifier is used without further introduction it can be assumed to be a or the instance of the class with the same name. For example, if we say to call some method on \verb|self|, one can assume self to be the only relevant instance of class \verb|Self|.
+
+Delegator is all about extending Java in such a way that it provides delegation, i.e. some manipulation of classes and methods. At the same time, Delegator is written completely in Java itself, being nothing more or less than a number of Java classes,  each having a number of methods. When speaking of class or method it may therefore at times be unclear whether this is a class or method that is part of the Delegator API, or one that is being manipulated by it. In the following, when no further explanation is provided, class and method refer to the things Delegator is manipulating, whereas Delegator's own classes and methods will be explicitly denoted as such.
+
+Diagrams will be provided to clarify the more complex concepts and examples. Where possible the UML (Unified Modeling Language) has been used since its the de facto standard of the industry. The UML, however, is specifically aimed at class based programming languages and as such provides no support whatsoever for notation of concepts of delegation. Furthermore, it is designed to describe object models, not programming language concepts. We believe, therefore, that providing some non formal diagrams will at times be more clarifying than leaving them out or providing counter-intuitive UML-transcriptions for lack of a notation in the UML.
+
+\chapter{Delegation in Java}
+\section*{Purpose}
+The Java programming language is currently one of the most popular programming languages. It is provided freely on the internet by Sun Microsystems. Java programs can run on multiple platforms on a special Java Virtual Machine (JVM). Java has a class-based approach to Object Oriented Programming, combined with a pretty strict static typing system.
+
+Prototype based programming and delegation havent gotten their fair share of the software development communitys attention. The reasons for this are largely historical. The first popular Object Oriented Programming Language, smalltalk, was based on classes as opposed to prototypes. Even though at that time prototype based languages were available, this pretty much set the standard for Object Oriented Programming. Most people in the industry think Object Oriented naturally implies class-based, resulting even in the necessity for a MSc-Thesis on the subject to explain what delegation is before going into the subject.
+
+Having a stable implementation of delegation for Java would bring the advantages of delegation to a large audience. Hopefully it would help to bridge the gap between prototype based languages and class based languages. Additionally it would bring the best of both worlds: classes could be used for speed and static typing, and delegation could be used for the benefits mentioned in the previous. An implementation as a library, requiring no extra tools in the development process other than the addition of one more \verb|.jar| file to the list of libraries, would ease adaptation.
+
+Additionally we believe delegation as a concept itself deserves rehabilitation, and we believe Delegator could provide the means for that. Since most languages supporting delegation had little industrial application very few modern programmers ever actually had a serious opportunity to use it.
+
+\section*{Delegation in Java is hard}
+Implementing delegation in Java is non-trivial. At first a solution must be found for the self-problem. Secondly Java is a strongly typed language, and delegation is by its very nature untyped. In delegation a programmer may send a message to an object of a class that may not contain a handler for that message, and will use the messagehandler of another object instead. Let's consider our drawing application again. In our implementation using delegation, we'd like to send messages like \verb|getX()| to objects of the class \verb|Square|:
+
+\begin{verbatim}
+Square square = createSquareUsingDelegation();
+int x = square.getX();
+\end{verbatim}
+
+This code, however, will not compile in Java, because the class \verb|Square| does not contain a method with the name \verb|getX()|. Java's type system is too strict for delegation. To make this method call and use delegation we'll have to find a workaround.
+
+\subsection*{Expressive power of inheritance and delegation}
+Are class based inheritance and delegation equally expressive? No: using only inheritance it is not possible to implement delegation, whereas it is easy to implement inheritance using delegation. Implementing inheritance using delegation is trivial. Simply replace all subclass relations by delegates-to relations. However, because delegates-to relations may change at runtime, it isn't possible to determine at compile-time whether a call will be understood by the delegatee. We will therefore loose the benefit of static typing (although many smalltalk programmers wouldn't call this a benefit at all).
+
+Implementing delegation with inheritance, however, isn't possible, due to something called the self-problem by [Lieberman86]. The variable that is bound to the original receiver of a message, or client, is called self (though it is called this in Java). In inheritance based languages this variable stays bound to the initial receiver when the the method call is actually dealt with by a superclass. The only way to implement delegation from within the framework of inheritance is by using message forwarding. When a message is, however, forwarded to another object the variable self is rebound to that object. At that point the reference to the client is lost. Subsequent method calls that should be dealt with by or forwarded by the original receiver are now dealt with by the delegatee.
+
+The following example clarifies this. Let's say we write a class \verb|MyList| that delegates to some \verb|List|. \verb|MyList| contains only one method: \verb|add()|. In the \verb|List| the method \verb|addAll(Collection c)| is implemented as an iteration over that collection with a call to \verb|add()| for each of the elements in that collection.
+
+If the method \verb|addAll()| is called on an object of the type \verb|MyList| that delegates to list, the method won't be found in \verb|MyList| and will therefore be delegated to the \verb|List|. The execution of \verb|addAll()| will result in a number of calls to \verb|add()|. Of course, the desired behavior is that the original receiver of the message, our \verb|MyList|, receives these calls to add, so \verb|MyList|'s own adapted \verb|add()| method is used. The problem is that if delegation is implemented using forwarding in an inheritance based language, this desired behavior isn't achieved (see Illustrations 4 and 5).
+
+\section*{Goals}
+When developing an implementation of delegation in Java we will strive to achieve a number of goals. In the above a number of advantages are mentioned: dynamic composition of objects, sharing of state among different objects and having the possibility to have multiple delegatees for one delegator, jointly leading to more options for reuse and the easy reuse of unmodifiable code. Ideally, an implementation of delegation should provide all of these. In any case, one should remember that these properties form the very reason for implementing delegation and should therefore be included if in any way possible.
+
+In the above, one of the reasons mentioned for implementing delegation in Java is that it may actually be used in the industry. To make true adaptation of any framework for delegation realistic the costs for such an adaptation should be reasonably low. Though implementing delegation using special tools such as precompilers might be easier for those implementing, we see that in practice the extra costs on the build process would be too high for most possible users. The solution will therefore have to be limited to a single \verb|.jar| file that can be added to the classpath as is common for external libraries.
+
+However, having this as a goal does not restrict us in the adding of extra tools. We could provide a number of extra options that can be run as separate tools for checks that are typically useful at compile time. One condition for these extra tools is that they may never be fundamental or necessary for reasonable usage of the package.
+
+Another important factor in the decision to either use or ignore new technology is the cost of learning it. This is the case on a multitude of levels, starting at the understanding of the concept of delegation itself, moving through the easily picking up of the new ways to do things to a clear understanding of the inevitable exceptions and subtleties. Learning will be eased by keeping the interface simple and providing enough learning material.
+
+Keeping code simple and reducing duplication are two major underlying reasons for having delegation in Java in the first place. It is therefore of paramount importance that such an implementation does not introduce so much overhead of its own that the result is nil. In fact, considering all other costs of adaptation, using delegation should 
+lead to a substantial drop in duplication and increase of simplicity. An important goal is that delegation in Java should be reasonably transparent, meaning that, whenever we write some things using delegation or using regular Java the code should preferably behave identically on all other accounts than the means of inheritance.
+
+Additionally a number of code samples will be provided as examples of the possibilities of delegation. Some of these will be presented as JUnit tests so the user can experiment a little.
+
+Performance, both in terms of speed and of memory should be good enough so programs containing the implementation can be run in realistic settings. Finally such an implementation should be robust enough to be used in production code. A major factor in the decision to either go or not go with any product is the expectation of that product wrecking yours. We therefore demand JUnit tests to be provided for all functionality. This both ensures a much higher robustness of the product than would otherwise have been possible, and provides any user with an automatically checkable specification.
+
+\section*{Context}
+Now that weve set our goals, what is it that we can expect from our user? We will assume a reasonably intelligent user. We say that a user that is bold enough to start playing with a concept like delegation probably also has the brains when things get a little bit more complicated.
+
+Though the user can delve into the specific workings of Delegator, knowing anything about proxies or components is unnecessary for her. Self simply presents itself as a composed object that can be accessed using a casting mechanism. In our reasoning in the following we will not expect the user to have a deep understanding of our implementation. On the other hand, there are things that are and there are things that arent possible using Delegator. We do expect the user to take the responsibility in finding out what is possible.
+
+We also say that because delegation leaves a number of Javas important concepts like static typing by the road the user has to come up with ways of coping with this herself. An obvious choice would be to use a dynamic testing framework like JUnit.
+
+\section*{The state of the art}
+Multiple solutions for an implementation of delegation in Java have been proposed and implemented. Before we will move on to a discussion of Delegator we will examine to which extend each of these are viable solutions with respect to the goals mentioned above.
+
+The easiest way to implement delegation is not to actually implement it at all. In this setup the idea is to let the programmer mimic delegation herself and only provide conventions to do so. To mimic delegation programmers have to pass around self pointers in some way, either by passing them as a parameter, or by storing them as a field. This approach has a number of drawbacks, most obviously its complete lack of transparency, the resulting code clutter and the fact that the code of existing classes will have to be adapted to allow for use in the context of delegation.
+
+JavaSoft proposed a convention for this kind of manual labour for its JavaBeans architecture (the Glasgow proposal), but withdrew this due to public criticism. A more detailed description of the Glasgow proposal's drawbacks can be found in [Kniesel98]. There are no indications of delegation becoming in any way officially part of the Java language soon.
+
+Several other products exist that provide very limited forms of delegation, mostly based on precompilers. An example is Jamie [viega98]. Jamie, a precompiler, makes a very simple form of delegation possible. In Jamie the following class declaration is legal:
+
+\begin{verbatim}
+class ClassName extends SuperClass forwards AnInterface to AnotherClass{ //...
+\end{verbatim}
+
+This is all precompiled in such a way that multiple inheritance becomes possible in Java. Unfortunately, a large number of the other advantages of delegation, such as sharing of state and the dynamic manipulation of the delegation-relations, aren't available in this setup, because it is based on delegating to a class, not an instance. Jamie works for Java 1.1 and no longer seems to be maintained.
+
+\subsection*{Darwin/Lava}
+The most promising implementation for delegation in Java, other than Delegator, is the Darwin project, resulting in the programming language Lava. Lava uses special language constructs which are translated into pure Java by a precompiler. Unfortunately the project seems to have been inactive since 2002.
+
+The project has a large number of limitations, though these are mostly not due to conceptual problems but due to lack of manpower: The most important ones are that a superset of Java 1.3, but not the entire Java 1.4 language is supported (rendering the project practically unusable in these times) and that external types, i.e. classes that have not been compiled in Lava cannot be delegated to (canceling the possible benefit of extending legacy objects).
+
+Our \verb|Square|s and \verb|Point|s example would be written in Lava like this:
+
+\begin{verbatim}
+public class Square {
+
+  mandatory delegatee atomic Point point;
+
+  public Square(Point point) {
+    this.point = point;
+  }
+
+  //local behavior, such as draw()
+
+}
+\end{verbatim}
+
+The class \verb|Square| may freely use methods from the delegatee \verb|point|. The delegatee can be passed as a parameter of the construction, but can also be manipulated using a setter. The fact that a delegatee is used, and the type of the delegatee (in this case \verb|Point|) are fixed in the code of the class \verb|Square|, as opposed to leaving this completely open. This is, as we'll see with Delegator, a design choice.
+
+The fact that a delegatee itself doesn't do any further delegation is indicated by the keyword \verb|atomic|. Atomic delegatees are used to ensure there are no circular references between objects. Lava currently doesn't support multiple delegatees per delegator. Using multiple delegatees introduces similar problems as multiple inheritance because delegatees may have different methods with equal signatures, leading to the diamond problem and Lava doesn't provide a mechanism to order the search in the delegatee classes.
+
+The keyword delegatee supports full fledged delegation, i.e. including passing of the self-pointer. If a method in the delegatee refers to a method that also exists in the delegator, the delegators method is called. Lava alternatively supports consultation, or plain forwarding. In consultation all calls to methods that don't exist in the delegator, but do exist in the delegatee, are forwarded to the delegatee, but the delegatee doesn't consult the delegator for it own method calls. 
+
+Lava manages to work with delegation within the strict Java typing system because the precompiler gives a type-safe result. Another safety check is that delegatees that are marked with the keyword mandatory may never refer to null.  This is dynamically checked and an exception is thrown if an assignment to null is made.
+
+\chapter{Delegator: Delegation in Java}
+Delegator is an implementation of delegation in Java as a Java library. It includes a solution to the self problem. Delegator was developed by Erik Groeneveld for Seek You Too Software B.V. in the period 2001 - 2004 as an open source project and was presented at OT2004. Its source can be found on sourcefourge.net. The main subject of this thesis is on the adaptations the author made to Delegator. Wherever differences between the versions of Delegator before and after the authors work are being described the former will be indicated as Groenevelds version.
+
+In the following Delegator's interface to its user will be presented. Delegator's approach is slightly different than the one seen so far. To bridge the gap between the two approaches the concept of the empty container \emph{Self} will be introduced first. Secondly a number of implementation issues will be discussed. Groeneveld's approach will be introduced, followed by a number of newly solved problems.
+
+\section*{An approach using Self}
+In the previous, we distinguished the separate concepts of a delegator and a delegatee: a delegator may delegate to one or more delegatees. If we call any method on the delegator, it will first attempt to deal with this call itself, and if this fails it will look for an implementation in the delegatees. 
+
+Using these seperate concepts of a delegator and a delegatee is perfectly natural in explaining the idea of delegation. Consider for example the case where we extend the behavior of a button with the behavior of an observable object. It would then be reasonable to say we deal with a button (a delegator) that delegates a small part of its behavior to an observable (a delegatee). Though this difference is useful in reasoning about delegation it is not fundamental. In the following we will therefore abstract from it.
+
+To do that, we will introduce the concept of a component. Note that both delegators and delegatees are simply objects that are able to deal with a fixed set of method calls. Components are therefore defined to be non-delegating objects that are used to compose delegating objects. Both a delegator and a delegatee are abstracted to a component by taking the methods that are actually implemented by them, as opposed to any possible methods that would deal with adding delegatees.
+
+Additionally we introduce the concept of some sort of container that contains a (possibly empty) ordered list of components. We will call methods on the container, which forwards the calls to the components. Additionally the container offers an interface for the maintenance of the list of components: adding, removing, etc. This container acts as a single object to the outside world. We will call it Self, the name commonly used in the delegation literature to denote a (possibly componsed) object.
+
+Note that the approach using a delegator and delegatees is indeed equivalent to the approach using a container with components. To transform a solution formulated using the first approach to one using the second, simply add the delegator as the first component of the container; to translate back simply take the first component and make that a delegator. 
+
+\section*{An interface in Java}
+We will use the concept of a Self with a number of components directly in our implementation in Java. Firstly we will discuss the interface we'll offer to the user of the API, the programmer.
+
+The concept of Self is translated directly into an Java class \verb|Self|. This class offers some trivial methods for the maintenance of the list of components, i.e. adding and removing components by class or index and reordering them. The component implementations are shielded from the programmer and will be discussed later. Self, our unit of access, is the only thing exposed to the user.
+
+In our conceptual discussion we simply stated that methods should be called on instances of \verb|Self|. However, in the context of Java and its type system, this is impossible to do directly. Consider this example.
+
+Say we've created an instance of \verb|Self| called \verb|self| with as one of its components a \verb|HashMap|, implementing the method \verb|put(key, value)|. How could we call this method \verb|put()| on \verb|self|? Writing \verb|self.put(key, value)| wouldn't get us far: the class \verb|Self| of which \verb|self| is an instance has no method \verb|put(...)| so Java's type system forbids this. Casting self to a \verb|HashMap| doesn't really help either: \verb|self| is no instance of the class \verb|HashMap| so this results in a \verb|ClassCastException|. In fact, since both \verb|Self| and \verb|HashMap| are distinct subclasses of \verb|Object| some ways of writing this would be caught even by the compiler.
+
+To enable calls to methods on self we will extend the Delegator API by having \verb|Self| provide a method \verb|cast(Class clazz)|. Because the term cast can now have two different meanings we will be explicit about this. In the following the term the method \verb|cast(...)| will refer to the method on \verb|Self|, whereas the term cast or cast using java's casting mechanism will refer to the built in functionality of being able to cast objects down to more specific classes.
+
+The method \verb|cast(Class clazz)| returns a proxy of the class or interface \verb|clazz| for the instance of \verb|Self| it was called on. In our example, a call to \verb|self.cast(HashMap.class)| would return an object that is a \verb|HashMap| and somehow knows it represents self. Because the method \verb|cast()| may return objects of different classes its return type is \verb|Object|. We therefore need to cast the result to a \verb|HashMap| using java's casting mechanism. This results in the following rather cryptic line:
+
+\begin{verbatim}
+((HahMap) self.cast(HashMap.class)).put(key, value);
+\end{verbatim}
+
+Obviously, factoring the casting mechanisms out will pay off in many instances:
+
+\begin{verbatim}
+HashMap map = (HashMap) self.cast(HashMap.class);
+map.put(key1, value1);
+map.put(key2, value2);
+\end{verbatim}
+
+Some utility methods are provided by the static class Delegator that serve to simplify notation. A call to the method \verb|extend(Class subclass, Class[] superclasses)| returns a proxy of type subclass for a \verb|Self| having subclass and superclasses as its components. Of course, one may also see it as an object that is a subclass of multiple superclasses without going into the implementation details of having a self with proxies. This provides a rather natural notation for multiple inheritance.
+
+\begin{verbatim}
+Map map = (Map) Delegator.extend(HashMap.class, new Class[]{WebPage.class, TreeNode.class});
+\end{verbatim}
+
+\subsection*{Java's static typing}
+A programmer using Delegator will typically have to pull one more trick to circumvent Javas static typing. She can usually choose among three available tricks. As a running example we will consider a \verb|Square| that delegates the information about its center to a \verb|Point|. The point has some methods to get \verb|x| and \verb|y| coordinates.
+
+Firstly one can restrict himself to the use Delegator's casting mechanism. In this approach one casts \verb|self| to the type of the delegator or delegatee and calls the method directly on this proxy. Note that it is in this way impossible to refer to \verb|Point|-specific methods from within \verb|Square|s code or vice versa. 
+
+\begin{verbatim}
+public Square {
+  //square-specific methods
+}
+
+public void testThisCompiles() {
+  Self self = new Self(Square.class);
+  self.add(Point.class);
+  Square square = self.cast(Square.class);
+  int size = square.getSize();
+  Point point = self.cast(Point.class);
+  int x = point.getX();
+}
+\end{verbatim}
+
+Secondly, we could use an interface that contains all methods of the delegatee, and let the  delegator declare to implement this interface. Of course, the programmer shouldnt actually have to implement all these methods. Therefore, to make sure the compiler doesnt complain about the lacking implementation of the interface, the delegator class will be declared to be abstract. The \verb|Square| and \verb|Point| example using the interface approach:
+
+\begin{verbatim}
+public interface IPoint {
+  public int getX();
+  //...
+}
+
+public abstract Square implements IPoint {
+  //square-specific methods
+}
+
+public void testThisCompiles() {
+  Square square = Delegator.extend(Square.class, Point.class);
+  int x = square.getX();
+}
+\end{verbatim}
+
+This approach does allow for the user to make references to \verb|Point|-specific methods from within the \verb|Square|s code. Obviously, the \verb|Square| can no longer be created using Javas traditional new operator because \verb|Square| is now abstract.
+
+The third way to deal with Java's typing is by adding abstract methods to the delegating object. Sometimes adding a seperate interface could be considered overkill, for example if we only want to use one or two methods of the delegate. In that case we can add these as separate, abstract methods to the delegator. Our example would look like this:
+
+\begin{verbatim}
+public abstract Square implements IPoint {
+  public abstract int getX();
+  //other getters and setters 
+  //square-specific methods
+}
+
+public void testThisCompiles() {
+  Square square = Delegator.extend(Square.class, Point.class);
+  int x = square.getX();
+}
+\end{verbatim}
+
+With respect to being able to call \verb|Point|-specific methods from \verb|Square|, the same applies as in the case of the use of an interface.
+
+\subsection*{Conventions}
+When using Delegator the user is often faced with recurring patterns. We provide some suggestions for conventions on how to deal with these here.
+
+In Delegator the coupling of the delegate to the delegatee can be done anywhere. In some cases, when clearly dealing with one piece of code which is the delegator, we suggest to put the code for creating new instances in a static method \verb|create()| of that component.
+
+\section*{Implementation overview}
+We will now discuss the implementation of proxies, \verb|Self| and components. Firstly how these three concepts are tied together will be discussed. Secondly we will look at the implementation of proxies, \verb|Self| and its method lookup mechanism and components individually.
+
+To provide a basic understanding of Delegator's implementation a single method call's execution will be traced through Delegator's various parts. As we have seen in the previous, self's methods are always called on one of its proxies first. This proxy then somehow forwards this call to the right instance of \verb|Self|, which then performs a lookup and forwards it to the right component. If the component contains method calls on itself, these are sent back to self which again performs method lookup. Let's look at the way these parts of Delegator communicate and the way they are implemented in some more detail.
+
+\subsection*{Proxies}
+New instances of proxies are always initialized with a reference to a specific instance of \verb|Self|, so the proxy always knows what object it is a proxy for. Whenever a method is called on a proxy, it has then somehow has to notify this self which method was called and with which parameters. It cannot do this by simply calling a method of the same name since it won't exist in self - this is the reason we have proxies in the first place. It will therefore call the method \verb|invoke(...)| on self with the method's name and parameters as parameters.
+
+Proxies for interfaces are generated using java's built in \verb|java.lang.reflect.Proxy.newProxyInstance(Class[] interfaces, InvocationHandler h)|. This method returns a new object that implements the interfaces that are given as a parameter but forwards all method calls to the \verb|Invocationhandler|. A class implementing the interface \verb|InvocationHandler| responds to the method \verb|invoke(...)|. In our implementation, we obviously make \verb|self| this \verb|InvocationHandler|.
+
+For classes, as opposed to interfaces, there is no standard built in functionality to generate proxies. Delegator therefore provides this behavior itself. Proxies for classes are generated dynamically using apache BCEL, and are then loaded dynamically using a specialized ClassLoader. To make sure proxies will be recognized as instances of the classes they are a proxy for, they are generated as subclasses of those classes. Consider the following line of code again:
+
+\begin{verbatim}
+HashMap map = (HashMap) self.cast(HashMap.class);
+\end{verbatim}
+
+The Java cast \verb|(HashMap)| is only legal if the result from \verb|self.cast(...)|, i.e. the Proxy we're currently discussing, is either a \verb|HashMap| or a subclass of a \verb|HashMap|. This naturally results in this proxy also implementing all public and protected methods a \verb|HashMap| implements.
+
+When we do this, of course, we don't really want to have something that actually has \verb|HashMap| behavior: we want a proxy instead. We therefore override all protected and public methods and implement them so that they delegate to \verb|self|. This is where Apache BCEL steps in to generate bytecode. Proxies are generated to have the name of the class they are a proxy for followed by \verb|$proxy|, e.g. \verb|HashMap$proxy|.
+
+\subsection*{Self and its method lookup mechanism}
+When \verb|invoke()| is called on \verb|self| it will do a method lookup in its list of components for a method with that signature. It will then call the first method that matches; more specifically it will call an adapted version of it for reasons that will become clear when we discuss components.
+
+For each method that is called we will eventually reach \verb|Self|'s \verb|invoke()| method. When this happens we have to somehow lookup the right method in \verb|self|'s (ordered) list of components. This is simply done by examining the components one by one and look whether they provide a method that matches the signature (and some additional properties) of the method that was called on our proxy. With respect to Groenevelds version this mechanism has been extended to be more precise. Whenever no matching method is found in any of the components a \verb|NoSuchMethodException| is thrown.
+
+We want this method lookup mechanism to work analogous to normal Java. We say the role of a proxy and a component in Delegator are analogous to respectively a superclass and a subclass, or an interface and its implementation in regular Java. Why? The proxy, whether it is based on an actual interface or on a Java class, describes a number of methods that may be called on self. It may contain more methods than described in that particular proxy, since we can create multiple proxies for each \verb|Self|. It may also contain less methods than in that proxy, since we can say get proxies for any class (also not implemented classes) for a given self. We don't really care: bottom line is, that when any method is called on a proxy, we want self to execute it if we have an implementation for it in one of the components, and throw a \verb|NoSuchMethodException| when we don't have such an implementation.   
+
+Abstracting from the list of components we say that, looking in order of appearance in the list of components, we check for each tuple (\verb|theProxy.theCalledMethod()|, \verb|aComponent|)  whether that component has a method that implements the \verb|Proxy|'s called method. The basic check just considers complete equality of the two methods' names and parameter types, i.e. the method signatures must match completely. This check has been much improved with respect to Groeneveld's implementation: the types of the parameters and exceptions are considered more precisely and Java's access modifiers are also taken into account. 
+
+\subsection*{Components}
+The concept of a component is represented in Delegator by special classes that implement the token interface \verb|Component|. \verb|Component|s are also generated dynamically using apache BCEL. In the following, when speaking of \verb|Component|s we will refer to these classes implementing the concept of a component discussed above.
+
+We dynamically generate components, as opposed to just use instances of their classes because we have to solve the self-problem. Remember the self problem says that any call from within any delegatee to a method of itself should be interpreted as a call on the original receiver, i.e. the delegator. In our approach using a single container \verb|self| with multiple components this translates to the following: any call from within any component to a method of itself should be interpreted as a call on the original receiver, i.e. \verb|self|.
+
+The self-problem is solved by making some adaptations to the components. Like the proxies, components are instances of dynamically generated classes. Like proxies, the classes are subclasses of the class they are a component for. Like proxies, they have their superclass name followed by a special code, in this case \verb|$component|. Now for each method that may be called on the component, we have two instances. One has exactly the same signature as the original (and therefore overrides it), one has a slightly modified signature.
+
+The methods with the original signatures are overridden by new methods, the so called delegation methods. These do nothing but forward the call to self, i.e. call invoke on self with their own name and parameters. As we will see in the following, these methods are called solely by the Components own methods. This means that any method call from within the component will be forwarded to self, as is described in the self problem.
+
+Additionally, each method is copied to a so called implementing method. This is a method that has a slightly different signature to avoid duplication and provide a distinction with the delegating method. The implementing method actually implements the component's original behavior. In Groeneveld's version this is done using a call to its superclass' method with the original signature. Whenever self calls a method, it calls one of these implementing methods. 
+
+%[een plaatje is beschikbaar]
+
+\chapter{Java's access control}
+Java has access control rules to allow for information hiding and encapsulation. Members, i.e. fields and methods of a class can be declared to be private, protected, public or package (the package declaration is done implicitly by leaving the other three possibilities out).
+
+\begin{tabular}
+{|l|llll|}
+\hline
+Specifier&Class&Package&Subclass&World\\
+\hline
+private&X&&&\\
+default/package&X&X&&\\
+protected&X&X&X*&\\		
+public&X&X&X&X\\
+\hline
+\end{tabular} 
+Private members can be accessed only by objects of the same class. This includes access across objects, so one object may access the private members of another object if this other object is of the same class. Default or package members may additionally be accessed from objects from anywhere in their own package. Protected members may be accessed in the same ways as default members, but may additionally be accessed from objects of a subclass. A minor caveat is that in that case objects can only access the protected methods of their own instance. Public members may be accessed from anywhere. 
+
+As we have seen, Delegator creates classes on the fly to implement delegation: the proxies and components. These classes are obviously not identical to the original ones, creating problems with the Java access control. 
+
+In Groeneveld's prototype large parts of Java's access control mechanism were basically ignored. On the one hand, Delegator violated the principle of encapsulation by allowing more methods to be called from outside components than one would expect, on the other hand a number of problems that Javas access control system created was overlooked. With respect to that version, a number of problems has been solved. Some problems seem to be impossible to solve within the given context and have been documented.
+
+We will examine a number of cases where we will want Delegator to behave similarly to the rest of Java. To make a comparison we will use the following code with the following pattern:
+
+\begin{verbatim}
+(SomeClass (new Self(SomeClass.class).cast(SomeClass.class))).someMethod();
+\end{verbatim}
+
+This creates a new \verb|Self| with one component of type \verb|SomeClass|, generates a proxy for this \verb|Self| and (after casting) calls some method on it. Obviously in everyday use this wouldn't make much sense since it would be easier to just use its equivalent without Delegator:
+
+\begin{verbatim}
+new SomeClass().someMethod();
+\end{verbatim}
+
+In the following section the purpose will however be to compare exactly these two lines of code, using different instances of \verb|SomeClass| and \verb|someMethod()|. If they behave equally we say Delegator has been implemented well for that accessor. If they behave differently they it hasnt, and it will be defended why this would somehow be impossible.
+
+For each of the accessors we will both examine whether at least as much is possible in Delegator as in regular Java, as whether not more is possible.
+
+\section*{Private accessors}
+The \verb|private| accessor is the most restricted of the four different types and will be considered first. We will examine whether Delegator works with private methods in all cases. Seeing that this is not the case and cannot be made so we will examine which things can still be expressed in Delegator and whether this may or may not lead to hard-to-track programming errors. In the passing we will consider the safeness of Delegator with regards to encapsulation.
+
+Private methods can be called from three different types of locations, and it is this location that determines whether its possible within Delegator. Firstly an object may always call a private method on itself. Next private methods may be called on other instances of the same class. Finally private methods of inner classes may be called by their containing classes.
+
+Before considering the three cases, consider the implementation of private method calls. In Java Private method calls are implemented differently than protected and public method calls. Whereas the latter are dynamically dispatched, the former are statically linked. To understand why, consider the purpose of private methods. The whole point of private methods is that they are private to their class and should therefore never be overridden in subclasses. Any call to a private method of a class' instance will be dealt with by that class' code, never by a subclass' code. Since the compiler knows at compile time which class provides that method, the link to that method is made at compile time.
+
+Now, consider the three different ways in which private method calls may be done. Firstly, consider the case of an object calling a private method on itself. Say we have a class \verb|PrivateSelfCallingClass| which calls the private method \verb|method()| in one of its methods bodies. This call is executed normally in regular Java. If we now create an instance of \verb|PrivateSelfCallingClass| using Delegator, i.e. create an instance of Self with as a single component a \verb|PrivateSelfCallingClass|, we want this behavior to be preserved.
+
+Additionally lets consider what kind of overriding behavior is acceptable. Seeing that private methods may in regular Java never be accessed outside their own class, we say Delegator should encapsulate similarly, i.e. restrict the accessibility of private methods to their own components.
+
+How does this work? The call to \verb|method()| in the body of another method is statically linked, meaning that a link to \verb|PrivateSelfCallingClass.method()| is created. Remember, in our original setup we expect method calls on this to be dealt with by an overriding delegating method to make sure self deals with it. Because private methods are statically linked to the class they are a method of this overriding mechanism does not work for private methods, even if we wanted it to. Whenever a private method is called it is dealt with by \verb|this|, instead of forwarded to \verb|self|.
+
+We chose the accessibility of private methods to be restricted to the components they are methods of. Therefore, if a private method is called by some component-code, we know the only method that should be indicated by that call is the one in that component. Considering the fact that private methods are dealt with by \verb|this| directly this means that our accessibility level is correct.
+
+Secondly we will examine private methods of inner classes being called from their containing classes. Consider our test case again: we are going to compare calling a method on a \verb|self| with one component and the same method on a normal object. Consider an inner class \verb|PrivateMethod| with one private method \verb|method()|. If we do a method call from the containing class on a regular instance of this class wed expect \verb|method()| to be executed on that instance, which is what happens. Say we create an instance of this class using delegation and call the method \verb|method()| on it from the containing class. It turns out that a call of \verb|method()| isnt actually handled by self at all, and therefore its single component, but by the proxy. 
+
+A proxy actually responding to method calls itself is very undesirable. The only purpose of the proxy is to provide a way around Javas strict typing system so we can make calls on self even though self does not provide all the right methods. The only reason the proxy provides methods that actually do something as opposed to just forward to self is that they are inherited. We inherit from them not because we actually want that behavior, but because we need to to satisfy the type system. 
+
+As we have seen in the previous Delegator generates proxies as subclasses of the class they are a proxy for. When the method \verb|method()| is called on this proxy we'd want our the delegating method, the one that forwards the call to self which forwards it to the right component, to be executed. However, in the calling code the call to \verb|method()| is made like this:
+
+\begin{verbatim}
+(PrivateMethod (new Self(PrivateMethod.class).cast(PrivateMethod.class))).method();
+\end{verbatim}
+
+So \verb|method()| is called on something that is a \verb|PrivateMethod|. Because the compiler statically links this the call is also made on the \verb|PrivateMethod|s \verb|method()| code. \verb|PrivateMethod$proxy.method()| is never reached.
+
+Conclusion: calls from outside classes to their inner classes private methods dont work in Delegator if these inner classes are created using delegation, because the private method calls are done on the proxies.
+
+Lastly consider the case of a reference to another instance of the same class:
+
+\begin{verbatim}
+public static class ForwardingClass {
+
+  private void m1() {
+    ForwardingClass forwardingClass = new ForwardingClass();
+    forwardingClass.m2();
+  }
+
+  private void m2() {
+    called = true;
+  }
+       
+  public boolean isCalled() {
+    return called;
+  }
+	    
+}
+\end{verbatim}
+
+How does this code work? A new instance of the same class is made and a method is called on that instance. No problem at all in regular Java. However, if we replace the other instance of \verb|forwardingClass| with one created using delegator, we run into trouble, for the exact same reason as calling private methods on inner classes doesnt work: the private method is called on the proxy.
+
+Finally, consider the case of a private class being extended using Delegator:
+
+\begin{verbatim}
+new Self(PrivateClass.class);
+\end{verbatim}
+
+This won't work, because \verb|Self|'s implementation will try to dynamically generate a subclass. Private classes, however, cannot be accessed from outside their containing classes or themselves. So, besides problems with private methods, we have a problem with private classes. In the following we will mainly look at the problem with methods. %because....
+
+\subsection*{Are the problems with private methods solvable?}
+Unfortunately, in our setup it is not possible to solve this problem. We take a very liberal approach with proxies. We can use any class to act as a proxy. This means there is no way we can prohibit proxies from having private methods. Also, proxies are by definition never of the same class as the class they are a proxy for. Since Javas static linking of private methods can also not be altered this means private methods may be called on proxies with undesirable consequences.
+
+\subsection*{Are the problems with private methods acceptable?}
+Now that we know this problem is unsolvable under the given circumstances we will look at the question of whether this is acceptable. In dealing with this question there are two major subquestions. The first question is one of completeness: does this limitation make certain things impossible? The second question is one of safety: will it induce more and harder-to-solve programming mistakes?
+
+Firstly we will examine the issue of completeness. Does the way private methods cannot be called on proxies limit the programmer?
+
+In the most direct sense, of course, it does. Weve seen the programmer cannot call private methods on proxies. The next question is what this implies. 
+
+Say it would be possible for the programmer to replace all called private methods by for example protected ones, i.e. change their method signatures. We say that though this would be slightly less elegant, it would give all the benefits of delegation so it would often be worthwhile. There are many cases where the programmer indeed has full control over all source code and may  choose that the benefit of using Delegator is greater than the loss of elegance for using protected in stead of private methods.
+
+On the other hand, as we have seen, there may also be cases in which the user is not in control of all code. In fact, these very situations have been mentioned as ones where Delegator may be very useful. Weve seen two cases in which the user may be faced with the fact that private methods dont work in Delegator. Firstly a private method may be called from the containing class of their class in the case of inner classes. Secondly it may be called on an instance of the same class created using Delegator. Is it possible that in one of these cases the user is not in control of the component code and is using Delegator to create the component?
+
+The question in the following is in which part of the code objects can be created as either a self with proxy or as a regular Java object.
+
+Inner classes can only be accessed from their containing class. This implies they can also only be created from their containing class or from themselves. Since they can be created as proxies only in the containing class we know that the programmer who decided (assuming file-level access rights) to use Delegator can also alter the inner class in such a way that the private methods causing trouble are removed. We can safely conclude that inner classes are in no way going to be problematic.
+
+If a private method is called on a different instance of the same class it depends. In many cases this means that, like in our example above, the other instance is also created in that class. Again, because we then know delegation made its way to the class code, we know the programmer can also change all relevant method headers to another accessor. This is, however, in no way guaranteed. Consider the example of a linked list, where objects of class \verb|Node| can be created by the user and set to be each others next \verb|node|:
+
+\begin{verbatim}
+public class Node {
+
+  private Node next;
+
+  public void setNext(Node node) {
+    next = node;
+  }
+
+  public void get2Ahead() {
+    return next.getNext();
+  }
+
+  private void getNext() {
+    return next;
+  }
+
+}
+\end{verbatim}
+
+If we, in this setup, create our nodes using Delegator, link them to each other and then call \verb|get2Ahead()| were in trouble. Why? The fields next are now set to proxies. The method \verb|get2Ahead()| calls a private method on this field, and therefore on this proxy.
+
+This may be highly problematic. In some cases the user cant even review the source code and therefore has no idea whether private methods are called in this way or not. The only way around this seems to be having a rigorous testing environment like JUnit in place so the user at least sees the cases in which this fails.
+
+%TODO: je zou een analyse kunnen doen op het component, aangezien dat de enige is die met private methods iets kan doen zoals we hier hebben gezien en dan zoeken op aangeroepen private methods op andere instanties en dan nog liefst kijken of die met delegation zijn gemaakt lastig maar te proberen
+
+\subsection*{Safety:}
+Now that weve seen in which situations workaround solutions are possible, lets take a look at safety. In the previous weve seen that private methods dont combine well with Delegator. What this boils down to is that its semantically illegal to use private methods on proxies, but technically possible. Given this, is Delegator safe?
+
+The question here is divided in two parts: prevention and restoration. Firstly the question is how likely it is, using documentation and such, that the programmer will not make any mistakes. Secondly it is important to know how easy it will be to track and restore these mistakes, given that they may be made.
+
+Preventing this type of error to occur is pretty hard. Of course we will provide documentation, carefully describing what is legal and what isnt. At the same time, we believe developers are often eager enough to just jump in and start coding without reading any documentation. Generating warnings is, as described below, generally not very useful.
+
+Now consider restoration. Lets look at the level of knowledge we may expect. Some programmers might only know that there is something called self which may have multiple components. On the simplest level they may not even know about casting. Some others may know that self can be cast, but they might not be conscious of the fact that an object of a new class is created. A programmer with this level of knowledge will be completely puzzled. A programmer with the understanding of why proxies are needed will at least be able to pinpoint the error. Still she might be amazed. Programmers who know that private methods cannot be used in Delegator may have some trouble tracking the problem down but will then immediately see what they did wrong.
+
+As seen in the previous, we will expect users of Delegator to have some interest in the technology they are using. Therefore we say of the above types of users the most likely categories are those who know what proxies are and can then reasonably quickly find out that its illegal to call private methods on them.
+
+Under some circumstances errors will be rather hard to track. The private method seems to be executed normally, and debuggers will also show it to do so. In a lot of circumstances the error will show up much later. An instance of the private method is executed, but not on the right object. This means debuggers will just step through the code. In short one doesnt expect a method call to be executed on the wrong object.
+
+Bottom line is that the whole point of Delegator is to offer the programmer an interface to a composed object as if it where one. If, now, all of a sudden a method is executed only on part of this object, without any warning, this is highly confusing.
+
+Consider this example:
+
+\begin{verbatim}
+class UniqueNumber {
+
+  //field declarations
+
+  public static UniqueNumber getNew(int initialvalue) {
+    UniqueNumber otherInstance = //generate a new instance using delegation
+    otherInstance.setConnected(true);
+    return otherInstance;
+  }
+
+  private void setConnected(boolean b) {
+    //do some interesting connecting stuff
+  }
+
+  public boolean getConnected() {
+    return connected;
+  }
+		
+}
+\end{verbatim}
+
+If we execute the method \verb|getNew()| and then call \verb|getConnected()| on the result we get a value of \verb|false|. Why? Because the method \verb|setConnected()| is a private method and will therefore not be executed properly.
+
+\subsection*{Restriction to interfaces}
+A possible restriction on Delegator's casting mechanism would be to allow only interfaces for casting. This would solve a number of the problems considering accessors. In this scenario, it is impossible to accidentally access a proxy's field, private or package method. This protects the user against the whole range of errors described above. 
+
+On the other hand, it would introduce the extra burden of having to write interfaces for all the classes to be used as proxies. In what sense this really is a burden depends largely on programming style. Some programmers and APIs work with interfaces a lot anyway.
+
+However, this would also be limiting in other ways. Consider the example with a Node that can be given another Node as a next Node. If one would create an interface \verb|NodeInterface| for this \verb|Node| to be acting as a proxy, this interface cannot be passed to the \verb|Node| since it expects a \verb|Node|.
+
+A middle way would be to allow proxies for classes only after the user has explicitly requested to be able to do so. Such an explicit request could be accompanied by giving the programmer the awareness of what is and what isnt legal.
+
+\subsection*{Generating warnings}
+A na�e solution would be to generate some kind of warning for every time a private method is added to a proxy. However, this would generate a great number of false positives. Proxies may be created out of all kinds of classes, which may contain a great number of private methods. This is only problematic once these are actually called.
+
+Something that would be possible is to generate warnings for components that contain private method calls on other instances then themselves.
+
+For containing classes that call the private methods of their inner classes we could devise a special checking tool. Such a tool would be available separately.
+
+However, good modern day programming practice teaches that everything should be tested first. In such a setup it is questionable whether such extra tools would really be of extra value.
+
+\section*{Default/package accessor}
+The package or default accessor is the second most restricted level of access. Like with private methods, we will examine whether Delegator works with package methods in all cases. Again we will notice how Delegator is limited, explain which further solutions are available and examine the implications and risks of these limitations. The safeness with regards to encapsulation will be dealt with in the passing.
+
+Package methods can be called from the same three types of locations as private methods and additionally from anywhere in the package. As we have seen with private methods, the real question is whether methods are called from within a component on itself or on a proxy. We will also see and explain that the package accessors cause similar problems to private accessors.
+
+Implementing Delegator to behave identically to Java is particularly hard in the case of default accessor. Methods that have default accessor can be accessed from anywhere in their own package, but from nowhere outside their package. Ideally we'd like Delegator to have equivalent behavior. 
+
+As we have seen previously, proxies are generated dynamically as subclasses of the classes they are a proxy for. The generated proxies are put in the same package as their parents. They are, however, loaded using a different than the default \verb|ClassLoader|. The default \verb|ClassLoader| is usually just set to fetch classes from the filesystem, whereas the proxies which are generated on the fly need a special \verb|ClassLoader|.
+
+Now consider the following:
+
+\begin{verbatim}
+Self self = new Self(SomeClass.class);
+SomeClass someClass = (SomeClass) self.cast(SomeClass.class);
+someClass.defaultaccessorMethod();
+\end{verbatim}
+
+where \verb|defaultaccessorMethod()| is not surprisingly a method with default accessor. Let's also say that \verb|SomeClass| is situated in the same package as this code so this actually compiles.
+
+The behavior we would desire is that the method \verb|defaultaccessorMethod()| is called on the proxy, so the proxy can forward the message to \verb|self|. This, however, doesn't happen in Java. Why not? 
+
+Java classes are uniquely identified by a 3-tuple: their name, their package and the ClassLoader instance that was finally responsible for loading them. It turns out that because the subclass \verb|SomeClass$proxy| is loaded by another \verb|ClassLoader| than the default \verb|ClassLoader| is is not recognized to be in the same package as \verb|SomeClass| by the JVM. Therefore the JVM's method lookup will skip the proxy's method and resolve to \verb|SomeClass|' method, which is undesirable. Perfect transparency would demand this code to work exactly the same as when the \verb|defaultaccessorMethod()| would have been public accessor.
+
+Again, like with private Classes, it is not possible to use Delegator to generate package-scope classes. The reason is the same as why some other things concerning package-classes don't work: they are loaded using the wrong classloader.
+
+\subsection*{Are the problems with package methods solvable?}
+Unfortunately, in our setup it is not possible to solve this problem. We take a very liberal approach with proxies. We can use any class to act as a proxy. This means there is no way we can prohibit proxies from having package methods. Because we work with a different \verb|ClassLoader|, proxies are by the JVMs definition never of the same package as their components. We cannot change the way the JVM deals with package methods so this problem is not solvable.
+
+\subsection*{Is this problematic?}
+The problems resulting from semantically illegal calls to package methods of proxies are very similar to those resulting from illegal calls to private methods and a discussion of those wont be repeated here.
+
+Additionally we have one more limitation, but this can be handled. Package methods in components suffer from a similar limitation as do private methods of components. Because overriding methods are not considered, the self problem is not solved for them. In the case of private methods this was in fact the desired behavior. For package methods we would like other package methods to be able to override. This cant be made to work for the exact same reasons as proxies dont work under package accessor. The limitations and prevention and restoration of errors are also analogous.
+
+At the same time, these limitations automatically prevents any undesirable exposure of methods that should be encapsulated. It is undesirable to have package methods available outside their package. Since in our setup, they are available nowhere, this is no problem.
+
+\subsection*{A workaround}
+Since the problems with package methods originate from way they are loaded, a workaround is available. If, instead of using our own classloader, we manage to fool the original classloader to load the proxies and components this problem no longer exists. In fact, under some circumstances, this is very easy.
+
+Say we work in an environment which loads classes from the file system using a certain classpath, as is very common. If we manage to save our dynamically created proxies and components to the right location in the filesystem just before they are needed, this standard classloader will find them and load them.
+
+This approach has a number of drawbacks, which is the reason we have chosen not to offer it to the user at the moment. Firstly in a number of configurations of Java, either the filesystem is not available or the classloader is a different one than the one just described. Secondly this approach leads to a cluttered binaries directory. 
+
+\section*{Protected accessor}
+Protected accessors are the second most public accessors in the Java language. Methods may be accessed from all the same locations as with package accessor, and additionally from all descendants. With protected accessor we again would like Delegator to behave equivalently to regular Java.
+
+None of the problems of private and package accessor are present in the case of protected accessor. The definition of protected methods is that they can be overridden in any subclass. This is exactly what we do, and therefore what works.
+
+Lets examine the encapsulation of protected methods. We say the semantics of having a proxy are very similar to having an interface. Its the proxy that offers itself to the programmer.
+
+As seen in the previous, selfs lookup mechanism considers a number of components in order, looking for a match between the method that is called on the proxy and a method in that component. With any of these components we only want to accept a method that is equally or more accessible than the method that was called on the proxy. Otherwise, a programmer could accidentally call a protected method on a component by calling a public method on a proxy.
+
+In Groeneveld's version of Delegator this was not implemented yet. Protected and public methods were treated identically and protected methods could be called via a public method in the proxy. In the current version this has indeed been adapted.
+
+\section*{Public accessors}
+Public accessor is the only trivial case. Firstly public methods may be called from anywhere, so problem such as with private and package accessors simply do not exist. On the other hand, there is also no need for us to be very careful not to expose anything. Since public methods may be accessed from anywhere the 
+
+\chapter{Exceptions}
+As explained in the section on Delegator's implementation, \verb|Self|'s \verb|invoke()| method provides a method lookup mechanism. It does so to dynamically locate a method in \verb|self|'s list of components that matches the call's signature and execute some code for it. In the following this mechanism is extended to deal with java's exception throwing mechanism.
+
+Like many modern programming languages, Java provides extended support for dealing with exceptions. An exception is an event that occurs during the execution of a program that disrupts the normal flow of instructions during the execution of a program. Exceptions enable the programmer to separate error handling code from normal code, enable propagation of errors up the stack and allow for grouping and differentiating error types.
+
+How do exceptions work? Programmers may use a throw statement to throw an exception somewhere in a method indicating an error has occurred. This means the method creates an exception object and hands it off to the runtime system. After a method has been thrown the runtime system attempts to find something to handle it, moving up the call stack to find an exception handler. This is a block of code, indicating which types of exceptions it can handle and how this should be done. When a method provides an exception handler for a certain type of exception we say it catches that exception.
+
+The class of objects that may be thrown as an exception is called \verb|Throwable|. Two of its descendants, \verb|Error| and \verb|RuntimeException|, form the roots of so called unchecked exceptions. In principle unchecked exceptions are thrown by the JVM, as opposed to explicitly in the program code. It is, however, also possible for the programmer to throw unchecked exceptions. All other descendants of the class \verb|Throwable| are called, not surprisingly, checked exceptions. 
+
+A method may also specify that it can throw a particular type of exception by making this explicit this in its method declaration. Exceptions that can be thrown by a method are defined to be all exceptions that are either thrown directly in that method by a \verb|throw| statement or are specified to be thrown by one of its called methods.
+
+The Java language has something called the Catch or Specify Requirement. This means it requires that a method must either catch or specify all checked exceptions that can be thrown by that method. 
+
+In fact, when for some reason, for example in the case of generated bytecode, checked exceptions are thrown by methods that arent expected to throw them, the JVM wraps this checked exception in an unchecked \verb|UndeclaredThrowableException|.
+
+Knowing that methods may specify a number of exception types that that method may throw, how does this relate to overriding or implementing methods? A method that overrides or implements a superclass or interfaces method should somehow match with that methods signature: The subclass' or implementing method may never throw more checked exceptions than its superclass or interface. It may however, throw less exceptions or more specific \verb|Exception|s. To realize why this is so consider the following example:
+
+\begin{verbatim}
+BaseClass base = getBaseClass();
+try{
+  base.mayThrowBaseException();
+} catch (BaseException e) {
+  //handling code
+}
+\end{verbatim}
+
+Considering this code, we don't know whether base is actually an instance of \verb|BaseClass| or of one of its subclasses. If \verb|base.mayThrowBaseException()| would throw more than just \verb|BaseExceptions| this code would break. If it would throw less exceptions or more specific |Exception|s (which would all be \verb|BaseExceptions|) the catch-clause would still be able to deal with all these cases.
+
+In the previous we introduced self's method lookup mechanism. This basically tries to find a match the method that was called on the proxy to one of the components methods. Say we already have a method on a component that considering all other things, like name and parameters, implements the proxy's called method.
+
+The question is, under which combinations of declared-to-be-thrown Exceptions for the proxy's and the component's method we say the latter implements the former. Considering what we've seen in regular Java, it shouldn't come as a surprise that the condition is that we have a match when the component's method does not throw any more exceptions, or more general exceptions than the proxy's called method.
+
+With respect to Groenevelds version, a number of things have changed. For the user, the only change is the fact that a check on the above condition has now been added to \verb|Self|s method forwarding mechanism. In Groenevelds version, the lack of that check led to an \verb|UndeclaredThrowableException|. On the implementation side a few other additions where necessary as well. In Groenevelds version neither proxies nor components specified any exceptions in their method headers.
+
+When a method is implemented by one of the components but not having the right exceptions it is outright ignored. This may pose problems for the programmer 
+
+Consider the case where only the failing of the test on declared exceptions stops a match between a components and a proxys method, so all other things that are taken into account for the match, like method name and parameters, do match.
+
+So, for example, we declare an interface \verb|MethodInterface| containing just one method: \verb|method()|. Say we also have a component of \verb|MethodClass| in \verb|self|, containing many methods amongst which \verb|method()|, but throwing some \verb|Exception|. If we now use \verb|MethodInterface| as a proxy of \verb|self|, and call \verb|method()| on it, we get a \verb|NoSuchMethodException|. 
+
+Obviously this is exactly the behavior described above. Also, it may be fixed easily by adapting either the proxy or the component. However, to the na�e programmer this kind of exception may be completely puzzling.
+
+Finding this error is particularly hard. Any debugger or comparable tool would show that the components out of which self are made do contain one that implements \verb|method()|. It has to be the user herself that finally understands that because an Exception is missing or too much somewhere that all of this fails. Especially if one would like the user to be virtually unaware of Delegators implementation and subtleties, this is problematic.
+
+A comparable situation in regular Java, is when a programmer calls a method on an object via an interface. In that situation, the programmer explicitly sets in code that \verb|MethodClass| implements \verb|MethodInterface|, and the compiler static check fails: because the implementing class throws an \verb|Exception|. The programmer can then fix the problem then and there - much easier than tracking it down.
+
+Finally, there is one more complication. Although it is not required to declare unchecked exceptions in the method header, it is allowed. However, doing this in no way disturbes the method overriding/implementation mechanism. In other words, it is perfectly legal to let a method which explicitly declares to throw a \verb|RuntimeException| implement a method which does not. Again, we have made sure that Delegator behaves identically.
+
+\chapter{This pointer encapsulation}
+In this section we will consider a complication in the use of \verb|Component|s. We will show what Components are in this context, why they should be encapsulated and which new solution was chosen with respect to Groenevelds version. Furthermore well consider why it is desirable to share components and how this leads to complications in encapsulation. Finally well look at a number of solutions.
+
+Components, the classes implementing the token interface \verb|Component|, are implementation details that are used to compose \verb|self|. In the above it is shown that because \verb|Component|s are subclasses of the classes they represent they can be treated as such as far as Javas type system is concerned. However, when calling one of the components methods directly (that is the original method, not one with a modified signature) the component will attempt to forward that call to some \verb|Self|. Any implementation that doesnt limit the maximum number of selves for a component to one will then show some form of random behavior, as will be shown below. Because components look very much like the classes they represent, but in fact can not be used in the same way, it is very desirable to encapsulate them in some way.
+
+On the other hand, it is also desirable to have access to the concept of a component, as opposed to its implementation directly. One of the advantages of delegation and goals of Delegator put forward in this thesis is the fact that the composition of selves may be manipulated. Specific components may be added, removed and even shared among different selves. To do this, some kind of handle for components is required. Summarizing we can say that though we want to have some reference to components, it should be impossible to have a regular Java reference since on such a reference methods can be called.
+
+Groenevelds version did not meet these dual requirements. To enable direct manipulation of components, the user had multiple available paths. Firstly she could directly access the method \verb|ProxyGenerator.newComponentInstance()| that returned a new \verb|Component|, secondly she could retrieve components by index from \verb|self|.
+
+The current version of Delegator no longer allows for such direct access to Components. Instead, if a single component is retrieved from \verb|self| it is wrapped in a new instance of \verb|Self|. This \verb|self| can be added to another \verb|self|, leading to the latter adding a reference to the formers single component, or methods can be called on it using a proxy. This solution therefore allows for manipulation of single conceptual components and the calling of their methods without violating the encapsulation of the implementation detail \verb|Component|.
+
+\section*{Sharing of components}
+One of the main advantages of delegation, and therefore one of the main goals of Delegator, is to have the ability to share components among a number of different instances of \verb|Self|. It was shown in the above that components translate calls on their methods with unmodified signature into calls to some \verb|Self|s \verb|invoke()| method. Whenever they do so, theyll have to know which \verb|Self|s \verb|invoke()| they should call. Because Components can be shared among a number of instances they cant simply be equipped with a reference to their single owner at instantiation time. The meaning of calling \verb|invoke()| on a \verb|Self| is that that \verb|Self| is the actual, conceptual object on which the method currently being executed on the component was made. This is, in other words, the \verb|self| that called the components method.
+
+%Een eerste opl. zou nl. de volgende zijn: volgende vraag: waarom wordt er geen gebruik meer gemaakt van passing van self als een parameter?? Dit lost het probleem trouwens niet op hoor...
+
+We can't simply set a field of a component to the correct instance of self. In case of recursive calls or calls from multiple threads there would only be one field available for more than one bit of information.
+
+In Groeneveld's implementation, components know which self they belong to by looking at a (thread local) stack. Whenever \verb|self| calls a method on one of its components, it first adds itself to this stack, whenever the method returns to \verb|self|'s \verb|invoke()| method \verb|self| removes itself. Components peak at the top of this stack to find out which \verb|Self| called them, and call that \verb|Self|'s \verb|invoke()| method.
+
+\section*{Leaking this-pointers}
+In Groeneveld's implementation of Delegator it is conceivable that a reference to a component may be acquired outside \verb|self|. Furthermore, this situation may occur not only as a deliberated result of trying to gain access to the components, but also as an unintended surprise. To see how, let's take a look at an example.
+
+Consider the case where we have some class \verb|Document| that maintains a number of nodes in a graph. Instances of \verb|Document| act as factories to generate these nodes, in such a way that the nodes are instantiated with a reference to the document they belong to:
+
+\begin{verbatim} 
+public class Document {
+
+  public Node createNode() {
+    return new Node(this);
+  }
+
+}
+\end{verbatim}
+
+In this example, every call to \verb|createNode| generates an object with a reference to the \verb|Document| instance. Now say we will create an instance of \verb|Document| using Delegator, i.e. we create an instance of \verb|Self| that has a \verb|Document| as one of its components. 
+
+If the user calls \verb|createNode()| on this delegation-made document, what happens under water is that, after a detour via a proxy and self, the code above is executed somewhere in a component. Because the code is executed as part of a component, the this-pointer that is passed as a parameter to the newly created node is a reference to the component, not to \verb|self| or a proxy to \verb|self|. This means the newly created node now has access to one of the supposedly encapsulated components of self.
+
+\begin{verbatim}
+public void testExampleFromBoth() {
+  Document document = getDocument();
+  Node node = document.createNode();
+  assertEquals(document, node.getDocument()); //test1
+  assertEquals(1, node.getDocument().getOne()); //test2
+}
+\end{verbatim}
+
+Consider the above test. If the method \verb|getDocument()| returns a regular instance of \verb|Document| both assertions simply succeed. This isnt surprising: a document is passed as a parameter to a node and can then be retrieved.
+
+If, however, the method \verb|getDocument()| returns a proxy for \verb|self| that contains a single document component, both assertions fail. The first one simply fails because \verb|node.getDocument()| now returns a \verb|Component| for \verb|document| instead of \verb|document| itself. 
+
+The second assertion causes an exception when called in Groenevelds version. In general, when a method is called on a \verb|Component| directly, this may lead to unpredictable random behavior. This is caused by the use of a stack to determine which \verb|self| called the components method. If a method is called directly on a component, without first adding anything to this stack, the values on the stack no longer match reality. The stack could be empty, leading to a \verb|NullPointerException| in generated bytecode (not a pretty sight to debug), or the top of the stack could contain any random \verb|self|, leading to methods being called on  random instances of \verb|Self|. This kind of random spooky behavior is almost impossible to debug and very undesirable.
+
+In our example, we have seen one particular way for Components leaking out of their selves. In general, components may leak out via this-pointers in two different ways. Firstly they may be passed as a parameter to some method as shown in the example. Secondly they may be returned as the result of a method. These two cases are also the only two cases: as we have seen calling methods of the form \verb|this.method()| works perfectly well
+
+\section*{Groenevelds workaround solution}
+Groenevelds version of Delegator did provide a workaround solution for this problem. It does this in the form of a required, but minimal adaptation of the \verb|Component|s source code.
+
+If a piece of code is executed as part of a \verb|Component|, we dont want a this-pointer to be passed as a parameter or returned. If a piece of code is executed normally, we want the this-pointer to be returned normally.
+
+Self provides a static method that does exactly this: it transforms Components into proxys for their self and leaves non-components as they are. It does this by peaking on the stack at the moment it is called.
+
+Since there is only a very limited amount of cases in which this-pointers are actually returned or passed as parameters and the wrapping method is pretty short (this is replaced by \verb|Self.self(this)|) this could be justified as a workable workaround.
+
+Using this workaround the running example is modified like this:
+
+\begin{verbatim}
+public class Document {
+
+  public Node createNode() {
+    return new Node(Self.self(this));
+  }
+
+}
+\end{verbatim}
+
+In other words: we adapt the code that will be used as a component manually to make sure this-pointers won't leak out. This solution however, is not possible if we can't alter the existing code. Since we formulated the reuse of existing code as one of Delegator's main advantages, the lack of a solution that keeps the existing code intact is problematic. In the following a number of solutions will be explored.
+
+\section*{Possible solution with code-copying}
+Any solution for this problem will entail some form of adaptation of Delegators automatic generation of components.
+
+In the previous it was shown how Components contain a so called implementing method for each method they implement. A possible solution of the lack of encapsulation for this-pointers could be to change the layout of these implementing methods. In Groevelds version, implementing methods do nothing more than make a call to the components superclass method with the same name. This method obviously implements its real behavior.
+
+An intuitive idea is to replace the instances of this that are either passed as a parameter or returned as the result of a method by \verb|Self.self(this)| in the bytecode. If our bytecode is simply a call to a superclass, as in Groenevelds version, this is impossible, because we cant alter the superclass, but only our own \verb|Component|.
+
+We could however, also, just copy all the bytecode of all ancestors and replace this-pointers by self-pointers of some kind. In this approach, the implementing method is changed from a call to its superclass to a modified copy of that superclass.
+
+In fact, the code of the method may not be in a components direct superclass, but also in its ancestors or in a number of ancestors. Therefore, we will have to copy all this code into our Component and mimic the inheritance chains manually.
+
+Because we copy the superclasses code that originally is executed in some other class, we run into trouble with access modifiers. Say we copy some public superclass method that provides access to a private field:
+
+\begin{verbatim}
+private int x;
+
+public int getX() {
+  return x;
+}
+\end{verbatim}
+
+To access this field, however, in the subclass' code, we have to make an explicit copy of it, because private fields are not available in subclasses. This has to be done recursively, so we have to copy all fields from all ancestors.
+
+This solution, even if we would be able to make it work, certainly wouldnt be very elegant. A large amount of code is duplicated: in fact all code from all ancestors finds its way somehow in this huge collecting class, the \verb|Component|.
+
+Restricting ourselves to the methods that actually return this or pass it as a parameter would be very desirable. It is unfortunately impossible, because we dont know on which level what occurs.
+
+\subsection*{Replacing the this-pointers}
+Replacing the this-pointers isnt trivial, but its possible. The byte-code for a call to \verb|Self(this)| is easily generated: the BCEL library provides enough functionality to make this a trivial task. This-pointers are also easily spotted: the this-pointer is simply the first local variable (index = 0) so every load instruction that loads the first local variable onto the stack is a reference to this.
+
+This-pointers may be loaded onto the stack for a multitude of reasons. All calls on the objects own methods are calls to \verb|this.method()|. So this is loaded for all of these. We now have to restrict ourselves to replacing only those this-pointers that are put on stack because they are returned as the methods result or passed as a parameter, i.e. the two cases we found out to be problematic. A first approach is to look at the statement directly after the loading of the this-pointer on stack.
+
+Determining which this-pointers on the stack are being used for which goal isnt that simple though. Consider for example a this-pointer that is first put into a field and then used in different ways, being passed as a parameter and as a reference to call methods on. Some serious form of program analysis is required to determine which instances of this need to be replaced.
+
+Alternatively, we can take an even more drastic approach. In this approach all this-pointers are replaced by self-pointers (i.e. proxies to \verb|self|). Because the proxy contains all delegating methods we can now simplify our setup. We can name do away with the delegating methods in our \verb|Component| and set the signature of the implementing methods to the regular signature.
+
+\subsection*{conclusion}
+A great number of further complications will be left out here because the the solution is not workable anyway. This is because the idea of the copying of code is flawed to begin with. The problem is that due to Javas access modifying system we run into serious trouble. Consider the following examples:
+
+Firstly consider an inner class that modifies the private field of its containing class. If we copy the entire inner class to another location this type of access has become illegal. Secondly say we have some superclass of our Component that accesses another object in its own package using a method with package accessor. If we now copy this code into our Component, the access to this other objects package method has become illegal. This is the same effect as weve seen in the chapter on access modifiers, but with more consequences.
+
+Thirdly consider another case with private modifiers. The same problem occurs in the case of private modifiers. Objects may change the private fields of other instances of the same class. If code is now copied to another class, i.e. the Component we also copy this accessing of a private field. However, the code trying to access that field is now no longer in the same class as the instance being accessed.
+
+Balancing the benefits against the drawbacks we must say this approach is on balance less attractive than Groenevelds approach.
+
+The number of instances in which Components leak out as described in our problem is relatively small. Much smaller in fact than the number of times private fields of other objects are accessed, or protected methods of the same class.
+
+Another important difference with the general trouble one runs into with access modiers in Greonevelds version is that those can be circumvented by being careful not to use to strict access modifiers in new code. In this approach, however, existing code is in danger.
+
+\section*{A solution with unsharable components}
+In the previous it became clear that in a context of sharable components this-pointers leaking out is a hard problem. Lets consider our goals again, but drop the goal of being able to share a component among multiple instances of Self. Just as a thought experiment, we realize the value of sharing but just to see how far this takes us. Later we will see whether the two solutions are combinable.
+
+When we drop the requirement of being able to share Components we can equip each Component with a field that refers to the single instance of Self it belongs to. This is in fact the way proxies work: they have a single field that refers to the instance of \verb|Self| they were created for. Delegating methods now simply delegate to this single instance which is always available since its a field. One could also say that a Component has become a proxy for its single instance of Self in this way.
+
+This alone is enough to solve our problem. Admittedly, components may still leak out. However since they are now also a proxy for the right instance of self calling methods on them will still work. In fact, all solutions so far have in common that they return a Proxy instead of this. We can either change the way the returning and passing works, or we can make sure this is a proxy.
+
+So we have found our solution! Unfortunately, in finding it we have dropped one of our goals: the ability to share components among different instances of self.
+
+The advantages of delegation are very diverse, but this also means that a lot of users will not use all advantages at the same time In which situation do we want this ability of sharing of components is hard to say a priori. There may be users who never want it. On the other hand, there may be users who will use delegation especially for the purpose of being able to share components.
+
+We could offer the user a choice: when creating a Component, should this Component be sharable? If it is, the user will still have to deal with the problem of Components leaking out. If it isnt she wont have to do that. 
+
+The type of \verb|Component| to be added to \verb|self| could be given as a parameter when creating new components. (of course they will be implemented using different classes) Components that can not legally be shared among different instances of self may in this setup not be added to another self or (because this works with a one-component self) not even be fetched as parts of one self. (there is also no need for this). Throwing an exception at runtime for these situations is, however, much more acceptable than the kind of errors that occur when Components leak out. This is because the cause is clearly indicated, the exception is thrown at the right moment and a solution may be proposed immediately. (if fact we could also just hide the components, whatever proves to be more useful)
+
+Additionally, letting the programmer choose between these two options, well propose a default choice. We expect both the use of this-pointers in program code and the want to share components to happen roughly an equal amount of cases. However, we see that the type of behavior when someone accidentally uses a sharable component in a context with this pointers leaking out is much harder to debug and understand than the type of error when someone uses a non-sharable component in the context of sharing. 
+
+In other words: sharable components are more powerful, but more dangerous. It is therefore reasonable to say the user has to explicitly request the extra functionality. Additionally, when moving up to sharable components we can document the shareable components as what they are: sharable, but dangerous in the context of this pointers that are returned or passed as parameters.
+
+This solution solves a lot of problems, but not all of them. Were stuck with people who cant change their code, want to share components and have thispointers in their original code. But you cant have it all and this can be clearly documented.
+
+[en nog weer een ander idee is om components een pointer naar hun eigen, component only self te geven - dit gaat geloof ik alleen niet werken omdat je die alleen kunt gebruiken als je met een lege stack zit en dan nog niet echt wee twat je era an hebt]
+
+As weve seen in the previous there are reasons to defend extra, not essential but useful tools. It could be worthwhile to do further research on the question whether a special analyzer or compiler like tool like described in the previous could be developed to warn the programmer for possible errors. 
+
+Yet another idea is to start out with non-sharable components, and adapt these once they are used in more than one self. (This is visible because they are retrieved from \verb|self|). Once that happens you go to 2-self mode. Copying of fields is probably possible. No references will exist because Components are encapsulated. Problems? Maybe in the case of Multithreading (find out!). With respect to letting the programmer choose this relieves the programmer of the burden to make this choice explicitly, but on the onther hand results in even spookier behavior because now code sometimes does work, sometimes doesnt (based on some deeply hidden implementation detail).
+
+%[Volgens mij is het volgende niet acceptabel omdat het echt volledig onvoorspelbaar gedrag oplevert, maar wellicht is het wel als idee voor te stellen. Of het component maakt het zelf. (die keuze)
+Is dit een aanvaardbaar traject:? ?	je kijkt altijd op de stack en als die niet leeg is is er geen probleem -- !!! hier kunnen hele gekke dingen van gebeuren maar hoe vaak komt dat voor??als de stack wel leeg is neem je e.e.a. default, bijv. de laatste die erop heeft gestaan of een soort default-self of je gooit een begrijpelijke foutmelding.]
+
+%\section*{Een analyse van gebruik:}
+%Wat zal de conceptuele betekenis van return this en this als parameter meegeven in het algemeen zijn? Als dat stiekem nl. meestal iets te maken heeft met het component (zie ook het document-voorbeeld) wil je daar misschien wel iets mee doen - of dan is het iig niet zo erg als er door de stack willekeurige antwoorden uitkomen en moet je alleen om weten te gaan met het draaiend houden van de boel - ie. nullpointers voorkomen
+
+%Een constatering trouwens: in het geval dat een component onterecht is uitgelekt is er in ieder geval 1 aanroep geweest op de juiste manier dus we hebben altijd minstens 1 aanknooppunt.
+
+%Laten we het tegenvoorbeeld eens bekijken en kijken of het iets betekent of echt contrived is.
+
+%Dan zouden we een document hebben dat twee maal gebruikt wordt als component. Er zijn dus twee instanties van Self self1 en self2 die allebei documentComp als component hebben. Self1 en self2 hebben allebei een proxy document1 en document2. Stel dat er nu een aanroep is op doc1.createNode(). Dan lekt dus docComponent uit. Dan gebeurt er iets waardoor docComponent in geval van uitlekken denkt te horen bij self2 (bijv. omdat we werken op basis van last call en er een call tussendoor komt).
+
+%Nu is dit erg als er doordat er een aanroep is op het uitgelekte component uiteindelijk code van een van self2's componenten anders dan het uitgelekte wordt aangeroepen ipv een van self1's componenten anders dan het uitgelekte (iets vaker - als een van deze twee dingen waar is).
+
+%In andere woorden: als we het document-achtige gedrag hebben uitgebreid/gedelegeerd/extend. Dus als we een nieuwe methode createNode hebben ---Nee want dan zou een ander document zijn uitgelekt!!! dus alleen als we een deel van zo'n document aanpassen hebben we een probleem.
+%Maar zal er niet altijd ergens een aanpassing zitten in de document code?? Anders heeft het nl. zo weinig zin om die code te combineren met andere code - zelfs in het geval van bijv. een observer zal er iets aangepast moeten worden. 
+
+%Bijv. als je createNode zou overriden om een method changed() aan te roepen en dan twee docs maken met hetzelfde comp. maar een andere observer ---!!!! dit heeft gewoon geen enkele sematiek meer ;-)
+Tenzij je bijv. zou willen zien vanuit waar een methode wordt aangeroepen Dan neem je juist 1 ding met 2 observers
+
+%\section*{[en ik bedenk me hier nog een oplossing]}
+%Zou het mogelijk zijn om de thispointer opnieuw te binden? Dwz om te schrijven naar het locale veld 0???!!! Dit zou wellicht een hele gave opl. Kunnen zijn!!!!
+%Hmmm hoe moeilijk is het om dat te doen? Kan je dat eenmalig doen bij de instantiatie? Nee niet echt, want je moet juist elke keer voor een methode op nieuw. Kan je dat doen voordat je super aanroept? Misschien wel, maar dan beinvloed je ook het gedrag van je component-code en zou je het terug moeten zetten. Kan je dit uberhaubt doen?? Interessante vraag!
+
+%Losse gedachten this pointer encapsulation
+%? why not make different instances of different components while keeping one object that represents the actual data? ?because of problems with fields? nee omdat het hele punt is dat oplossingen met eea manier van wrappen niet gaan werken. Het hele idee is nl. dat de thispointer right in the middle uitlekt.
+
+%Wel falen slechts *2* tests nadat e.e.a. is omgeschreven. aangezien het een kracht van delegator is om comps te kunnen delen zou hier misschien wel wat meer aandacht voor mogen zijn...
+
+\chapter{Multi-threading}
+Java supports concurrency with a number of classes and keywords. A Java program may contain a number of independently running threads. It is therefore, desirable, that an implementation of Delegator will work transparently in a multi-threaded environment as well. Programmers using multi threading will expect Delegator to work just as well as if they weren't using multi-threading.
+
+Regarding supporting muli-threading in Delegator there are two distinguishable steps. Firstly Delegator needs to be made safe for multi threading. Secondly Java's locking mechanism, the option to make certain blocks synchronized, needs to be looked at in the context of delegation.
+
+Before delving into the specific situation of Delegator, let's take a look at some research on the topic. The combination of concurrency and delegation has been researched by various authors. A language that supports delegation for a distributed environment, dPico, is described in [VanCutsem04]. It additionally describes a number of concurrency-issues and proposes another language on the way that deals with concurrency, cPico. The approach the authors take, however, is to base cPico on Active Objects, an approach that relates to Java's thread paradigm only in a very limited way.
+
+Self supports concurrency on a very basic level. New processes can be created and semaphores used to denote critical sections. dSelf is a language, based on Self, that supports distribution. The mechanisms for concurrency provided by dSelf are quite limited: the idea was to implement the issues concerning distribution before the issues concerning concurrency were solved.
+
+Now lets look at the combination of Delegator and Threads. Firstly we will examine the use of Self by multiple threads at the same time. The whole point of Delegator is to introduce dynamic delegation to Java. This means that the composition of objects (selves) may be changed dynamically. This implies that a certain object may at some times respond to certain method calls and at other times not respond, or may respond differently to the same method call at different times. Additionally, messing around with the structure of self may compromise its state even though the relevant method is neither added nor removed.
+
+A major question here is which of these problems can be solved automatically and which must be addressed by the programmer. We say firstly that, if one thread is removing or adding components and another thread is calling a method which is contained by none of these components, this method should always be executed. On the other hand, we say that its the programmers responsibility to make sure the methods shes calling actually exist, so a programmer removing or adding relevant components while attempting to execute them is on her own.
+
+In Groenevelds version the following didnt work, but it has now been fixed. Consider an instance of self to which components with no relevant methods are added and removed at the beginning of its component-list. This used to disturb selfs method lookup mechanism, but now no longer does so. The same goes for adding and removing another component with a relevant method, while at keeping at least one component in the list which is able to respond to the message call at all times.
+
+\section*{Problem 2: how to translate the concept of a monitor to delegation?}
+The second addition to Delegator is the introduction of the concept of a monitor in the context of delegation. Hoare introduced the monitor as a concept to prevent simultaneous data access in [Hoare74]. A monitor is a combination of data and procedures on that data. At any given point in time there is no more than one thread executing the monitor's code. 
+
+Java's concurrency support owes a lot to monitors. Java's objects map quite naturally to the idea of a monitor: objects too contain both data and methods. Blocks of statements, methods and classes may be declared to be synchronized. All statements of one object that are synchronized may only be accessed by one thread at a time. This means the set of synchronized statements is effectively a monitor. Other threads that attempt enter the monitor will wait and are notified only when the thread in the monitor leaves it.
+
+In an inheritance based language such as Java there is a natural one to one mapping from objects to monitors. Every object is clearly identifiable and separate entity having it own data and modifiers. In a delegation-based language this separation is less clear. Objects that are composed using delegation may have a number of components and components may be shared across different selves.  
+
+Let's look at an example of monitors at work in an inheritance based context, i.e. Java, first. Synchronized methods use a reference to the object on which they where called as the monitor on which to acquire a lock. Notice that this reference is the this-pointer. If a programmer declares a number of methods in some class to be synchronized, any instance of that class may only be accessed in those methods by one thread at a time. If a programmer now creates a subclass of that class and adds a number of synchronized methods to it, the methods on the various levels still form a monitor together. This is because the reference that is used for locking the monitor, the this-pointer, is the same on all levels of the hierarchy.
+
+However, if a programmer mimics class based inheritance using delegation this is no longer going to work. In a context using delegation we are actually dealing with a number of separate components that are linked together by \verb|Self|. If in this setup multiple objects have synchronized methods each of them has its own this-pointer. Therefore they will all be treated as separate monitors instead of, what might at times be intended, as one single monitor.
+
+It seems plausible to think the role of \verb|this| in Java's synchronization framework could be translated to a new role of self in a delegation-based adaptation of Java. Is this indeed the case? 
+
+In such a scenario we could lock all components of self once a method is called on one of them. This solution, however, is much to strict and may possibly even lead to deadlocks. 
+
+We must conclude that automatic solutions can fundamentally not work because the concept of a composed object no longer clearly maps to a monitor. On the one hand, this means that different selves may share data, on the other hand multiple monitors may be present in one self. Because the concept of a monitor no longer corresponds to one single object it seems plausible to leave this to the programmer's responsibility. Only she knows which data belongs together in the form of a monitor. 
+
+We will now examine two similar approaches that put the responsibility for locking of monitors squarely in the hands of the user. Because they differ slightly both are offered as part of the Delegator package.
+
+Both approaches have two important properties. Firstly both offer a separate object, which may be used as a component, to uniquely represent a lock for the critical sections. Secondly it is up to the user to make explicit references to this object.
+
+In our first approach we introduce two methods, \verb|acquire()| and \verb|release()|, which respectively acquire and release a unique lock. Both of these operations can only be accessed by one thread at the same time. If the lock is free \verb|acquire()| will give the calling thread the lock. If the lock is not free the calling thread will wait until it is released by the \verb|release()| method.
+
+Java provides a built in class \verb|java.util.concurrent.Semaphore| that provides this behavior. However, one important feature is missing. As we saw in the previous Javas built in system allows for nested synchronization. This built in class does unfortunately not have this same behavior. This means that acquiring the same lock twice, as would happen in a recursive call, leads to a deadlock. To amend this Delegator provides a class Semaphore that indeed does allow for multiple acquiring of the same lock.
+
+Obviously, instances of this class can be combined with the rest of our code using delegation. To this end we also provide an interface ISemaphore. The use of the Semaphore is demonstrated below:
+
+\begin{verbatim}
+public int inc() throws InterruptedException {
+  acquire();
+  int result = value++;
+  release();
+  return result;
+}
+\end{verbatim}
+
+This approach is very flexible and allows for a high level of programmer control. The Semaphore may be either combined using delegation or using ordinary message forwarding. Locks may be acquired and released at any location, meaning that this may also span methods or even span objects.
+
+On the other hand, the syntax is rather bulky. Note that our example could be reduced to return \verb|value++| in a context without synchronization. Firstly, the user needs to add the two statements \verb|acquire()| and \verb|release()| for each critical section. In the case of return statements the result needs to be set within the critical section too, so we need another local variable.
+
+The second approach uses the synchronized statement, providing a distinct object that can be used as the lock. Remember that Java provides a statement for the synchronization of blocks. In the previous it became clear that using this statement with \verb|this| as the handle is not a workable solution in the context of delegation. However, we may assign a different, distinct object that may be put there. 
+
+To do so we simply provide a class \verb|Monitor| with one method \verb|getMonitor()| returning the monitor itself. We also provide an interface \verb|IMonitor|, implemented by \verb|Monitor|, with this one method. Blocks that need to be synchronized can now be wrapped by synchronization statemente like this:
+
+\begin{verbatim}
+Synchronized(getMonitor()) {
+  //synchronized block...
+}
+\end{verbatim}
+
+%With respect to Javas notation for synchronization this is slightly less elegant. In Java we can also label methods as synchronized which is impossible in this setup. However, this is reasonably acceptable.
+
+%[Hoe zit het eigenlijk met Threads die worden gemaakt mbv delegation? Zinvol? Mogelijk?]
+
+\chapter{Miscellaneous features}
+\section*{Strict forwarding and Final classes}
+Groeneveld's version of Delegator only offers real delegation, i.e. the self-problem is always solved. As we've seen in Darwin/Lava, we may also offer the user the option of automatic forwarding. In automatic forwarding, \verb|self| is still composed out of components. However, whenever a method is called on one of these, the self-pointer is not passed in such a way that the component calls methods on self.
+
+Offering creation of automatic forwarding-components besides true delegation-components has a number of benefits. Firstly for a great number of users there may be no need for true delegation at all, whereas automatic forwarding would be a feature of great help. Automatic message forwarding requires a lower level of understanding of delegation and is closer to common day practice and well known design patterns. Secondly automatic forwarding is much faster than true delegation, because the overhead of redirecting every method call within the component via \verb|self| is eliminated.
+
+Thirdly automatic forwarding provides a way around a limitation of Delegator. Because Delegator creates subclasses of the class it creates proxies and components for final classes cannot be used anywhere in the context of delegation. Remember, however, that the only reason to actually generate subclasses for components is to solve the self-problem, i.e. to implement true delegation.
+
+Finally, this way of forwarding allows for a dynamic addition to \verb|self|. As we have seen, components are generated on the fly, which means that they are created at the moment they are added to some \verb|self|. If we, however, already have some live object that we would like to be added to \verb|self| this approach doesn't work. An approach with automatic forwarding allows life objects to be added.
+
+Having automatic forwarding as an option allows us to have a great number of delegation's advantages for final classes too. Specifically, in the context of unmodifiable code it would allow the user to have an extension mechanism for final classes.
+
+
+%[dat verhaal over become moet natuurlijk wel ergens in de scriptie komen]
+
+
+\chapter*{Object methods}
+All Java Objects support a specific set of methods that are considered to be of importance for all of them. A number of these are supposed to be overridden by user' implementations in the subclasses. 
+
+\section*{equals()}
+All Java Objects support the \verb|equals()| method. In this section the semantics of \verb|equals()| in an environment of delegation will be examined. Additionally we will look at what's possible in Java and show how this has been implemented in Delegator.
+
+In what kind of situations do we use equals()? Collection-framework and tests are two important applications. What does this say about semantics?
+
+The identity operator \verb|==| tests for Object identity.
+
+Desirable properties:
+Tranparancy
+Maintain meaning. (zie artikel voor de betekenis daarvan in inheritance, in delegation is daarvan nog een vertaling.)
+
+
+The equals method implements an equivalence relation on non-null object references: 
+- It is reflexive: for any non-null reference value x, x.equals(x) should return true. 
+- It is symmetric: for any non-null reference values x and y, x.equals(y) should return true if and only if y.equals(x) 
+ returns true. 
+- It is transitive: for any non-null reference values x, y, and z, if x.equals(y) returns true and y.equals(z) returns true, then x.equals(z) should return true. 
+- It is consistent: for any non-null reference values x and y, multiple invocations of x.equals(y) consistently return true or consistently return false, provided no information used in equals comparisons on the objects is modified. 
+- For any non-null reference value x, x.equals(null) should return false.
+
+
+Notice that equals() is very much semantics - it is often related directly to what values are in the program.
+
+Wat kan je?
+Object composition may have different meanings. Therefore this should be left to the programmer. Compare the adding of an observer to an object with mixing two value classes with merging two value classes with overlapping values. Automation is out of the window.
+
+
+An important problem:
+a.equals(proxy) en proxy.equals(a) -- also because many implementations of A will have checks on fields
+- this leads to random results...
+what happens when we can modify A's code?
+ - compare this with an approach that allows only interfaces - in that case we at least get false all the time
+
+compare this with a.equals(self) -- the problems are very similar, but at least we get false all the time from both sides.
+
+Can the components be compared?
+ - in the case of instanceof yes...
+ - in the other case we could argue that they should be declared final and therefore used as  non-generated components.
+
+ 
+The meaning of different proxies on one self - semantically we say they are the same because they are like references to the same value. We also say a proxy is the same as its self for the same reason. (dit maakt een optimalisatie mogelijk trouwens)
+
+
+Vergelijkbare complicaties in Java/complicaties waarvan de conclusies gevolgen hebben 
+The discussion on the internet should somehow be included here.
+
+Maybe later: allow the user to choose which parts of the component are used by either its own or another object's (misschien moet ik dat toch maar alvast gaan doen...) equals() method. Something similar could be devised for the option of allowing for random ordering.
+
+\section*{hashcode}
+
+Beschrijving uit Object.hashCode()
+
+Returns a hash code value for the object. This method is supported for the benefit of hashtables such as those provided by java.util.Hashtable. The general contract of hashCode is: - Whenever it is invoked on the same object more than once during an execution of a Java application, the hashCode method must consistently return the same integer, provided no information used in equals comparisons on the object is modified. This integer need not remain consistent from one execution of an application to another execution of the same application. - If two objects are equal according to the equals (Object) method, then calling the hashCode method on each of the two objects must produce the same integer result. - It is not required that if two objects are unequal according to the java.lang.Object.equals(java.lang.Object) method, then calling the hashCode method on each of the two objects must produce distinct integer results. However, the programmer should be aware that producing distinct integer results for unequal objects may improve the performance of hashtables.  As much as is reasonably practical, the hashCode method defined by class Object does return distinct integers for distinct objects. (This is typically implemented by converting the internal address of the object into an integer, but this implementation technique is not required by the JavaTM programming language.) Returns: a hash code value for this object. See Also: java.lang.Object.equals(java.lang.Object) java.util.Hashtable
+
+
+Updating \verb|equals()| forces us to update \verb|hashCode()| as well. This is because the latter should give equal results for 
+
+We may just pick the first component (in a setting with complete, non user-defined equation). A better result would be generated by taking a combination over the different components though.
+
+
+uit java practices:
+    * if a class overrides equals, it must override hashCode
+    * if two objects are equal, then their hashCode values must be equal as well
+    * if a field is not used in equals, then it must not be used in hashCode
+    * if it is accessed often, hashCode is a candidate for caching
+
+We kunnen de techniek uit (bookmarks) gebruiken om recursief hashes aan te maken...
+echter: willen we dat een self(object) dezelfde hash geeft als object? Nee maakt niet zo veel uit (zie ook equals() discusse)
+
+\section*{toString()}
+
+Nu (en ik denk dat dat goed is):
+Eerst alle componenten in volgorde bekijken. Dan ev. een aanroep op zichzelf (geldt trouwens voor meer dan toString()}
+Zit er nog een verschil in tussen via de proxy gaan en rechtstreeks op self aanroepen? Nu vermoedelijk wel, maar het is niet te zien omdat toString nog niet is geimplementeerd.
+
+Alternatieve implementatie: Self[alle componenten] indien niet geimplementeerd.
+
+\section*{clone()}
+
+Clone() is not a standard method on Object, but only in objects of the 
+
+Stel je hebt een proxy die Cloneable is. Dan heeft dat component idd die methode clone(). Maar komt ie daar ook? En wat wil je dan? Self clonen? Kan dat? Alleen als alle onderdelen ook cloneable zijn...
+
+Dit exacte verhaal gaat ook op voor compareTo()
+
+....Observatie: is er niet een algemeen probleem met dingen die je op self wilt aanroepen die over het hele ding gaan ipv over onderdelen ervan? 
+compare() is er ook zo een.
+
+
+copy constructors...
+
+copying existing objects into \$components
+
+copying objects that are used as components in automatic forwarding...
+
+ wait method, as well as the methods notify, notifyAll  and getClass. are final...
+ 
+ 
+finalize() method is geen enkel probleem omdat deze toch altijd bereikt wordt...
+
+
+%what happens if one creates a proxy of class Self for Self? I don't think this will pose any real problems. - no it doesn't seem to do so.
+
+%what happens if self is added as a component as a whole? - dat kan (nog) niet maar dat heeft te maken met de aanwezigheid van methoden met InvocationHandler in de signature - een algemener probleem.
+
+%what happens if we try to extend private etc. classes using delegator?
+
+%todo onderzoek naar sealed packages... niet relevant voor package scope maar wel interesant om te zien of het uberhaubt werkt
+
+%Performance [volgende revisie]
+%The performance of the current system is unknown. Because, however, a number of things are done on Java-code level, resulting in for example a great number of String-comparisons, it is bound to be slower than inheritance. Just how much slower needs to be investigated first. When a good testing benchmark has been developed I will  optimize the code for performance.
+
+%Good performance is very relevant for a useful framework: if Delegation is too slow to be workable it is not going to be used, no matter how elegant.
+
+%Distributed Applications
+%Distributed applications are another field where Delegation could be useful. Distributed applications often have components that may be composed from a number of objects, that may be distributed over a network. It would be very useful if objects could be adressed (i.e. messages could be sent to them) as if they themselves handle these messages, whereas they are actually composed using delegation. The specific problems caused by the combination of distributed applications and delegation are, however, outside the accessor of this paper.
+
+%[geknipt uit het proposal maar hier heeft het nog geen plekje:]
+%Delegator implementation
+%In Delegator the coupling of the delegate to the delegatee can be done anywhere. We can, however, put the code in the delegator class by writing a special method create(). To make a class ready for use as a delegator we'll most usually have to anticipate this by making it static abstract anyway.
+
+%Delegator ondersteunt geen velden:
+%A similar problem in the same category arises with field accesses. Field accesses will always be done without message dispatching and will therefore be done on the proxy instead of the component.
+
+%[dit is brak opgeschreven:]It is a generally accepted idea that non-private field accesses should be avoided and Delegator will not support it. The only reason to do such a thing would be reasons of performance and we don't see people that want every last microsecond using Delegator at the same time. [dit lijkt me onzin:]Private field access remains a problem though because it doesn't mix with Delegator.
+
+%[iets met typing]
+%With respect to transparency, this situation may still be problematic though. To understand why, one has to [ok het volgende moet wellicht elders - het is een soort filosofische analyse van typing]
+
+%Delegator lacks an important concept from Java: static typing, because it is irreconcilable with delegation. Because of the use of proxies, there is some level of typing though.
+
+%On the one hand, there is no guarantee at all that the methods that are called on the Self actually exist. A proxy may be generated for any random class so basically random methods may be called on Self, leading to NoSuchMethodExceptions.
+
+%On the other hand, in the Delegator setup, in it not possible for a programmer to just call any method on an object. The programmer first has to explicitly declare her expectation that self implements a certain class or interface by casting self to that class using Delegators cast() method.
+
+%What is the reason we have a type system in the first place? It is to protect the programmer against certain types of mistakes.
+
+%The amount of protection is inevitably traded against a certain loss of flexibility 
+
+%As stated before, the degree to which the programmer .
+
+\chapter{Bibliography}
+\section*{Delegation}
+Lieberman provides an excellent explanation of delegation, starting off from the perspective of knowledge representation and sharing but touching upon a large number of practical issues. The power of inheritance and delegation are compared, an analysis of efficiency is made, there is an analysis of the problems of multi-threading and the paper is rich with clarifying examples.
+
+Lieberman, H. Using prototypical objects to implement shared behavior in object-oriented systems. In Proceedings of OOPSLA '86, Object-Oriented Programming Systems, Languages, and Applications (November 1986), pp. 214--223. printed as SIGPLAN Notices, 21(11). <http://citeseer.ist.psu.edu/lieberman86using.html>
+
+Ulrich Frank, Delegation: An Important Concept for the Appropriate Design of Object Models. In Journal of Object-Oriented Programming. Vol. 13, No. 3, June 2000, pp. 13-18.
+
+Gnter Kniesel, Implementation of Dynamic Delegation in Strongly Typed Inheritance-Based Systems, Bonn 1995
+
+[Birtwistle73] Birtwistle, G.M. (Graham M.) 1973. SIMULA begin. Philadelphia, Auerbach.
+
+Flavors:
+[Flavors] http://www.franz.com/support/documentation/6.2/doc/flavors.htm
+
+Darwin/Lava
+The Darwin Project's homepage can be found here.
+<http://javalab.cs.uni-bonn.de/research/darwin/>
+
+The Phd thesis leading up to the Darwin project:
+Gnter Kniesel. Darwin -- Dynamic Object-Based Inheritance with Subtyping. PhD thesis, CS Dept. III, University of Bonn, Germany, 2000.
+
+Delegator
+CQ2 maintains an oversight of delegation in general, delegation in Java and Delegator specifically.
+<http://www.cq2.nl/en/oss/delegator/toon>
+
+Delegator was presented at OT2004. A session description and the presentation can be found here.
+<http://www.cq2.nl/en/oss/delegator/delegationinjava/toon>
+
+Delegator is available at SourceForge.
+<http://sourceforge.net/projects/delegator/>
+
+Other proposals
+JavaSoft's proposal for a language extension is described in
+<http://java.sun.com/products/javabeans/glasgow/>
+
+and attacked in
+[Kniesel98] Gnter Kniesel, Delegation for Java: API or Language Extension? Technical Report IAI-TR-98-5, Computer Science Department III, University of Bonn. ISSN 0944-8535. May 1998.  http://citeseer.ist.psu.edu/kniesel97delegation.html
+
+A very limited attempt at delegation, mainly aimed at multiple inheritance is found in
+[viega98automated.pdf] John Viega, Bill Tutt, and Reimer Behrends. Automated delegation is a viable alternative to multiple inheritance in class based languages. Technical Report CS-98-03, 2, 1998. http://citeseer.ist.psu.edu/viega98automated.html
+
+Implementation of new Features
+A good overview of Java's access control scoping rules can be found here.
+<http://java.sun.com/docs/books/tutorial/java/javaOO/accesscontrol.html>
+
+Monitors are an important concept of concurrency
+[Hoare74] C.A.R. Hoare. Monitors: An operating system structuring concept. Communications of the ACM, 17(10):549--557, October 1974.
+
+Languages using delegation
+Development of the Self Language was halted in 2004. The Self language is described here.
+<http://research.sun.com/self/language.html>
+
+[SmithUngar] Randall B. Smith and David Ungar, Programming as an Experience: The Inspiration for Self.
+
+dSelf is an attempt to make a distributed version of the self language.
+[Tolksdorf01]
+Robert Tolksdorf and Kai Knubben, dSelf, A Distributed SELF, Technische Universitat Berlin, Fachbereich Informatik, FLP/KIT, 2001
+
+Various sources
+[Gamma95] Gamma, Erich, Richard Helm, Ralph Johnson, and John Vlissides. Design Patterns: Elements of Reusable Object-Oriented Software, AdissonWesly, Riding, MA, 1995.
+
+[todos nav werk hier:
+NoSuchMethodException ipv Error maken]
+
+
+\end{document}
