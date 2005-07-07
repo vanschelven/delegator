@@ -31,6 +31,10 @@ public class EqualityTest extends TestCase {
     private A proxy1;
     private A proxy2;
     private A differentProxyValue;
+    private Self selfAB1;
+    private Self selfAB2;
+    private Self selfBA;
+    private Self selfABDifferentValue;
 
     public static class A {
         
@@ -49,17 +53,41 @@ public class EqualityTest extends TestCase {
             this.i = i;
         }
         
-        public void set(int i) {
+        public void setI(int i) {
             this.i = i;
         }
         
-        public int get() {
+        public int getI() {
             return i;
         }
         
     }
     
     public static class B {
+        
+        private int j;
+        
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (!(obj instanceof B)) return false;
+            B other = (B) obj;
+            return (other.j == j);
+        }
+        
+        public B() {}
+        
+        public B(int j) {
+            this.j = j;
+        }
+        
+        public void setJ(int j) {
+            this.j = j;
+        }
+        
+        public int getJ() {
+            return j;
+        }
+        
     }
 
     protected void setUp() throws Exception {
@@ -68,14 +96,24 @@ public class EqualityTest extends TestCase {
         differentA = new A(2);
         self1 = new Self(A.class);
         proxy1 = (A) self1.cast(A.class);
-        proxy1.set(1);
+        proxy1.setI(1);
         self2 = new Self(A.class);
         proxy2 = (A) self2.cast(A.class);
-        proxy2.set(1);
+        proxy2.setI(1);
         differentSelfValue = new Self(A.class);
         differentProxyValue = (A) differentSelfValue.cast(A.class);
-        differentProxyValue.set(3);
+        differentProxyValue.setI(3);
         
+        selfAB1 = new Self(A.class);
+        selfAB1.add(B.class);
+        selfAB2 = new Self(A.class);
+        selfAB2.add(B.class);
+        selfABDifferentValue = new Self(A.class);
+        selfABDifferentValue.add(B.class);
+        ((A) selfABDifferentValue.cast(A.class)).setI(1);
+        selfBA = new Self(B.class);
+        selfBA.add(A.class);
+
         //dan hebben we nog: b-proxy op a, b-proxy op b, a-proxy op b
     }
     
@@ -93,14 +131,14 @@ public class EqualityTest extends TestCase {
     }
     
     public void testEmptyProxy() {
-        assertEquals(new Self().cast(Vector.class), new Self().cast(Vector.class));
-        assertEquals(new Self().cast(Vector.class), new Self().cast(HashMap.class));
-        assertFalse(new Self().cast(Vector.class).equals(null));
+        assertEquals(new Self().cast(A.class), new Self().cast(A.class));
+        assertEquals(new Self().cast(A.class), new Self().cast(B.class));
+        assertFalse(new Self().cast(A.class).equals(null));
     }
     
     public void testEmptySelfProxy() {
-        assertEquals(new Self(), new Self().cast(Vector.class));
-        assertEquals(new Self().cast(Vector.class), new Self());
+        assertEquals(new Self(), new Self().cast(A.class));
+        assertEquals(new Self().cast(A.class), new Self());
     }
     
     public void testOneElementSelf() {
@@ -124,7 +162,45 @@ public class EqualityTest extends TestCase {
         assertFalse(proxy1.equals(differentSelfValue));
     }
     
+    public void testTwoElementsSelf() {
+        assertEquals(selfAB1, selfAB1);
+        assertEquals(selfAB1, selfAB2);
+        assertFalse(selfAB1.equals(null));
+        assertFalse(selfAB1.equals(selfABDifferentValue));
+        assertFalse(selfAB1.equals(selfBA));
+    }
 
+    public void testTwoElementsProxy() {
+        assertEquals(selfAB1.cast(A.class), selfAB1.cast(A.class));
+        assertEquals(selfAB1.cast(A.class), selfAB1.cast(B.class));
+        assertFalse(selfAB1.cast(A.class).equals(null));
+    }
+    
+//TODO misschien later...
+//    public void testEqualsFilter() {
+//        selfAB1.setEqualsComponents(new Class[]{A.class});
+//        assertEquals(selfAB1, self1);
+//        selfAB1.setEqualsComponents(new Class[]{});
+//        assertEquals(selfAB1, new Self());
+//    }
+//    
+
+    public void testWeirdEqualityBetweenOriginalsAndProxies() {
+        assertEquals(new A(), proxy1);
+        assertEquals(1, proxy1.getI());
+        assertEquals(0,new A().getI());
+        assertFalse(proxy1.equals(new A()));
+        a1 = new A();
+        a1.setI(1);
+        assertFalse(a1.equals(proxy1));
+        assertEquals(1, proxy1.getI());
+        assertEquals(1, a1.getI());
+
+    }
+    
+    public void testX() {
+        System.out.println(proxy1.toString());
+    }
     
 }
 

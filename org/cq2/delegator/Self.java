@@ -207,7 +207,7 @@ public class Self implements InvocationHandler, ISelf {
             other = (Self) obj;
         else other = getSelfFromProxy((Proxy) obj);
 
-        if (this.nrOfComponents != other.nrOfComponents) return false; //fix this
+        if (this.nrOfComponents != other.nrOfComponents) return false; 
         try {
             for (int i = 0; i < nrOfComponents; i++) {
                 Method m = this.components[0].getClass().getDeclaredMethod("equals", new Class[]{InvocationHandler.class, Object.class});
@@ -217,6 +217,7 @@ public class Self implements InvocationHandler, ISelf {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
         return true;
     }
 
@@ -284,4 +285,5 @@ public class Self implements InvocationHandler, ISelf {
             }
         }
     }
+
 }
