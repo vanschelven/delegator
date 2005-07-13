@@ -2,6 +2,8 @@
  * Copyright (C) 2001 Erik J. Groeneveld, http://www.ejgroeneveld.com Copyright
  * (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl
  */
+//TODO marker interfaces lijken een beperkt nut te hebben en kunnen er misschien wel uit.
+
 package org.cq2.delegator.classgenerator;
 
 import java.lang.reflect.Field;
@@ -19,12 +21,11 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.bcel.Constants;
-import org.apache.bcel.Repository;
-import org.apache.bcel.classfile.JavaClass;
 import org.apache.bcel.generic.ArrayType;
 import org.apache.bcel.generic.BasicType;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
+import org.apache.bcel.generic.FieldGen;
 import org.apache.bcel.generic.InstructionConstants;
 import org.apache.bcel.generic.InstructionFactory;
 import org.apache.bcel.generic.InstructionList;
@@ -33,9 +34,6 @@ import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.ReferenceType;
 import org.apache.bcel.generic.Type;
-import org.apache.bcel.verifier.VerificationResult;
-import org.apache.bcel.verifier.Verifier;
-import org.apache.bcel.verifier.VerifierFactory;
 import org.cq2.delegator.Component;
 import org.cq2.delegator.ComponentMethodFilter;
 import org.cq2.delegator.ISelf;
@@ -43,8 +41,11 @@ import org.cq2.delegator.Proxy;
 import org.cq2.delegator.method.MethodComparator;
 import org.cq2.delegator.method.MethodFilter;
 import org.cq2.delegator.method.MethodUtil;
+import org.cq2.delegator.method.ProxyMethodFilter;
 
-public class ClassGenerator implements Constants {
+public abstract class ClassGenerator implements Constants {
+
+    protected static final MethodFilter proxyMethodFilter = new ProxyMethodFilter();
 
     protected static final MethodFilter componentMethodFilter = new ComponentMethodFilter();
 
@@ -70,9 +71,14 @@ public class ClassGenerator implements Constants {
         }
 
         protected Class findClass(String classname) throws ClassNotFoundException {
-            if (classname.endsWith("$component")) {
+            if (classname.endsWith("$sharablecomponent")) {
+                return injectSharableComponentClass(loadClass(classname.substring(0,
+                        classname.length() - 18)));
+            } else if (classname.startsWith("sharablecomponent$")) {
+                return injectSharableComponentClass(loadClass(classname.substring(18)));
+            } else if (classname.endsWith("$component")) {
                 return injectComponentClass(loadClass(classname.substring(0,
-                        classname.length() - 10)));
+                            classname.length() - 10)));
             } else if (classname.startsWith("component$")) {
                 return injectComponentClass(loadClass(classname.substring(10)));
             } else if (classname.endsWith("$proxy")) {
@@ -84,30 +90,31 @@ public class ClassGenerator implements Constants {
         }
 
         private Class injectProxyClass(Class clazz) {
-            return injectClass(clazz, "proxy");
+            String className = getClassName(clazz, "proxy");
+            return injectClass(new ProxyGenerator(className, clazz), clazz, className);
         }
 
         private Class injectComponentClass(Class clazz) {
-            if (clazz.isInterface()) {
-                throw new IllegalArgumentException(
-                        "Interfaces are not supported, use java.lang.reflect.Proxy.");
-            }
             String className = getClassName(clazz, "component");
-            byte[] classDef = new EncapsulatedComponentGenerator(className, clazz)
-                    .generate();
-            return inject(className, classDef, clazz.getProtectionDomain());
+            return injectClass(new SingleSelfComponentGenerator(className, clazz), clazz, className);
+        }
+        
+        private Class injectSharableComponentClass(Class clazz) {
+            String className = getClassName(clazz, "sharablecomponent");
+            return injectClass(new SharableComponentGenerator(className, clazz), clazz, className);
         }
 
-        private Class injectClass(Class clazz, String prefix) {
+        private Class injectClass(ClassGenerator generator, Class clazz, String className) {
             if (clazz.isInterface()) {
                 throw new IllegalArgumentException(
                         "Interfaces are not supported, use java.lang.reflect.Proxy.");
             }
-            String className = getClassName(clazz, prefix);
-            byte[] classDef = new ProxyGenerator(className, clazz).generate();
+            byte[] classDef = generator.generate();
             return inject(className, classDef, clazz.getProtectionDomain());
         }
     }
+    
+    public abstract byte[] generate();
 
     private static final ObjectType CLASS = new ObjectType("java.lang.Class");
 
@@ -116,50 +123,29 @@ public class ClassGenerator implements Constants {
 
     protected final ClassGen classGen;
 
-    protected final InstructionFactory instrFact;
+    private final InstructionFactory instrFact;
 
-    protected final InstructionList instrList;
+    private final InstructionList instrList;
 
-    protected final ConstantPoolGen constPool;
+    private final ConstantPoolGen constPool;
 
-    protected Set methods;
+    private Set methods;
 
     private static Cache componentsClassCache = new Cache("component");
 
+    private static Cache sharableComponentsClassCache = new Cache("sharablecomponent");
+    
     private static Cache proxyClassCache = new Cache("proxy");
 
-    protected JavaClass superJavaClass;
-
-    ClassGenerator(String className, Class superClass, Class marker, boolean useParentConstPool) {
+    ClassGenerator(String className, Class superClass, Class marker) {
         String[] extraInterfaces = new String[] { marker.getName(), ISelf.class.getName() };
         int modifiers = (Modifier.isPublic(superClass.getModifiers()) ? ACC_PUBLIC : 0) | ACC_SUPER;
-        superJavaClass = Repository.lookupClass(superClass.getName());
-        
-        if (useParentConstPool) constPool = new ConstantPoolGen(superJavaClass.getConstantPool());
-        else constPool = new ConstantPoolGen();
-        
-        classGen = new ClassGen(className, superClass.getName(), "", modifiers, extraInterfaces, constPool);
+        classGen = new ClassGen(className, superClass.getName(), "", modifiers, extraInterfaces);
+        constPool = classGen.getConstantPool();
         instrFact = new InstructionFactory(classGen, constPool);
         instrList = new InstructionList();
         addDefaultConstructor();
-        this.methods = collectMethods(superClass, extraInterfaces);
-    }
-
-    ClassGenerator(String className, Class superClass, Class marker) {
-        this(className, superClass, marker, false);
-    }
-
-    private void addDefaultConstructor() {
-        MethodGen methodGen = new MethodGen(ACC_PUBLIC, Type.VOID, Type.NO_ARGS, new String[] {},
-                "<init>", classGen.getClassName(), instrList, constPool);
-        createLoadThis();
-        instrList.append(instrFact.createInvoke(classGen.getSuperclassName(), "<init>", Type.VOID,
-                Type.NO_ARGS, Constants.INVOKESPECIAL));
-        instrList.append(InstructionFactory.createReturn(Type.VOID));
-        methodGen.setMaxStack();
-        methodGen.setMaxLocals();
-        classGen.addMethod(methodGen.getMethod());
-        instrList.dispose();
+        methods = collectMethods(superClass, extraInterfaces);
     }
 
     static String getClassName(Class superClass, String marker) {
@@ -195,15 +181,53 @@ public class ClassGenerator implements Constants {
         for (Iterator iter = methods.iterator(); iter.hasNext();) {
             Method method = (Method) iter.next();
             if (methodFilter.filter(method)) {
+                //System.out.println("Adding " + method);
                 addDelegationMethod(method, useSelf);
             }
         }
+    }
+
+    protected void addSuperCallMethods(MethodFilter methodFilter) {
+        for (Iterator iter = methods.iterator(); iter.hasNext();) {
+            Method method = (Method) iter.next();
+            int modifiers = method.getModifiers();
+            if (methodFilter.filter(method) && !Modifier.isAbstract(modifiers)) {
+                addSuperCallMethod(method);
+            }
+        }
+    }
+
+    protected void addSelfField() {
+        FieldGen fieldGen = new FieldGen(ACC_PUBLIC | ACC_TRANSIENT, new ObjectType(
+                "java.lang.reflect.InvocationHandler"), "self", classGen.getConstantPool());
+        classGen.addField(fieldGen.getField());
+    }
+
+    private void addDefaultConstructor() {
+        MethodGen methodGen = new MethodGen(ACC_PUBLIC, Type.VOID, Type.NO_ARGS, new String[] {},
+                "<init>", classGen.getClassName(), instrList, constPool);
+        createLoadThis();
+        instrList.append(instrFact.createInvoke(classGen.getSuperclassName(), "<init>", Type.VOID,
+                Type.NO_ARGS, Constants.INVOKESPECIAL));
+        instrList.append(InstructionFactory.createReturn(Type.VOID));
+        methodGen.setMaxStack();
+        methodGen.setMaxLocals();
+        classGen.addMethod(methodGen.getMethod());
+        instrList.dispose();
     }
 
     private void addDelegationMethod(Method method, boolean useSelf) {
         Type returnType = Type.getType(method.getReturnType());
         MethodGen methodGen = addMethodHeader(method, returnType, null, false);
         createCallToInvocationHandler(method, useSelf);
+        addMethodTrailer(returnType, methodGen);
+    }
+
+    private void addSuperCallMethod(Method method) {
+        Type returnType = Type.getType(method.getReturnType());
+        MethodGen methodGen = addMethodHeader(method, returnType, InvocationHandler.class, true);
+        //createBindSelf(1);
+        createCallToSuper(method, returnType, 2);
         addMethodTrailer(returnType, methodGen);
     }
 
@@ -218,7 +242,7 @@ public class ClassGenerator implements Constants {
     // Constants.PUTFIELD));
     //}
     
-    protected MethodGen addMethodHeader(Method method, Type returnType, Class firstArg, boolean publicAccessor) {
+    private MethodGen addMethodHeader(Method method, Type returnType, Class firstArg, boolean publicAccessor) {
         List types = new ArrayList();
         types.addAll(Arrays.asList(getArgumentTypes(method)));
         if (firstArg != null) {
@@ -237,11 +261,11 @@ public class ClassGenerator implements Constants {
         return methodGen;
     }
 
-    protected Type[] getArgumentTypes(Method method) {
+    private Type[] getArgumentTypes(Method method) {
         return Type.getArgumentTypes(Type.getSignature(method));
     }
 
-    protected void addMethodTrailer(Type returnType, MethodGen methodGen) {
+    private void addMethodTrailer(Type returnType, MethodGen methodGen) {
         convertReturnValue(returnType);
         methodGen.setMaxStack();
         methodGen.setMaxLocals();
@@ -249,7 +273,7 @@ public class ClassGenerator implements Constants {
         instrList.dispose();
     }
 
-    protected void convertReturnValue(Type returnType) {
+    private void convertReturnValue(Type returnType) {
         if (returnType.equals(Type.STRING)) {
             instrList.append(instrFact.createCheckCast(Type.STRING));
         } else {
@@ -297,11 +321,26 @@ public class ClassGenerator implements Constants {
                 Constants.INVOKEVIRTUAL));
     }
 
-    protected void createLoadThis() {
+    private void createCallToSuper(Method method, Type returnType, int stackIndex) {
+        createLoadThis();
+        Class[] argClasses = method.getParameterTypes();
+        for (int i = 0; i < argClasses.length; i++) {
+            Type type = Type.getType(argClasses[i]);
+            instrList.append(InstructionFactory.createLoad(type, stackIndex));
+            stackIndex += type.getSize();
+        }
+        // this.super.>method<(
+        instrList.append(instrFact.createInvoke(method.getDeclaringClass().getName(), method
+                .getName(), returnType, getArgumentTypes(method), Constants.INVOKESPECIAL));
+        instrList.append(InstructionFactory.createReturn(returnType));
+    }
+
+    private void createLoadThis() {
         instrList.append(InstructionFactory.createLoad(Type.OBJECT, 0));
     }
 
     private void createCallToInvocationHandler(Method method, boolean useSelf) {
+       // createSystemOutPrintln(method.toString());
         createLoadThis();
         if (useSelf) {
             // this.>delegate<.invoke( ...
@@ -445,18 +484,6 @@ public class ClassGenerator implements Constants {
         return result;
     }
 
-    public static Proxy newProxyInstance(Class clazz, InvocationHandler handler) {
-        try {
-            Class proxyClass = proxyClassCache.getClass(injector, clazz);
-            Object proxy = proxyClass.newInstance();
-            zeroAllFields(proxy, clazz);
-            getDelegateField(proxy).set(proxy, handler);
-            return (Proxy) proxy;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private static void zeroAllFields(Object instance, Class clazz) {
         if (Object.class.equals(clazz))
             return;
@@ -481,17 +508,35 @@ public class ClassGenerator implements Constants {
                 && !field.getType().isPrimitive();
     }
 
-    public static Component newComponentInstance(Class clazz) {
-        Class componentClass = null;
+    public static Proxy newProxyInstance(Class clazz, InvocationHandler handler) {
         try {
-            componentClass = componentsClassCache.getClass(injector, clazz);
-            return (Component) componentClass.newInstance();
-        } catch (Throwable e) {
-//            Verifier verifier = VerifierFactory.getVerifier(componentClass.getName());
-//            VerificationResult result = verifier.doPass2();
-//            System.out.println("********************");
-//            System.out.println(componentClass.getName());
-//            System.out.println(result);
+            Class proxyClass = proxyClassCache.getClass(injector, clazz);
+            Object proxy = proxyClass.newInstance();
+            zeroAllFields(proxy, clazz);
+            getDelegateField(proxy).set(proxy, handler);
+            return (Proxy) proxy;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    public static Component newComponentInstance(Class clazz, InvocationHandler handler) {
+        try {
+            Class componentClass = componentsClassCache.getClass(injector, clazz);
+            Component result = (Component) componentClass.newInstance();
+            getDelegateField(result).set(result, handler);
+            return result;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static Component newSharableComponentInstance(Class clazz) {
+        try {
+            Class componentClass = sharableComponentsClassCache.getClass(injector, clazz);
+            Component result = (Component) componentClass.newInstance();
+            return result;
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

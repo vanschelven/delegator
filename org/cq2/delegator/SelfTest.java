@@ -17,7 +17,7 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.classgenerator.ProxyGenerator;
+import org.cq2.delegator.classgenerator.ClassGenerator;
 
 public class SelfTest extends TestCase {
 	private Object keyRef = null;
@@ -45,14 +45,6 @@ public class SelfTest extends TestCase {
 		assertEquals(key, keyRef);
 		assertEquals(value, valueRef);
 		assertEquals(result, returnVal);
-	}
-
-	//TODO (hoort elders thuis...) er moet nog een test bij die laat zien hoe gaaf het is dat je componenten kan delen als we dat gedrag willen behouden
-	public void testAddComponent() {
-		Self self = new Self();
-		Component c = ProxyGenerator.newComponentInstance(ArrayList.class, self); //TODO dit is in onzin veranderd want het heeft geen zin componenten deelbaar te maken als ze dat niet echt zijn
-		self.add(c);
-		assertSame(c, self.component(0));
 	}
 
 	public void testNoSuchMethod() {
@@ -171,7 +163,7 @@ public class SelfTest extends TestCase {
 		Object objC = newModifiedSelf(C.class).cast(Object.class);
 		assertEquals("modifiedSelf", objC.toString());
 	}
-
+	
 	public void testHashCodeCannotBeRedefined() {
 		Object objA = newModifiedSelf(A.class).cast(Object.class);
 		assertEquals(99, objA.hashCode());
@@ -179,6 +171,25 @@ public class SelfTest extends TestCase {
 		assertEquals(99, objB.hashCode());
 		Object objC = newModifiedSelf(C.class).cast(Object.class);
 		assertEquals(99, objC.hashCode());
+	}
+
+	public void testEqualsCannotBeRedefined() {
+//		Self self1 = new Self();
+//		Self self2 = new Self();
+//		assertFalse(self1.equals(self2));
+//		assertTrue(self1.equals(self1));
+//		self1.add(A.class);
+//		self2.add(A.class);
+//		assertFalse(self1.equals(self2));
+//		assertTrue(self1.equals(self1));
+//		A a1 = (A) self1.cast(A.class);
+//		A a2 = (A) self2.cast(A.class);
+//		assertFalse(a1.equals(a2));
+//		assertTrue(a1.equals(a1));
+//		assertFalse(a1.equals(null));
+//		assertFalse(a1.equals(new Object()));
+//		assertFalse(new Object().equals(a1));
+//		assertTrue(a1.equals(self1.cast(HashMap.class)));
 	}
 
 	public static class Nr1 {
@@ -305,8 +316,10 @@ public class SelfTest extends TestCase {
 	}
 
 	public void testCrossRefs() {
-		Component r1 = (Component) new Self(R1.class).component(0);
-		Component r2 = (Component) new Self(R2.class).component(0);
+		Self r1 = new Self();
+		r1.addSharableComponent(R1.class);
+		Self r2 = new Self();
+		r2.addSharableComponent(R2.class);
 		Self self = new Self();
 		self.add(r2);
 		self.add(r1);
@@ -378,9 +391,10 @@ public class SelfTest extends TestCase {
 		ISelf base = (ISelf) original.cast(ArrayList.class);
 		ISelf clone = Self.clone(base);
 		assertTrue(clone instanceof ArrayList);
-		assertSame(clone.component(0), original.component(0));
-		assertSame(clone.component(1), original.component(1));
-		assertSame(clone.component(2), original.component(2));
+//		assertSame(clone.component(0), original.component(0));
+//		assertSame(clone.component(1), original.component(1));
+//		assertSame(clone.component(2), original.component(2));
+		assertEquals(clone, original);
 		assertNotSame(clone.self(), original.self());
 	}
 	
