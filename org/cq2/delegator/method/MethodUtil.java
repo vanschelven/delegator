@@ -29,6 +29,7 @@ public class MethodUtil {
 
     //differs from class.getDeclaredMethod in the acceptance of less specific
     // types as well
+    //TODO volgens mij pakt hij te snel algemene types boven specifieke -- vgl. java's gedrag
     public static Method getDeclaredMethod(Class clazz, String name, Class[] parameterTypes, Class[] exceptionTypes) {
         Method method = searchMethods(clazz.getMethods(), name, parameterTypes, exceptionTypes);
         return method;
