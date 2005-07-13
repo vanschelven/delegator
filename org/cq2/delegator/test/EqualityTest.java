@@ -164,6 +164,11 @@ public class EqualityTest extends TestCase {
         assertFalse(proxy1.equals(differentSelfValue));
     }
     
+    public void testObjectsWithoutEquals() {
+        Self selfX = new Self(Object.class);
+        assertEquals(selfX, selfX);
+    }
+    
     public void testTwoElementsSelf() {
         assertEquals(selfAB1, selfAB1);
         assertEquals(selfAB1, selfAB2);
@@ -196,15 +201,9 @@ public class EqualityTest extends TestCase {
         assertFalse(a1.equals(proxy1));
         assertEquals(1, proxy1.getI());
         assertEquals(1, a1.getI());
-
-    }
-    
-    public void testX() {
-        System.out.println(proxy1.toString());
     }
     
 }
 
 
 //TODO heeeeeel ergens anders opnemen: hoe zit het met classes zonder defaultconstructor als component??
-//TODO heeeeeel ergens anders hoe gaan we om met het toevoegen van bestaande objecten als componenten??

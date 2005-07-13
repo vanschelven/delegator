@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
-import org.cq2.delegator.classgenerator.ProxyGenerator;
+import org.cq2.delegator.classgenerator.ClassGenerator;
 import org.cq2.delegator.method.MethodUtil;
 
 public class Self implements InvocationHandler, ISelf {
@@ -30,9 +30,9 @@ public class Self implements InvocationHandler, ISelf {
 
     private Class[] equalsComponents;
 
-    private Self(Component object) {
+    private Self(Component component) {
         this();
-        addComponent(object);
+        addComponent(component);
     }
 
     public Self() {
@@ -140,7 +140,7 @@ public class Self implements InvocationHandler, ISelf {
             }
         }
         throw new DelegatorException(
-                "Become may only be called from within parts of self");
+                "Become may only be called from within components of self");
     }
 
     public void add(Self object) {
@@ -148,27 +148,23 @@ public class Self implements InvocationHandler, ISelf {
             addComponent(object.components[i]);
     }
 
-    public Object component(int component) {
-        return components[component];
+    public Self getComponent(int component)  {
+        return new Self(components[component]);
     }
 
-    public Component component(Class clazz) {
+    public Self getComponent(Class clazz)  {
+        return new Self(component(clazz));
+    }
+
+    private Component component(Class clazz) {
         for (int i = 0; i < nrOfComponents; i++) {
             if (components[i].getClass().getSuperclass().equals(clazz)) return components[i];
         }
         return null;
     }
 
-    public Object component(InvocationHandler h, int component) {
-        return component(component);
-    }
-
     public void add(Class clas) {
-        add(newComponent(clas));
-    }
-
-    public void add(Component component) {
-        addComponent(component);
+        addComponent(newComponent(clas));
     }
 
     private synchronized void addComponent(Component component) {
@@ -182,10 +178,6 @@ public class Self implements InvocationHandler, ISelf {
         components[nrOfComponents++] = component;
     }
 
-    public void add(InvocationHandler s, Class clas) {
-        add(clas);
-    }
-
     public synchronized void insert(Class componentType) {
         Component[] newComponents = new Component[components.length + 1];
         newComponents[0] = newComponent(componentType);
@@ -195,7 +187,7 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     private Component newComponent(Class clas) {
-        return ProxyGenerator.newComponentInstance(clas, this);
+        return ClassGenerator.newComponentInstance(clas, this);
     }
 
     public Self extend(Class class1) {
@@ -222,9 +214,13 @@ public class Self implements InvocationHandler, ISelf {
         
         try {
             for (int i = 0; i < thisComponents.length; i++) {
-                Method m = thisComponents[i].getClass().getDeclaredMethod("equals", new Class[]{InvocationHandler.class, Object.class});
-                Boolean result = (Boolean) m.invoke(thisComponents[i], new Object[]{this, otherComponents[i]});
-                if (!result.booleanValue()) return false;
+                try {
+                    Method m = thisComponents[i].getClass().getDeclaredMethod("equals", new Class[]{InvocationHandler.class, Object.class});
+                    Boolean result = (Boolean) m.invoke(thisComponents[i], new Object[]{this, otherComponents[i]});
+                    if (!result.booleanValue()) return false;
+                } catch (NoSuchMethodException e) {
+                    if (!thisComponents[i].equals(otherComponents[i])) return false;
+                }
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -244,12 +240,10 @@ public class Self implements InvocationHandler, ISelf {
 
     private Method findMethod(Method m) {
         for (int i = 0; i < nrOfComponents; i++) {
-            try {
-                return components[i].getClass().getSuperclass().getMethod(
-                        m.getName(), m.getParameterTypes());
-            } catch (NoSuchMethodException e) {
-                continue;
-            }
+                Method result = MethodUtil.getDeclaredMethod(
+                components[i].getClass().getSuperclass(),
+                        m.getName(), m.getParameterTypes(), m.getExceptionTypes());
+                if (result != null) return result;
         }
         return null;
     }
@@ -316,6 +310,11 @@ public class Self implements InvocationHandler, ISelf {
             }
         }
         return result;
+    }
+
+    public void addSharableComponent(Class componentClass) {
+        Component component = ClassGenerator.newSharableComponentInstance(componentClass);
+        addComponent(component);
     }
 
 }

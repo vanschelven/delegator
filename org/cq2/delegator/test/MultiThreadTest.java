@@ -130,13 +130,12 @@ public class MultiThreadTest extends TestCase {
 
     }
 
-    //TODO dit moet ergens anders heen
+    //TODO dit moet misschien ook ergens anders heen
     public void testBecomeUsingSingleThread() {
         ISelf self = new Self(A1.class);
         self.add(B.class);
         A a = (A) self.cast(A.class);
         a.m();
-
     }
 
     public class BComponentUser extends MyThread {

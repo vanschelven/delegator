@@ -9,13 +9,13 @@ public interface ISelf {
 	// add must become extend()
 	void add(Self self);
 	void add(Class componentType);
-	void add(Component component);
 	void insert(Class componentType);
 	//void remove();
 	//void remove(Object object);
 	//void remove(int component)
 	void remove(Class c);
-	Object component(int component);
+	Self getComponent(int component);
+	Self getComponent(Class c);
 	// Object component(Class c);
 	// Object component();
 	Self self();

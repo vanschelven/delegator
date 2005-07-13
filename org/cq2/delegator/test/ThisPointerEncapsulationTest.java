@@ -1,6 +1,10 @@
 package org.cq2.delegator.test;
 
+import javax.swing.text.Document;
+
 import junit.framework.TestCase;
+
+import org.cq2.delegator.Self;
 
 public class ThisPointerEncapsulationTest extends TestCase {
 
@@ -41,53 +45,58 @@ public class ThisPointerEncapsulationTest extends TestCase {
 
     public static class Document {
 
+        String name = "";
+        
+        public Document() {
+            
+        }
+        
+        public Document(String name) {
+            this.name = name;
+        }
+
         public Node createNode() {
             return new Node(this);
         }
 
-        public int getOne() {
-            return 1;
+        public String getName() {
+            return name;
         }
-
+        
+        public void setName(String name) {
+            this.name = name;
+        }
     }
 
     public void testExampleFromProposalRegularJava() {
-        Document document = new Document();
+        Document document = new Document("name");
         Node node = document.createNode();
-        assertEquals(document, node.getDocument());
+        assertTrue(document.equals(node.getDocument()));
     }
 
-    //TODO aanzetten
-//    public void testExampleFromProposal() {
-//        Self self = new Self(Document.class);
-//        Document document = (Document) self.cast(Document.class);
-//        Node node = document.createNode();
-//        assertEquals(document, node.getDocument());
-//    }
+    /**
+     * Shows that equality doesn't work for components that leak out of their containing Selves.
+     */
+    public void testExampleFromProposal() {
+        Self self = new Self(Document.class);
+        Document document = (Document) self.cast(Document.class);
+        document.setName("name");
+        Node node = document.createNode();
+        assertFalse(document.equals(node.getDocument()));
+    }
 
     public void testExampleFromThesisRegularJava() {
-        Document document = new Document();
+        Document document = new Document("name");
         Node node = document.createNode();
-        assertEquals(1, node.getDocument().getOne());
+        assertEquals("name", node.getDocument().getName());
     }
 
-    //TODO aanzetten
-//    public void testExampleFromThesis() {
-//        Self self = new Self(Document.class);
-//        Document document = (Document) self.cast(Document.class);
-//        Node node = document.createNode();
-//        assertEquals(1, node.getDocument().getOne());
-//    }
-
-    // TODO Turn this on: the final test
-    //    public void testDelegation() {
-    //        DelegatingSelfPointingClass a1 = (DelegatingSelfPointingClass)
-    // Delegator.extend(DelegatingSelfPointingClass.class, Vector.class);
-    //        DelegatingSelfPointingClass a2 = a1.returnThis();
-    //        assertEquals(a1, a2);
-    //    }
-
-
-
+    public void testExampleFromThesis() {
+        Self self = new Self(Document.class);
+        Document document = (Document) self.cast(Document.class);
+        document.setName("name");
+        Node node = document.createNode();
+        assertEquals("name", node.getDocument().getName());
+    }
 
 }

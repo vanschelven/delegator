@@ -72,7 +72,8 @@ public class DelegatorTest extends TestCase implements InvocationHandler {
 	}
 
 	public void testSelfMixin() {
-		Self a2 = new Self(A2.class);
+		Self a2 = new Self();
+		a2.addSharableComponent(A2.class);
 		Self mixin = a2.extend(A1.class);
 		//Object mixin = Delegator.extend(A1.class, new Class[] {A2.class});
 		A1 a1 = (A1) mixin.cast(A1.class);

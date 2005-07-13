@@ -11,7 +11,7 @@ import junit.framework.TestCase;
 import org.cq2.delegator.Delegator;
 import org.cq2.delegator.ISelf;
 import org.cq2.delegator.Self;
-import org.cq2.delegator.classgenerator.ProxyGenerator;
+import org.cq2.delegator.classgenerator.ClassGenerator;
 
 public class ScopeTest extends TestCase implements InvocationHandler {
 
@@ -45,7 +45,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
      * code it semantically could be expected to override.
      */
     public void testPrivateMethodProxy() {
-        PrivateMethod m = (PrivateMethod) ProxyGenerator.newProxyInstance(
+        PrivateMethod m = (PrivateMethod) ClassGenerator.newProxyInstance(
                 PrivateMethod.class, this);
         m.method();
         assertNull(invokedMethod);
@@ -226,7 +226,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
      * code it semantically could be expected to override.
      */
     public void testPackageMethodProxy() {
-        PackageMethod m = (PackageMethod) ProxyGenerator.newProxyInstance(
+        PackageMethod m = (PackageMethod) ClassGenerator.newProxyInstance(
                 PackageMethod.class, this);
         m.method();
         assertNull(invokedMethod);
@@ -277,14 +277,18 @@ public class ScopeTest extends TestCase implements InvocationHandler {
             called = true;
         }
         
+        public boolean isCalled() {
+            return called;
+        }
+        
     }
     
     /**
      * Test showing a limitation of Delegator: The fact that Delegator doesn't
      * have the self-problem solved for package methods. If a package method is called 
-     * within a component the component doesn't this to self (which is indicated by 
+     * within a component the component doesn't forward this to self (which is indicated by 
      * packageMethodCalled being false) but instead executes it itself (which is indicated by 
-     * callsPackageMethodComponent.called being true).
+     * m.isCalled() being true).
      */
     public void testPackageMethodsHaveSelfProblem() {
         Self self = new Self(PackageMethod.class);
@@ -292,8 +296,8 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         CallsPackageMethod m = (CallsPackageMethod) self.cast(CallsPackageMethod.class);
         m.call();
         assertFalse(packageMethodCalled);
-        CallsPackageMethod callsPackageMethodComponent = ((CallsPackageMethod) self.component(1));
-        assertTrue(callsPackageMethodComponent.called);
+        self.remove(PackageMethod.class);
+        assertTrue(m.isCalled());
     }
     
     private static class PackageClass {
@@ -325,7 +329,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
      * code it semantically is expected to override.
      */
     public void testProtectedMethodProxy() {
-        ProtectedMethod m = (ProtectedMethod) ProxyGenerator.newProxyInstance(
+        ProtectedMethod m = (ProtectedMethod) ClassGenerator.newProxyInstance(
                 ProtectedMethod.class, this);
         m.method();
         assertEquals("method", invokedMethod);
@@ -357,7 +361,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     }
     
     public void testPublicMethodProxy() {
-        PublicMethod m = (PublicMethod) ProxyGenerator.newProxyInstance(
+        PublicMethod m = (PublicMethod) ClassGenerator.newProxyInstance(
                 PublicMethod.class, this);
         m.method();
         assertEquals("method", invokedMethod);
@@ -504,7 +508,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     }
 
     public void testAbstractPublicMethod() throws Exception {
-        AbstractPublicMethod m = (AbstractPublicMethod) ProxyGenerator
+        AbstractPublicMethod m = (AbstractPublicMethod) ClassGenerator
                 .newProxyInstance(AbstractPublicMethod.class, this);
         m.method();
         assertEquals("method", invokedMethod);
@@ -515,7 +519,7 @@ public class ScopeTest extends TestCase implements InvocationHandler {
     }
 
     public void testAbstractProtectedMethod() throws Exception {
-        AbstractProtectedMethod m = (AbstractProtectedMethod) ProxyGenerator
+        AbstractProtectedMethod m = (AbstractProtectedMethod) ClassGenerator
                 .newProxyInstance(AbstractProtectedMethod.class, this);
         m.method();
         assertEquals("method", invokedMethod);

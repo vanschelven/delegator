@@ -19,10 +19,6 @@ public class ObservableImpl {
 
 	void changed(Object self) {
 		self = Self.self(self);
-		// TODO: the arg to changed is the component that called 'changed(this)'
-		// Passing this component to observers is not a good idea.
-		// It is better to pass either the Composer (==Self) or the proxy
-		// through which the original call has been done;
 		for (Iterator iter = observers.keySet().iterator(); iter.hasNext();) {
 			Observer observer = (Observer) iter.next();
 			observer.notifyChanged(self);

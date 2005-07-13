@@ -16,7 +16,7 @@ public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandle
 	private ProxyGeneratorSelfTestClass proxy;
 
 	protected void setUp() throws Exception {
-		proxy = (ProxyGeneratorSelfTestClass) ProxyGenerator
+		proxy = (ProxyGeneratorSelfTestClass) ClassGenerator
 				.newComponentInstance(ProxyGeneratorSelfTestClass.class, this);
 	}
 
@@ -79,8 +79,6 @@ public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandle
 		assertEquals("Are you there?", callSuperMethod("stringVoid"));
 	}
 
-	// TODO test rest of methods in TestClass
-	// TODO test Object methods
 	public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
 		fail("invoke must not be called");
 		return null;
