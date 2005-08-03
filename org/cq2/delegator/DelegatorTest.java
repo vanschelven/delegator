@@ -99,8 +99,8 @@ public class DelegatorTest extends TestCase implements MyInvocationHandler {
 		}
 	}
 
-    public Object invoke(Object proxy, int index, String name, Class[] parameterTypes, Class[] exceptionTypes, int modifiers, Object[] args) throws Throwable {
-        invokedMethod = name;
+    public Object invoke(Object proxy, int uniqueIdentifier, Object[] args) throws Throwable {
+        invokedMethod = MethodRegister.getInstance().getMethod(uniqueIdentifier).name;
         return null;
     }
 	

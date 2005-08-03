@@ -21,15 +21,14 @@ public class ZillionMixedProxyCalls implements Profilable {
     }
     
     public static void main(String[] args) {
-        new ZillionProxyCalls().runBody();
+        new ZillionMixedProxyCalls().runBody();
         System.out.println("Done! " + new Date());
     }
 
     public void runBody() {
-        Object string = "aaa";
         for (int i = 0; i < numloops; i++) {
-            v.add(string);
-            v.remove(0);
+            v.capacity();
+            v.size();
         }
     }
     

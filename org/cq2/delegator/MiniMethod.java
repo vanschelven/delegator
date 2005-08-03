@@ -1,9 +1,11 @@
 package org.cq2.delegator;
 
+import java.lang.reflect.Method;
+
 public class MiniMethod {
 
-    final String name;
-    final Class[] parameterTypes;
+    public final String name;
+    public final Class[] parameterTypes;
     final Class[] exceptionTypes;
     final int modifiers;
 
@@ -12,6 +14,13 @@ public class MiniMethod {
         this.parameterTypes = parameterTypes;
         this.exceptionTypes = exceptionTypes;
         this.modifiers = modifiers;
+    }
+    
+    public MiniMethod(Method method) {
+        name = method.getName();
+        parameterTypes = method.getParameterTypes();
+        exceptionTypes = method.getExceptionTypes();
+        modifiers = method.getModifiers();
     }
     
     public int hashCode() {

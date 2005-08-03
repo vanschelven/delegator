@@ -81,7 +81,7 @@ public class ProxyGeneratorSelfTest extends TestCase implements MyInvocationHand
 		assertEquals("Are you there?", callSuperMethod("stringVoid"));
 	}
 
-    public Object invoke(Object proxy, int index, String name, Class[] parameterTypes, Class[] exceptionTypes, int modifiers, Object[] args) throws Throwable {
+    public Object invoke(Object proxy, int index, Object[] args) throws Throwable {
 		fail("invoke must not be called");
 		return null;
     }

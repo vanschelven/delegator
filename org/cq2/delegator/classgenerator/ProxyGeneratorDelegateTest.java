@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 
 import org.cq2.delegator.InvocationHandlerWrapper;
+import org.cq2.delegator.MethodRegister;
 import org.cq2.delegator.MyInvocationHandler;
 
 import junit.framework.TestCase;
@@ -349,11 +350,11 @@ public class ProxyGeneratorDelegateTest extends TestCase implements MyInvocation
 		}
 	}
 
-    public Object invoke(Object proxy, int index, String name, Class[] parameterTypes, Class[] exceptionTypes, int modifiers, Object[] args) throws Throwable {
+    public Object invoke(Object proxy, int uniqueIdentifier, Object[] args) throws Throwable {
 		invokeProxy = proxy;
 		invokeCalled = true;
-		invokeMethodName = name;
-		invokeParameterTypes = parameterTypes;
+		invokeMethodName = MethodRegister.getInstance().getMethod(uniqueIdentifier).name;
+		invokeParameterTypes = MethodRegister.getInstance().getMethod(uniqueIdentifier).parameterTypes;
 		invokeArgs = args;
 		if (invokeException != null) {
 			throw invokeException;

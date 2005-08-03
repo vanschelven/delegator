@@ -149,15 +149,12 @@ public class Self implements MyInvocationHandler, ISelf {
 
     }
 
-    public synchronized Object invoke(Object proxy, int index, String name,
-            Class[] parameterTypes, Class[] exceptionTypes, int modifiers,
-            Object[] args) throws Throwable {
-        Tuple tuple = methodsCache.getTuple(index);
+    public synchronized Object invoke(Object proxy, int uniqueIdentifier, Object[] args) throws Throwable {
+        Tuple tuple = methodsCache.getTuple(uniqueIdentifier);
         if (tuple != null) {
             return invokeViaCache(proxy, tuple, args);
         }
-        return invokeNewMethod(proxy, new MiniMethod(name, parameterTypes,
-                exceptionTypes, modifiers), args);
+        return invokeNewMethod(proxy, MethodRegister.getInstance().getMethod(uniqueIdentifier), args);
     }
 
     public Object cast(Class clas) {

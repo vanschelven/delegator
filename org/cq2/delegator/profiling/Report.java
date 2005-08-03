@@ -28,6 +28,12 @@ public class Report {
         mixedProxyCalls.run(RUNS);
         out.println("1:" + (mixedProxyCalls.getAvg() / mixedCalls.getAvg()));
         
+        Profiler parameterCalls = new Profiler(new ZillionParameterCalls(), out);
+        parameterCalls.run(RUNS);
+        Profiler proxyParameterCalls = new Profiler(new ZillionProxyParameterCalls(), out);
+        proxyParameterCalls.run(RUNS);
+        out.println("1:" + (proxyParameterCalls.getAvg() / parameterCalls.getAvg()));
+        
         Profiler creations = new Profiler(new ZillionCreations(), out);
         creations.run(RUNS);
         Profiler selfCreations = new Profiler(new ZillionSelfCreations(), out);
