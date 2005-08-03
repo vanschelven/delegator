@@ -1,6 +1,8 @@
 /*
  * Created on Jun 3, 2004
  */
+
+//TODO deze hele klasse lijkt een beetje weird te zijn!!! duplicaat met classgeneratortest
 package org.cq2.delegator.classgenerator;
 
 import java.lang.reflect.Field;
@@ -42,16 +44,6 @@ public class ProxyGeneratorTest extends TestCase {
 				.loadClass("org.cq2.delegator.classgenerator.ProxyGeneratorTest$A$component");
 		assertTrue(Component.class.isAssignableFrom(c));
 		assertTrue(A.class.isAssignableFrom(c));
-	}
-
-	public void testCreateComponent() throws Exception {
-		Object c = ProxyGenerator.newComponentInstance(HashMap.class, new Self());
-		assertTrue(ProxyGenerator.isComponent(c));
-		assertFalse(ProxyGenerator.isProxy(c));
-		assertFalse(c instanceof Proxy);
-		assertTrue(c instanceof Component);
-		assertEquals("component$java.util.HashMap", c.getClass().getName());
-		assertNotNull(c.getClass().getMethod("size", new Class[]{InvocationHandler.class}));
 	}
 
 	public static class C {

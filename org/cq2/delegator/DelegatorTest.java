@@ -13,17 +13,12 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
-public class DelegatorTest extends TestCase implements InvocationHandler {
+public class DelegatorTest extends TestCase implements MyInvocationHandler {
 	public DelegatorTest(String arg0) {
 		super(arg0);
 	}
 
 	private String invokedMethod;
-
-	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		invokedMethod = method.getName();
-		return null;
-	}
 
 	public void testDelegateInterface() {
 		Map map = (Map) Delegator.proxyFor(Map.class, this);
@@ -103,5 +98,10 @@ public class DelegatorTest extends TestCase implements InvocationHandler {
 			assertEquals("Interfaces are not supported, use java.lang.reflect.Proxy.", e.getCause().getMessage());
 		}
 	}
+
+    public Object invoke(Object proxy, int index, String name, Class[] parameterTypes, Class[] exceptionTypes, int modifiers, Object[] args) throws Throwable {
+        invokedMethod = name;
+        return null;
+    }
 	
 }

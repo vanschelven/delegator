@@ -17,8 +17,6 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.classgenerator.ClassGenerator;
-
 public class SelfTest extends TestCase {
 	private Object keyRef = null;
 	private Object valueRef = null;

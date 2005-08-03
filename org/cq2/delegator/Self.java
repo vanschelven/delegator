@@ -5,7 +5,6 @@
 package org.cq2.delegator;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -14,12 +13,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
+import org.cq2.delegator.MethodsCache.Tuple;
 import org.cq2.delegator.classgenerator.ClassGenerator;
 import org.cq2.delegator.method.MethodUtil;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-public class Self implements InvocationHandler, ISelf {
+public class Self implements MyInvocationHandler, ISelf {
     public static ThreadLocal self = new ThreadLocal() {
         protected Object initialValue() {
             return new Stack();
@@ -32,13 +30,16 @@ public class Self implements InvocationHandler, ISelf {
 
     private Class[] equalsComponents;
 
+    private MethodsCache2 methodsCache;
+
     public Self(Object component) {
         this();
         addComponent(component);
     }
 
     public Self() {
-        this.components = new Object[4];
+        components = new Object[4];
+        methodsCache = new MethodsCache2();
     }
 
     public Self(Class firstComponentClass) {
@@ -46,74 +47,96 @@ public class Self implements InvocationHandler, ISelf {
         addComponent(newComponent(firstComponentClass));
     }
 
-    
-    /**
-     * @see InvocationHandler#invoke(Object, Method, Object[])
-     */
-    public Object invoke(Object proxy, Method method, Object[] args)
+    private Object invokeViaCache(Object proxy, int index, Object[] args)
             throws Throwable {
-        String name = method.getName();
-        if ("equals".equals(name))
+        //een factor 100 zit hierin... (t.o.v. return niks)
+        Tuple tuple = methodsCache.getTuple(index);
+        Object component = components[tuple.index];
+        Method delegateMethod = tuple.method;
+        //copy paste
+        Stack stack = ((Stack) self.get());
+        stack.push(this);
+        try {
+            try {
+                if (component instanceof Component)
+                    return delegateMethod.invoke(component, args);
+                return delegateMethod.invoke(component, args);
+                //        return new Integer(0);
+            } finally {
+                stack.pop();
+            }
+        } catch (InvocationTargetException e) {
+            throw e.getTargetException();
+        }
+    }
+
+    public Object invokeNewMethod(Object proxy, MiniMethod method, Object[] args)
+            throws Throwable {
+        if ("equals".equals(method.name))
             return Boolean.valueOf(equals(args[0]));
-        if ("hashCode".equals(name))
+        if ("hashCode".equals(method.name))
             return new Integer(hashCode());
         int i = 0;
-        synchronized (this) {
-            if (name.startsWith("__next__")) {
-                while (components[i] != proxy && (i < nrOfComponents))
-                    i++;
-                name = name.substring(8);
-                i++;
-                //if(!cmps.hasNext())throw new NoSuchMethodError
-            }
-            List argTypeList = new ArrayList();
-            argTypeList.add(InvocationHandler.class);
-            argTypeList.addAll(Arrays.asList(method.getParameterTypes()));
 
-            for (; i < nrOfComponents; i++) {
+        String name = method.name;
+        if (method.name.startsWith("__next__")) {
+            while (components[i] != proxy && (i < nrOfComponents))
+                i++;
+            name = name.substring(8);
+            i++;
+            //if(!cmps.hasNext())throw new NoSuchMethodError
+        }
+
+        for (; i < nrOfComponents; i++) {
+            Object component = components[i];
+            Method delegateMethod;
+            boolean componentMethodIsProtected;
+            if (component instanceof Component) {
+                delegateMethod = MethodUtil.getDeclaredMethod(component
+                        .getClass(), name + ClassGenerator.SUPERCALL_POSTFIX, method.parameterTypes,
+                        method.exceptionTypes);
+                //De superdelegatemethod is feitelijk de methode zoals
+                // ingetiept door de programmeur
+                //deze bestaat per definitie - als die niet gevonden wordt
+                // betekent dat hij protected is
+                Method superDelegateMethod = MethodUtil.getDeclaredMethod(
+                        component.getClass().getSuperclass(), name,
+                        method.parameterTypes, method.exceptionTypes);
+
+                componentMethodIsProtected = (delegateMethod != null)
+                        && (superDelegateMethod == null);
+            } else {
+                delegateMethod = MethodUtil.getDeclaredMethod(component
+                        .getClass(), name, method.parameterTypes,
+                        method.exceptionTypes);
+                componentMethodIsProtected = Modifier
+                        .isProtected(delegateMethod.getModifiers());
+            }
+            //TODO dit is in duigen gevallen met de toevoeging van package
+            // (in forwardees) maar dat lossen we later wel weer op...
+            if (delegateMethod != null
+                    && (!componentMethodIsProtected || Modifier
+                            .isProtected(method.modifiers))
+                    || !Modifier.isPublic(method.modifiers)) {
+                methodsCache.put(
+                        MethodRegister.getInstance().getUnique(method), i,
+                        delegateMethod);
+                delegateMethod.setAccessible(true);
+                Stack stack = ((Stack) self.get());
+                stack.push(this);
                 try {
-                    Object component = components[i];
-                    Method delegateMethod;
-                    boolean componentMethodIsProtected;
-                    if (component instanceof Component) {
-                        delegateMethod = MethodUtil.getDeclaredMethod(
-                                component.getClass(), name,
-                                (Class[]) argTypeList.toArray(new Class[] {}),
-                                method.getExceptionTypes());
-                        //De superdelegatemethod is feitelijk de methode zoals ingetiept door de programmeur
-                        //deze bestaat per definitie - als die niet gevonden wordt betekent dat hij protected is
-                        Method superDelegateMethod = MethodUtil.getDeclaredMethod(
-                                component.getClass().getSuperclass(), name, method.getParameterTypes(), method.getExceptionTypes());
-                        
-                        componentMethodIsProtected = (delegateMethod != null)
-                                && (superDelegateMethod == null);
-                    } else {
-                        delegateMethod = MethodUtil.getDeclaredMethod(
-                                component.getClass(), name,
-                                method.getParameterTypes(), method.getExceptionTypes());
-                        componentMethodIsProtected = Modifier.isProtected(delegateMethod.getModifiers());
-                    }
-                    //TODO dit is in duigen gevallen met de toevoeging van package (in forwardees) maar dat lossen we later wel weer op...
-                    if (delegateMethod != null
-                            && (!componentMethodIsProtected || Modifier
-                                    .isProtected(method.getModifiers()))
-                                    || !Modifier.isPublic(method.getModifiers())) {
-                        delegateMethod.setAccessible(true);
-                        Stack stack = ((Stack) self.get());
-                        stack.push(this);
-                        try {
-                            if (component instanceof Component)
-                                return delegateMethod.invoke(component,
-                                        mapArgs(args));
-                            return delegateMethod.invoke(component, args); 
-                        } finally {
-                            stack.pop();
-                        }
+                    try {
+                        if (component instanceof Component)
+                            return delegateMethod.invoke(component, args);
+                        return delegateMethod.invoke(component, args);
+                    } finally {
+                        stack.pop();
                     }
                 } catch (InvocationTargetException e) {
                     throw e.getTargetException();
                 }
             }
+
         }
         if ("become".equals(name)) {
             become((Class) args[0], proxy);
@@ -121,18 +144,30 @@ public class Self implements InvocationHandler, ISelf {
         }
 
         Method delegateMethod = MethodUtil.getDeclaredMethod(Self.class, name,
-                method.getParameterTypes(), method.getExceptionTypes());
+                method.parameterTypes, method.exceptionTypes);
         if (delegateMethod != null)
             return delegateMethod.invoke(this, args);
         throw new NoSuchMethodError(method.toString());
+
     }
 
-    private Object[] mapArgs(Object[] args) {
-        List argList = new ArrayList();
-        argList.add(this);
-        if (args != null)
-            argList.addAll(Arrays.asList(args));
-        return argList.toArray();
+    //    /**
+    //     * @see InvocationHandler#invoke(Object, Method, Object[])
+    //     */
+    //    public synchronized Object invoke(Object proxy, Method method,
+    //            Object[] args) throws Throwable {
+    //        return invoke(proxy, method.getName(), method.getParameterTypes(),
+    // method.getExceptionTypes(), method.getModifiers(), args);
+    //    }
+
+    public synchronized Object invoke(Object proxy, int index, String name,
+            Class[] parameterTypes, Class[] exceptionTypes, int modifiers,
+            Object[] args) throws Throwable {
+        if (methodsCache.contains(index)) {
+            return invokeViaCache(proxy, index, args);
+        }
+        return invokeNewMethod(proxy, new MiniMethod(name, parameterTypes,
+                exceptionTypes, modifiers), args);
     }
 
     public Object cast(Class clas) {
@@ -145,6 +180,7 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     private void become(Class clas, Object caller) {
+        invalidateCache();
         Component newComponent = newComponent(clas);
         for (int i = 0; i < nrOfComponents; i++) {
             if (components[i] == caller) {
@@ -161,26 +197,28 @@ public class Self implements InvocationHandler, ISelf {
             addComponent(object.components[i]);
     }
 
-    public Self getComponent(int i)  {
+    public Self getComponent(int i) {
         return new Self(component(i));
     }
 
-    public Self getComponent(Class clazz)  {
+    public Self getComponent(Class clazz) {
         Object result = component(clazz);
         if (result instanceof SingleSelfComponent)
-            throw new DelegatorException("Component may not be shared between different instances of Self");
+            throw new DelegatorException(
+                    "Component may not be shared between different instances of Self");
         return new Self(result);
     }
 
     Object component(int i) {
         return components[i];
     }
-    
+
     Object component(Class clazz) {
         for (int i = 0; i < nrOfComponents; i++) {
-            if ((components[i] instanceof Component &&
-                 components[i].getClass().getSuperclass().equals(clazz)) ||
-                 components[i].getClass().equals(clazz)) return components[i];
+            if ((components[i] instanceof Component && components[i].getClass()
+                    .getSuperclass().equals(clazz))
+                    || components[i].getClass().equals(clazz))
+                return components[i];
         }
         return null;
     }
@@ -198,6 +236,7 @@ public class Self implements InvocationHandler, ISelf {
             components = newComponents;
         }
         components[nrOfComponents++] = component;
+        invalidateCache();
     }
 
     public synchronized void insert(Class componentType) {
@@ -206,6 +245,7 @@ public class Self implements InvocationHandler, ISelf {
         System.arraycopy(components, 0, newComponents, 1, nrOfComponents);
         components = newComponents;
         nrOfComponents++;
+        invalidateCache();
     }
 
     private Component newComponent(Class clas) {
@@ -223,25 +263,34 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     public boolean equals(Object obj) {
-        if (obj == null) return false;
-        if (!(obj instanceof Self || obj instanceof Proxy)) return false;
+        if (obj == null)
+            return false;
+        if (!(obj instanceof Self || obj instanceof Proxy))
+            return false;
         Self other;
         if (obj instanceof Self)
             other = (Self) obj;
-        else other = getSelfFromProxy((Proxy) obj);
+        else
+            other = getSelfFromProxy((Proxy) obj);
 
         Object[] thisComponents = getEqualsComponents();
         Object[] otherComponents = other.getEqualsComponents();
-        if (thisComponents.length != otherComponents.length) return false; 
-        
+        if (thisComponents.length != otherComponents.length)
+            return false;
+
         try {
             for (int i = 0; i < thisComponents.length; i++) {
                 try {
-                    Method m = thisComponents[i].getClass().getDeclaredMethod("equals", new Class[]{InvocationHandler.class, Object.class});
-                    Boolean result = (Boolean) m.invoke(thisComponents[i], new Object[]{this, otherComponents[i]});
-                    if (!result.booleanValue()) return false;
+                    Method m = thisComponents[i].getClass().getDeclaredMethod(
+                            "equals" + ClassGenerator.SUPERCALL_POSTFIX,
+                            new Class[] { Object.class });
+                    Boolean result = (Boolean) m.invoke(thisComponents[i],
+                            new Object[] { otherComponents[i] });
+                    if (!result.booleanValue())
+                        return false;
                 } catch (NoSuchMethodException e) {
-                    if (!thisComponents[i].equals(otherComponents[i])) return false;
+                    if (!thisComponents[i].equals(otherComponents[i]))
+                        return false;
                 }
             }
         } catch (Exception e) {
@@ -262,10 +311,11 @@ public class Self implements InvocationHandler, ISelf {
 
     private Method findMethod(Method m) {
         for (int i = 0; i < nrOfComponents; i++) {
-                Method result = MethodUtil.getDeclaredMethod(
-                components[i].getClass().getSuperclass(),
-                        m.getName(), m.getParameterTypes(), m.getExceptionTypes());
-                if (result != null) return result;
+            Method result = MethodUtil.getDeclaredMethod(components[i]
+                    .getClass().getSuperclass(), m.getName(), m
+                    .getParameterTypes(), m.getExceptionTypes());
+            if (result != null)
+                return result;
         }
         return null;
     }
@@ -284,9 +334,8 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     public static Object self(Object obj) {
-        return obj instanceof Component ? 
-                ((ISelf) obj).cast(obj.getClass().getSuperclass()) :
-                   obj;
+        return obj instanceof Component ? ((ISelf) obj).cast(obj.getClass()
+                .getSuperclass()) : obj;
     }
 
     public void decorate(Class decorator) {
@@ -312,12 +361,13 @@ public class Self implements InvocationHandler, ISelf {
                 return;
             }
         }
+        invalidateCache();
     }
 
     public void setEqualsComponents(Class[] classes) {
         this.equalsComponents = classes;
     }
-    
+
     private Object[] getEqualsComponents() {
         Object[] result;
         if (equalsComponents == null) {
@@ -335,12 +385,17 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     public void addSharableComponent(Class componentClass) {
-        Component component = ClassGenerator.newSharableComponentInstance(componentClass);
+        Component component = ClassGenerator
+                .newSharableComponentInstance(componentClass);
         addComponent(component);
     }
 
     public void addForwardee(Object forwardee) {
         addComponent(forwardee);
+    }
+
+    private void invalidateCache() {
+        methodsCache.clear();
     }
 
 }

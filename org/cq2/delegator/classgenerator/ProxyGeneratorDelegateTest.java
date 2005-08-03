@@ -13,16 +13,20 @@ import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import org.cq2.delegator.InvocationHandlerWrapper;
+import org.cq2.delegator.MyInvocationHandler;
+
 import junit.framework.TestCase;
 
-public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHandler {
+public class ProxyGeneratorDelegateTest extends TestCase implements MyInvocationHandler {
 	private boolean invokeCalled;
 	private Object invokeProxy;
 	private Object invokeResult;
 	private ProxyGeneratorDelegateTestClass proxy;
 	private Throwable invokeException;
-	private Method invokeMethod;
 	private Object[] invokeArgs;
+    private String invokeMethodName;
+    private Class[] invokeParameterTypes;
 
 	public ProxyGeneratorDelegateTest(String arg0) {
 		super(arg0);
@@ -33,7 +37,8 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 		invokeProxy = null;
 		invokeResult = null;
 		invokeException = null;
-		invokeMethod = null;
+		invokeParameterTypes = null;
+		invokeMethodName = null;
 		invokeArgs = null;
 		proxy = (ProxyGeneratorDelegateTestClass) ClassGenerator.newProxyInstance(ProxyGeneratorDelegateTestClass.class,
 				this);
@@ -71,7 +76,7 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 		delegate.setAccessible(true);
 		Object delegateObj = delegate.get(testProxy);
 		assertNotNull(delegateObj);
-		assertTrue(delegateObj instanceof InvocationHandler);
+		assertTrue(delegateObj instanceof MyInvocationHandler);
 		assertSame(delegateObj, this);
 		testProxy.objectVoid();
 		assertTrue(invokeCalled);
@@ -193,45 +198,43 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 
 	public void testPassMethod() {
 		proxy.voidVoid();
-		assertEquals("voidVoid", invokeMethod.getName());
+		assertEquals("voidVoid", invokeMethodName);
 		proxy.voidString("Aap");
-		assertEquals("voidString", invokeMethod.getName());
+		assertEquals("voidString", invokeMethodName);
 		proxy.voidObject(new Object());
-		assertEquals("voidObject", invokeMethod.getName());
+		assertEquals("voidObject", invokeMethodName);
 		proxy.voidInteger(1);
-		assertEquals("voidInteger", invokeMethod.getName());
+		assertEquals("voidInteger", invokeMethodName);
 		proxy.voidBoolean(true);
-		assertEquals("voidBoolean", invokeMethod.getName());
+		assertEquals("voidBoolean", invokeMethodName);
 		proxy.voidLong(798);
-		assertEquals("voidLong", invokeMethod.getName());
+		assertEquals("voidLong", invokeMethodName);
 		proxy.voidDouble(1.234);
-		assertEquals("voidDouble", invokeMethod.getName());
+		assertEquals("voidDouble", invokeMethodName);
 		proxy.voidFloat((float) 3.21);
-		assertEquals("voidFloat", invokeMethod.getName());
+		assertEquals("voidFloat", invokeMethodName);
 		proxy.voidByte((byte) 3);
-		assertEquals("voidByte", invokeMethod.getName());
+		assertEquals("voidByte", invokeMethodName);
 		proxy.voidShort((short) 23);
-		assertEquals("voidShort", invokeMethod.getName());
+		assertEquals("voidShort", invokeMethodName);
 		proxy.voidChar('D');
-		assertEquals("voidChar", invokeMethod.getName());
+		assertEquals("voidChar", invokeMethodName);
 	}
 
 	public void testSomeArguments() {
 		proxy.voidAllArgTypes("Noot", new Object(), 1, true, 2, 1.2, (float) 9.0, (byte) 16,
 				(short) 23, 'K');
-		assertEquals("voidAllArgTypes", invokeMethod.getName());
-		assertEquals(Void.TYPE, invokeMethod.getReturnType());
-		Class[] parameterTypes = invokeMethod.getParameterTypes();
-		assertEquals(parameterTypes[0], String.class);
-		assertEquals(parameterTypes[1], Object.class);
-		assertEquals(parameterTypes[2], Integer.TYPE);
-		assertEquals(parameterTypes[3], Boolean.TYPE);
-		assertEquals(parameterTypes[4], Long.TYPE);
-		assertEquals(parameterTypes[5], Double.TYPE);
-		assertEquals(parameterTypes[6], Float.TYPE);
-		assertEquals(parameterTypes[7], Byte.TYPE);
-		assertEquals(parameterTypes[8], Short.TYPE);
-		assertEquals(parameterTypes[9], Character.TYPE);
+		assertEquals("voidAllArgTypes", invokeMethodName);
+		assertEquals(invokeParameterTypes[0], String.class);
+		assertEquals(invokeParameterTypes[1], Object.class);
+		assertEquals(invokeParameterTypes[2], Integer.TYPE);
+		assertEquals(invokeParameterTypes[3], Boolean.TYPE);
+		assertEquals(invokeParameterTypes[4], Long.TYPE);
+		assertEquals(invokeParameterTypes[5], Double.TYPE);
+		assertEquals(invokeParameterTypes[6], Float.TYPE);
+		assertEquals(invokeParameterTypes[7], Byte.TYPE);
+		assertEquals(invokeParameterTypes[8], Short.TYPE);
+		assertEquals(invokeParameterTypes[9], Character.TYPE);
 	}
 
 	public void testPassString() {
@@ -332,7 +335,7 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 
 	public void testIf() {
 		Object testProxy = Proxy.newProxyInstance(MyClass.class.getClassLoader(),
-				new Class[]{MyInterface.class}, this);
+				new Class[]{MyInterface.class}, new InvocationHandlerWrapper(this));
 		assertEquals(getClass().getPackage(), testProxy.getClass().getPackage());
 	}
 
@@ -346,14 +349,15 @@ public class ProxyGeneratorDelegateTest extends TestCase implements InvocationHa
 		}
 	}
 
-	public Object invoke(Object theProxy, Method method, Object[] args) throws Throwable {
-		invokeProxy = theProxy;
+    public Object invoke(Object proxy, int index, String name, Class[] parameterTypes, Class[] exceptionTypes, int modifiers, Object[] args) throws Throwable {
+		invokeProxy = proxy;
 		invokeCalled = true;
-		invokeMethod = method;
+		invokeMethodName = name;
+		invokeParameterTypes = parameterTypes;
 		invokeArgs = args;
 		if (invokeException != null) {
 			throw invokeException;
 		}
 		return invokeResult;
-	}
+    }
 }

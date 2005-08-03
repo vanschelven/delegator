@@ -10,6 +10,7 @@ import java.util.HashMap;
 import junit.framework.TestCase;
 
 import org.cq2.delegator.Component;
+import org.cq2.delegator.MyInvocationHandler;
 import org.cq2.delegator.Proxy;
 import org.cq2.delegator.Self;
 
@@ -51,7 +52,7 @@ public class ClassGeneratorTest extends TestCase {
 		assertFalse(c instanceof Proxy);
 		assertTrue(c instanceof Component);
 		assertEquals("component$java.util.HashMap", c.getClass().getName());
-		assertNotNull(c.getClass().getMethod("size", new Class[]{InvocationHandler.class}));
+		assertNotNull(c.getClass().getMethod("size" + ClassGenerator.SUPERCALL_POSTFIX, new Class[]{}));
 	}
 	
 	//TODO (ergens anders) uitfactoren van gelijkheden tussen de 3 soorten gegenereerde classes en hun beheer

@@ -6,15 +6,11 @@
 package org.cq2.delegator.classgenerator;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.ProtectionDomain;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -36,6 +32,9 @@ import org.apache.bcel.generic.Type;
 import org.cq2.delegator.Component;
 import org.cq2.delegator.ComponentMethodFilter;
 import org.cq2.delegator.ISelf;
+import org.cq2.delegator.MethodRegister;
+import org.cq2.delegator.MiniMethod;
+import org.cq2.delegator.MyInvocationHandler;
 import org.cq2.delegator.Proxy;
 import org.cq2.delegator.method.MethodComparator;
 import org.cq2.delegator.method.MethodFilter;
@@ -136,6 +135,8 @@ public abstract class ClassGenerator implements Constants {
     
     private static Cache proxyClassCache = new Cache("proxy");
 
+    public static final String SUPERCALL_POSTFIX = "__er";
+
     ClassGenerator(String className, Class superClass, Class marker) {
         String[] extraInterfaces = new String[] { marker.getName(), ISelf.class.getName() };
         int modifiers = (Modifier.isPublic(superClass.getModifiers()) ? ACC_PUBLIC : 0) | ACC_SUPER;
@@ -198,7 +199,7 @@ public abstract class ClassGenerator implements Constants {
 
     protected void addSelfField() {
         FieldGen fieldGen = new FieldGen(ACC_PUBLIC | ACC_TRANSIENT, new ObjectType(
-                "java.lang.reflect.InvocationHandler"), "self", classGen.getConstantPool());
+                MyInvocationHandler.class.getName()), "self", classGen.getConstantPool());
         classGen.addField(fieldGen.getField());
     }
 
@@ -217,42 +218,25 @@ public abstract class ClassGenerator implements Constants {
 
     private void addDelegationMethod(Method method, boolean useSelf) {
         Type returnType = Type.getType(method.getReturnType());
-        MethodGen methodGen = addMethodHeader(method, returnType, null, false);
+        MethodGen methodGen = addMethodHeader(method, returnType, "", false);
         createCallToInvocationHandler(method, useSelf);
         addMethodTrailer(returnType, methodGen);
     }
 
     private void addSuperCallMethod(Method method) {
         Type returnType = Type.getType(method.getReturnType());
-        MethodGen methodGen = addMethodHeader(method, returnType, InvocationHandler.class, true);
-        //createBindSelf(1);
-        createCallToSuper(method, returnType, 2);
+        MethodGen methodGen = addMethodHeader(method, returnType, SUPERCALL_POSTFIX, true);
+        createCallToSuper(method, returnType, 1);
         addMethodTrailer(returnType, methodGen);
     }
-
-    //private void createBindSelf(int argNr) {
-    //	createLoadThis();
-    //	// arg 'self'
-    //	instrList.append(InstructionFactory.createLoad(Type.OBJECT, argNr));
-    //	// this._self >= self<
-    //	instrList.append(instrFact.createFieldAccess(classGen.getClassName(),
-    // "self",
-    //			new ObjectType("java.lang.reflect.InvocationHandler"),
-    // Constants.PUTFIELD));
-    //}
     
-    private MethodGen addMethodHeader(Method method, Type returnType, Class firstArg, boolean publicAccessor) {
-        List types = new ArrayList();
-        types.addAll(Arrays.asList(getArgumentTypes(method)));
-        if (firstArg != null) {
-            types.add(0, Type.getType(firstArg));
-        }
+    private MethodGen addMethodHeader(Method method, Type returnType, String postfix, boolean publicAccessor) {
         int newMods = method.getModifiers()
                 & ~(Modifier.NATIVE | Modifier.ABSTRACT);
-        if (publicAccessor) newMods = newMods & ~(Modifier.PRIVATE | Modifier.PROTECTED) | Modifier.PUBLIC;
-        MethodGen methodGen = new MethodGen(newMods, returnType, (Type[]) types
-                .toArray(new Type[] {}), generateParameterNames(types.size()), method.getName(),
+        if (publicAccessor) newMods = newMods & ~(Modifier.PRIVATE | Modifier.PROTECTED) | Modifier.PUBLIC;        
+        MethodGen methodGen = new MethodGen(newMods, returnType, getArgumentTypes(method), generateParameterNames(method.getParameterTypes().length), method.getName() + postfix,
                 classGen.getClassName(), instrList, constPool);
+        
         Class[] exceptionTypes = method.getExceptionTypes();
         for (int i = 0; i < exceptionTypes.length; i++) {
             methodGen.addException(exceptionTypes[i].getName());
@@ -338,45 +322,108 @@ public abstract class ClassGenerator implements Constants {
         instrList.append(InstructionFactory.createLoad(Type.OBJECT, 0));
     }
 
-    private void createCallToInvocationHandler(Method method, boolean useSelf) {
-       // createSystemOutPrintln(method.toString());
-        createLoadThis();
-        if (useSelf) {
-            // this.>delegate<.invoke( ...
-            instrList.append(instrFact.createFieldAccess(classGen.getClassName(), "self",
-                    new ObjectType("java.lang.reflect.InvocationHandler"), Constants.GETFIELD));
-        } else {
-            // ((Stack)(org.cq2.delegator.Self.self.get()).peek()
-            instrList.append(instrFact.createFieldAccess("org.cq2.delegator.Self", "self",
-                    new ObjectType("java.lang.ThreadLocal"), Constants.GETSTATIC));
-            instrList.append(instrFact.createInvoke("java.lang.ThreadLocal", "get", Type.OBJECT,
-                    Type.NO_ARGS, Constants.INVOKEVIRTUAL));
-            instrList.append(instrFact.createCheckCast(new ObjectType("java.util.Stack")));
-            instrList.append(instrFact.createInvoke("java.util.Stack", "peek", Type.OBJECT,
-                    Type.NO_ARGS, Constants.INVOKEVIRTUAL));
-        }
-        createLoadThis();
-        createLoadThis();
-        // ... invoke(proxy, super.>getClass()< , ...
-        instrList.append(instrFact.createInvoke("java.lang.Object", "getClass", CLASS,
-                Type.NO_ARGS, Constants.INVOKESPECIAL));
-        // ... getClass().getMethod(>methodName<, ...
-        instrList.append(new PUSH(constPool, method.getName()));
-        // ... methodName, >Class[]< ...
-        Class[] argTypes = method.getParameterTypes();
-        createParameterTypeArray(argTypes);
-        // ... getClass().>getMethod(..., ...)< ...
-        instrList.append(instrFact.createInvoke("java.lang.Class", "getDeclaredMethod",
-                new ObjectType("java.lang.reflect.Method"), new Type[] { Type.STRING,
-                        new ArrayType(CLASS, 1) }, Constants.INVOKEVIRTUAL));
-        // this.delegate.>invoke(proxy, method, >args<)<;
-        createParameterArray(argTypes);
-        // this.delegate.>invoke(proxy, method, args)<;
-        instrList.append(instrFact.createInvoke("java.lang.reflect.InvocationHandler", "invoke",
-                Type.OBJECT, new Type[] { Type.OBJECT, new ObjectType("java.lang.reflect.Method"),
-                        new ArrayType(Type.OBJECT, 1) }, Constants.INVOKEINTERFACE));
-    }
+//    private void createCallToInvocationHandler(Method method, boolean useSelf) {
+//       // createSystemOutPrintln(method.toString());
+//        createLoadThis();
+//        if (useSelf) {
+//            // this.>delegate<.invoke( ...
+//            instrList.append(instrFact.createFieldAccess(classGen.getClassName(), "self",
+//                    new ObjectType("java.lang.reflect.InvocationHandler"), Constants.GETFIELD));
+//        } else {
+//            // ((Stack)(org.cq2.delegator.Self.self.get()).peek()
+//            instrList.append(instrFact.createFieldAccess("org.cq2.delegator.Self", "self",
+//                    new ObjectType("java.lang.ThreadLocal"), Constants.GETSTATIC));
+//            instrList.append(instrFact.createInvoke("java.lang.ThreadLocal", "get", Type.OBJECT,
+//                    Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+//            instrList.append(instrFact.createCheckCast(new ObjectType("java.util.Stack")));
+//            instrList.append(instrFact.createInvoke("java.util.Stack", "peek", Type.OBJECT,
+//                    Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+//        }
+//        createLoadThis();
+//        createLoadThis();
+//        // ... invoke(proxy, super.>getClass()< , ...
+//        instrList.append(instrFact.createInvoke("java.lang.Object", "getClass", CLASS,
+//                Type.NO_ARGS, Constants.INVOKESPECIAL));
+//        // ... getClass().getMethod(>methodName<, ...
+//        instrList.append(new PUSH(constPool, method.getName()));
+//        // ... methodName, >Class[]< ...
+//        Class[] argTypes = method.getParameterTypes();
+//        createParameterTypeArray(argTypes);
+//        // ... getClass().>getMethod(..., ...)< ...
+//        instrList.append(instrFact.createInvoke("java.lang.Class", "getDeclaredMethod",
+//                new ObjectType("java.lang.reflect.Method"), new Type[] { Type.STRING,
+//                        new ArrayType(CLASS, 1) }, Constants.INVOKEVIRTUAL));
+//        // this.delegate.>invoke(proxy, method, >args<)<;
+//        createParameterArray(argTypes);
+//        // this.delegate.>invoke(proxy, method, args)<;
+//        instrList.append(instrFact.createInvoke("java.lang.reflect.InvocationHandler", "invoke",
+//                Type.OBJECT, new Type[] { Type.OBJECT, new ObjectType("java.lang.reflect.Method"),
+//                        new ArrayType(Type.OBJECT, 1) }, Constants.INVOKEINTERFACE));
+//    }
 
+//    private void createCallToInvocationHandler(Method method, boolean useSelf) {
+//        // createSystemOutPrintln(method.toString());
+//         createLoadThis();
+//         if (useSelf) {
+//             // this.>delegate<.invoke( ...
+//             instrList.append(instrFact.createFieldAccess(classGen.getClassName(), "self",
+//                     new ObjectType(MyInvocationHandler.class.getName()), Constants.GETFIELD));
+//         } else {
+//             // ((Stack)(org.cq2.delegator.Self.self.get()).peek()
+//             instrList.append(instrFact.createFieldAccess("org.cq2.delegator.Self", "self",
+//                     new ObjectType("java.lang.ThreadLocal"), Constants.GETSTATIC));
+//             instrList.append(instrFact.createInvoke("java.lang.ThreadLocal", "get", Type.OBJECT,
+//                     Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+//             instrList.append(instrFact.createCheckCast(new ObjectType("java.util.Stack")));
+//             instrList.append(instrFact.createInvoke("java.util.Stack", "peek", Type.OBJECT,
+//                     Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+//         }
+//         
+//         createLoadThis();
+//         instrList.append(new PUSH(constPool, method.getName()));
+//         createParameterTypeArray(method.getParameterTypes()); //naam van de eerste methode is slecht
+//         createParameterTypeArray(method.getExceptionTypes()); //naam van de eerste methode is slecht
+//         instrList.append(new PUSH(constPool, method.getModifiers()));
+//         createParameterArray(method.getParameterTypes());
+//
+//         // this.delegate.>invoke(proxy, ........, args)<;
+//         instrList.append(instrFact.createInvoke(MyInvocationHandler.class.getName(), "invoke",
+//                 Type.OBJECT, new Type[] { Type.OBJECT, Type.STRING,
+//                         new ArrayType(CLASS , 1), new ArrayType(CLASS, 1), Type.INT, new ArrayType(Type.OBJECT, 1) }, Constants.INVOKEINTERFACE));
+//    }
+
+    private void createCallToInvocationHandler(Method method, boolean useSelf) {
+        // createSystemOutPrintln(method.toString());
+         createLoadThis();
+         if (useSelf) {
+             // this.>delegate<.invoke( ...
+             instrList.append(instrFact.createFieldAccess(classGen.getClassName(), "self",
+                     new ObjectType(MyInvocationHandler.class.getName()), Constants.GETFIELD));
+         } else {
+             // ((Stack)(org.cq2.delegator.Self.self.get()).peek()
+             instrList.append(instrFact.createFieldAccess("org.cq2.delegator.Self", "self",
+                     new ObjectType("java.lang.ThreadLocal"), Constants.GETSTATIC));
+             instrList.append(instrFact.createInvoke("java.lang.ThreadLocal", "get", Type.OBJECT,
+                     Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+             instrList.append(instrFact.createCheckCast(new ObjectType("java.util.Stack")));
+             instrList.append(instrFact.createInvoke("java.util.Stack", "peek", Type.OBJECT,
+                     Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+         }
+         
+         createLoadThis();
+         instrList.append(new PUSH(constPool, MethodRegister.getInstance().getUnique(new MiniMethod(method.getName(), method.getParameterTypes(), method.getExceptionTypes(), method.getModifiers()))));
+         instrList.append(new PUSH(constPool, method.getName()));
+         createParameterTypeArray(method.getParameterTypes()); //naam van de eerste methode is slecht
+         createParameterTypeArray(method.getExceptionTypes()); //naam van de eerste methode is slecht
+         instrList.append(new PUSH(constPool, method.getModifiers()));
+         createParameterArray(method.getParameterTypes());
+
+         // this.delegate.>invoke(...., ........, args)<;
+         instrList.append(instrFact.createInvoke(MyInvocationHandler.class.getName(), "invoke",
+                 Type.OBJECT, new Type[] { Type.OBJECT, Type.INT, Type.STRING,
+                         new ArrayType(CLASS , 1), new ArrayType(CLASS, 1), Type.INT, new ArrayType(Type.OBJECT, 1) }, Constants.INVOKEINTERFACE));
+    }
+    
     private void createParameterArray(Class[] argTypes) {
         instrList.append(new PUSH(constPool, argTypes.length)); // array
         // size
@@ -507,7 +554,7 @@ public abstract class ClassGenerator implements Constants {
                 && !field.getType().isPrimitive();
     }
 
-    public static Proxy newProxyInstance(Class clazz, InvocationHandler handler) {
+    public static Proxy newProxyInstance(Class clazz, MyInvocationHandler handler) {
         try {
             Class proxyClass = proxyClassCache.getClass(injector, clazz);
             Object proxy = proxyClass.newInstance();
@@ -519,7 +566,7 @@ public abstract class ClassGenerator implements Constants {
         }
     }
     
-    public static Component newComponentInstance(Class clazz, InvocationHandler handler) {
+    public static Component newComponentInstance(Class clazz, MyInvocationHandler handler) {
         try {
             Class componentClass = componentsClassCache.getClass(injector, clazz);
             Component result = (Component) componentClass.newInstance();
@@ -564,9 +611,9 @@ public abstract class ClassGenerator implements Constants {
         }
     }
 
-    public static InvocationHandler getInvocationHandler(Object proxy) {
+    public static MyInvocationHandler getInvocationHandler(Object proxy) {
         try {
-            return (InvocationHandler) getDelegateField(proxy).get(proxy);
+            return (MyInvocationHandler) getDelegateField(proxy).get(proxy);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }

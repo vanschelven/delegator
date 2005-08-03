@@ -10,25 +10,27 @@ import java.lang.reflect.Method;
 import java.util.Stack;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestCase;
+
+import org.cq2.delegator.MyInvocationHandler;
 import org.cq2.delegator.Self;
 
-public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandler {
-	private ProxyGeneratorSelfTestClass proxy;
+public class ProxyGeneratorSelfTest extends TestCase implements MyInvocationHandler {
+	private ProxyGeneratorSelfTestClass component;
 
 	protected void setUp() throws Exception {
-		proxy = (ProxyGeneratorSelfTestClass) ClassGenerator
+		component = (ProxyGeneratorSelfTestClass) ClassGenerator
 				.newComponentInstance(ProxyGeneratorSelfTestClass.class, this);
 	}
 
 	public void testSuperObjectVoid() throws Exception {
 		String methodName = "voidVoid";
-		assertFalse(proxy.voidVoidCalled);
+		assertFalse(component.voidVoidCalled);
 		Object result = callSuperMethod(methodName);
-		assertTrue(proxy.voidVoidCalled);
+		assertTrue(component.voidVoidCalled);
 		assertNull(result);
 		try {
 			((Stack) Self.self.get()).push(this);
-			proxy.voidVoid();
+			component.voidVoid();
 			fail();
 		}
 		catch (AssertionFailedError e) {}
@@ -39,10 +41,10 @@ public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandle
 
 	private Object callSuperMethod(String methodName) throws NoSuchMethodException,
 			IllegalAccessException, InvocationTargetException {
-		Method method = proxy.getClass()
-				.getMethod(methodName, new Class[]{InvocationHandler.class});
+		Method method = component.getClass()
+				.getMethod(methodName + ClassGenerator.SUPERCALL_POSTFIX, new Class[]{});
 		((Stack) Self.self.get()).push(this);
-		Object result = method.invoke(proxy, new Object[]{this});
+		Object result = method.invoke(component, new Object[]{});
 		((Stack) Self.self.get()).pop();
 		return result;
 	}
@@ -79,8 +81,9 @@ public class ProxyGeneratorSelfTest extends TestCase implements InvocationHandle
 		assertEquals("Are you there?", callSuperMethod("stringVoid"));
 	}
 
-	public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
+    public Object invoke(Object proxy, int index, String name, Class[] parameterTypes, Class[] exceptionTypes, int modifiers, Object[] args) throws Throwable {
 		fail("invoke must not be called");
 		return null;
-	}
+    }
+
 }
