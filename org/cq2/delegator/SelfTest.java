@@ -526,4 +526,19 @@ public class SelfTest extends TestCase {
         new Self().cast(Vector.class);
     }
 	
+
+    private ClassLoader loggingLoader = new ClassLoader() {
+        public Class findClass(String className) throws ClassNotFoundException {
+            //System.out.println(className);
+            return super.getParent().loadClass(className);
+        }
+    };
+
+    public void testConfigureClassLoader() {
+        Delegator.configureClassLoader(loggingLoader);
+        Self self = new Self(Object.class);
+        assertSame(loggingLoader, self.component(0).getClass().getClassLoader()
+    .getParent());
+    }
+	
 }

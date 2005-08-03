@@ -47,7 +47,6 @@ public class Self implements InvocationHandler, ISelf {
     }
 
     
-    //TODO ook het superdelegatemethod verhaal voorr forwardees laten gelden en snappen wat het was. -- dit testen
     /**
      * @see InvocationHandler#invoke(Object, Method, Object[])
      */
@@ -59,7 +58,6 @@ public class Self implements InvocationHandler, ISelf {
         if ("hashCode".equals(name))
             return new Integer(hashCode());
         int i = 0;
-        List argTypeListExludingInvocationHandler = new ArrayList();
         synchronized (this) {
             if (name.startsWith("__next__")) {
                 while (components[i] != proxy && (i < nrOfComponents))
@@ -71,9 +69,6 @@ public class Self implements InvocationHandler, ISelf {
             List argTypeList = new ArrayList();
             argTypeList.add(InvocationHandler.class);
             argTypeList.addAll(Arrays.asList(method.getParameterTypes()));
-
-            argTypeListExludingInvocationHandler.addAll(Arrays.asList(method //TODO idioot
-                    .getParameterTypes()));
 
             for (; i < nrOfComponents; i++) {
                 try {
@@ -88,22 +83,21 @@ public class Self implements InvocationHandler, ISelf {
                         //De superdelegatemethod is feitelijk de methode zoals ingetiept door de programmeur
                         //deze bestaat per definitie - als die niet gevonden wordt betekent dat hij protected is
                         Method superDelegateMethod = MethodUtil.getDeclaredMethod(
-                                component.getClass().getSuperclass(), name,
-                                (Class[]) argTypeListExludingInvocationHandler
-                                        .toArray(new Class[] {}), method.getExceptionTypes());
+                                component.getClass().getSuperclass(), name, method.getParameterTypes(), method.getExceptionTypes());
                         
                         componentMethodIsProtected = (delegateMethod != null)
                                 && (superDelegateMethod == null);
                     } else {
                         delegateMethod = MethodUtil.getDeclaredMethod(
                                 component.getClass(), name,
-                                (Class[]) argTypeListExludingInvocationHandler
-                                .toArray(new Class[] {}), method.getExceptionTypes());
+                                method.getParameterTypes(), method.getExceptionTypes());
                         componentMethodIsProtected = Modifier.isProtected(delegateMethod.getModifiers());
                     }
+                    //TODO dit is in duigen gevallen met de toevoeging van package (in forwardees) maar dat lossen we later wel weer op...
                     if (delegateMethod != null
                             && (!componentMethodIsProtected || Modifier
-                                    .isProtected(method.getModifiers()))) {
+                                    .isProtected(method.getModifiers()))
+                                    || !Modifier.isPublic(method.getModifiers())) {
                         delegateMethod.setAccessible(true);
                         Stack stack = ((Stack) self.get());
                         stack.push(this);
@@ -127,15 +121,12 @@ public class Self implements InvocationHandler, ISelf {
         }
 
         Method delegateMethod = MethodUtil.getDeclaredMethod(Self.class, name,
-                (Class[]) argTypeListExludingInvocationHandler
-                        .toArray(new Class[] {}), method.getExceptionTypes());
+                method.getParameterTypes(), method.getExceptionTypes());
         if (delegateMethod != null)
             return delegateMethod.invoke(this, args);
         throw new NoSuchMethodError(method.toString());
     }
 
-    //TODO (elders) accessing a non-shared-component should raise an Exception
-    
     private Object[] mapArgs(Object[] args) {
         List argList = new ArrayList();
         argList.add(this);
@@ -170,18 +161,26 @@ public class Self implements InvocationHandler, ISelf {
             addComponent(object.components[i]);
     }
 
-    public Self getComponent(int component)  {
-        return new Self(components[component]);
+    public Self getComponent(int i)  {
+        return new Self(component(i));
     }
 
     public Self getComponent(Class clazz)  {
-        return new Self(component(clazz));
+        Object result = component(clazz);
+        if (result instanceof SingleSelfComponent)
+            throw new DelegatorException("Component may not be shared between different instances of Self");
+        return new Self(result);
     }
 
-    private Object component(Class clazz) {
+    Object component(int i) {
+        return components[i];
+    }
+    
+    Object component(Class clazz) {
         for (int i = 0; i < nrOfComponents; i++) {
-            if (components[i].getClass().getSuperclass().equals(clazz) ||
-                components[i].getClass().equals(clazz)) return components[i];
+            if ((components[i] instanceof Component &&
+                 components[i].getClass().getSuperclass().equals(clazz)) ||
+                 components[i].getClass().equals(clazz)) return components[i];
         }
         return null;
     }
@@ -235,7 +234,6 @@ public class Self implements InvocationHandler, ISelf {
         Object[] otherComponents = other.getEqualsComponents();
         if (thisComponents.length != otherComponents.length) return false; 
         
-        //TODO ook dit moet met forwardees kunnen omgaan
         try {
             for (int i = 0; i < thisComponents.length; i++) {
                 try {

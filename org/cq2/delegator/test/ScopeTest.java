@@ -3,17 +3,19 @@
  */
 package org.cq2.delegator.test;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-
-import junit.framework.TestCase;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.util.StringTokenizer;
 
 import org.cq2.delegator.Delegator;
 import org.cq2.delegator.ISelf;
 import org.cq2.delegator.Self;
 import org.cq2.delegator.classgenerator.ClassGenerator;
+import org.cq2.delegator.classgenerator.ProxyGenerator;
+import org.cq2.delegator.classgenerator.SingleSelfComponentGenerator;
 
-public class ScopeTest extends TestCase implements InvocationHandler {
+public class ScopeTest extends InvocationHandlerTest {
 
     public static class PrivateMethod {
 
@@ -418,28 +420,87 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         abstract void method();
     }
 
+    //exactly the same as packagemethod but we need something to circumvent the ClassLoader
+    public static class PackageMethod2 {
 
+        private boolean called;
 
+        void method() {
+            packageMethodCalled = true;
+            called = true;
+        }
 
+        public boolean isCalled() {
+            return called;
+        }
+        
+    }
+    
+    public void testPackageMethodWithSavedClass() {
+        generateProxyClassFile(PackageMethod2.class);
+        generateComponentClassFile(PackageMethod2.class);
+        PackageMethod2 m = (PackageMethod2) new Self(PackageMethod2.class)
+          .cast(PackageMethod2.class);
+        m.method();
+        assertTrue(m.isCalled());
+        assertTrue(packageMethodCalled);
+        assertFalse(m.called);
+    }
+    
+    private String packageToPath(String packageName) {
+        return packageName.replaceAll("\\.", getSeparator())  + getSeparator();
+    }
+    
+    private String getSeparator() {
+        return System.getProperty("file.separator");
+    }
 
-//TODO aanzetten
-    //    public void testGenerateClassFile() {
-    //        String className =
-    // "org.cq2.delegator.test.ScopeTest$PackageMethod$proxy";
-    //        byte[] classDef = new ProxyGenerator(className, PackageMethod.class,
-    // Proxy.class).generateProxy();
-    //        OutputStream o;
-    //      try {
-    //          o = new
-    // FileOutputStream("/home/klaas/Documents/eclipse/delegator/classes/org/cq2/delegator/test/"
-    // +
-    //          		"ScopeTest$PackageMethod$proxy.class");
-    //          o.write(classDef);
-    //          o.close();
-    //      } catch (Exception e) {
-    //          e.printStackTrace();
-    //      }
-    //    }
+    private void generateClassFile(Class clazz, String postfix, byte[] generate) {
+        byte[] classDef = generate;
+        String classLocation = guessClassLocation(clazz);
+        if (classLocation == null) throw new RuntimeException("No location found for " + clazz);
+        saveToFile(classDef, classLocation + classNameOnly(clazz) + "$" + postfix + ".class");
+    }
+
+    private void generateProxyClassFile(Class clazz) {
+        String className = clazz.getName() + "$proxy";
+        byte[] classDef = new ProxyGenerator(className, clazz).generate();
+        generateClassFile(clazz, "proxy", classDef);
+    }
+
+    private void generateComponentClassFile(Class clazz) {
+        String className = clazz.getName() + "$component";
+        byte[] classDef = new SingleSelfComponentGenerator(className, clazz).generate();
+        generateClassFile(clazz, "component", classDef);
+    }
+
+    private String classNameOnly(Class clazz) {
+        return clazz.getName().substring(clazz.getPackage().getName().length() + 1);
+    }
+
+    private String guessClassLocation(Class clazz) {
+        String classPath = System.getProperty("java.class.path");
+        StringTokenizer tokenizer = new StringTokenizer(classPath, ":");
+        while (tokenizer.hasMoreTokens()) {
+            String token = tokenizer.nextToken();
+            String possiblePath = token + getSeparator() + packageToPath(clazz.getPackage().getName());
+            File file = new File(token);
+            if (file.exists() && file.isDirectory())
+                return possiblePath;
+        }
+        return null;
+    }
+
+    private void saveToFile(byte[] bytes, String fileName) {
+        OutputStream o;
+        try {
+            o = new FileOutputStream(fileName);
+            o.write(bytes);
+            o.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static class ProtectedSelfCallingClass {
 
@@ -475,18 +536,14 @@ public class ScopeTest extends TestCase implements InvocationHandler {
         assertTrue(s.isM2Called());
     }
 
-    public void setUp() {
-        invokedMethod = null;
-        invokeResult = null;
+    protected void setUp() throws Exception {
+        super.setUp();
         packageMethodCalled = false;
         privateMethodCalled = false;
         protectedMethodCalled = false;
         publicMethodCalled = false;
     }
 
-    private String invokedMethod;
-
-    private Object invokeResult;
 
     private static boolean packageMethodCalled;
 
@@ -496,34 +553,47 @@ public class ScopeTest extends TestCase implements InvocationHandler {
 
     private static boolean publicMethodCalled;
 
-    public Object invoke(Object proxy, Method method, Object[] args)
-            throws Throwable {
-        invokedMethod = method.getName();
-        return invokeResult;
+    interface PrivateInterface {
+    }
+
+    public void testPrivateInterface() {
+        try {
+            PrivateInterface o = (PrivateInterface) new Self()
+                    .cast(PrivateInterface.class);
+            fail();
+        } catch (IllegalAccessError e) {
+        }
+    }
+
+    interface PackageInterface {
+    }
+
+    public void testPackageInterface() {
+        try {
+            PackageInterface o = (PackageInterface) new Self()
+                    .cast(PackageInterface.class);
+            fail();
+        } catch (IllegalAccessError e) {
+        }
+    }
+
+    protected interface ProtectedInterface {
+        public void method();
+    }
+
+    public void testProtectedInterface() {
+        ProtectedInterface o = (ProtectedInterface) new Self()
+                .cast(ProtectedInterface.class);
+    }
+
+    public interface PublicInterface {
+        public void method();
+    }
+
+    public void testPublicInterface() {
+        PublicInterface o = (PublicInterface) new Self()
+                .cast(PublicInterface.class);
     }
     
-    //TODO (probably elsewhere): add specific methods for abstract behavior.
-    public abstract static class AbstractPublicMethod {
-        public abstract void method();
-    }
-
-    public void testAbstractPublicMethod() throws Exception {
-        AbstractPublicMethod m = (AbstractPublicMethod) ClassGenerator
-                .newProxyInstance(AbstractPublicMethod.class, this);
-        m.method();
-        assertEquals("method", invokedMethod);
-    }
-
-    public abstract static class AbstractProtectedMethod {
-        protected abstract void method();
-    }
-
-    public void testAbstractProtectedMethod() throws Exception {
-        AbstractProtectedMethod m = (AbstractProtectedMethod) ClassGenerator
-                .newProxyInstance(AbstractProtectedMethod.class, this);
-        m.method();
-        assertEquals("method", invokedMethod);
-    }
-
-    
+    //TODO schrijf: write documentation on interfaces
 }

@@ -20,5 +20,12 @@ public class ExperimentTest extends TestCase {
             fail();
         } catch (VerifyError e) {}
     }
+
+    public void testArray() {
+        try {
+            new Self(Object[].class);
+            fail();
+        } catch (ClassFormatError e) {}
+    }
     
 }

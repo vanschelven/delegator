@@ -1,11 +1,11 @@
 package org.cq2.delegator.classgenerator;
 
-import org.cq2.delegator.Component;
+import org.cq2.delegator.SingleSelfComponent;
 
 public class SingleSelfComponentGenerator extends ClassGenerator {
 
     public SingleSelfComponentGenerator(String className, Class superClass) {
-        super(className, superClass, Component.class);
+        super(className, superClass, SingleSelfComponent.class);
     }
     
     public byte[] generate() {

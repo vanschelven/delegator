@@ -203,6 +203,54 @@ public class EqualityTest extends TestCase {
         assertEquals(1, a1.getI());
     }
     
+    //this can be used to make sure Object.equals isn't the method really used, because even though fields may differ....
+    public static class OddOrEven {
+        
+        private int k;
+        
+        public boolean equals(Object obj) {
+            if (obj == null) return false;
+            if (!(obj instanceof OddOrEven)) return false;
+            OddOrEven other = (OddOrEven) obj;
+            return (other.k % 2 == k % 2);
+        }
+        
+        public OddOrEven() {}
+        
+        public OddOrEven(int k) {
+            this.k = k;
+        }
+        
+        public void setK(int k) {
+            this.k = k;
+        }
+        
+        public int getK() {
+            return k;
+        }
+        
+    }
+
+    public void testEqualityBetweenWrappedForwardees() {
+        Self selfForwardee1 = new Self(new A(1));
+        Self selfForwardee2 = new Self(new A(1));
+        Self differentForwardeeSelf = new Self(new A(2));
+        assertEquals(selfForwardee1, selfForwardee1);
+        assertEquals(selfForwardee1, selfForwardee2);
+        assertFalse(selfForwardee1.equals(null));
+        assertFalse(selfForwardee1.equals(differentForwardeeSelf));
+        
+        assertEquals(new Self(new OddOrEven(1)), new Self(new OddOrEven(3)));
+    }
+    
+    public void testEqualityBetweenDelegatesAndForwardees() {
+        Self selfForwardee1 = new Self(new A(1));
+        assertEquals(selfForwardee1, self1);
+        assertEquals(self1, selfForwardee1);
+        assertFalse(selfForwardee1.equals(differentSelfValue));
+        assertFalse(differentSelfValue.equals(selfForwardee1));
+    }
+    
 }
 
 

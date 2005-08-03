@@ -2,7 +2,6 @@
  * Copyright (C) 2001 Erik J. Groeneveld, http://www.ejgroeneveld.com Copyright
  * (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl
  */
-//TODO marker interfaces lijken een beperkt nut te hebben en kunnen er misschien wel uit.
 
 package org.cq2.delegator.classgenerator;
 

@@ -56,22 +56,16 @@ public class MethodUtilTest extends TestCase {
 		assertEquals(13, methods.size()); //This used to say 6 but I don't see why
 	}
 
-	private void printMethods(Set set) {
-		Iterator iter = set.iterator();
-		while (iter.hasNext()) {
-			System.out.println("\t" + iter.next().toString() + ";");
-		}
-	}
-	
 	public void testGetMethod() throws SecurityException, NoSuchMethodException {
         Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Object.class}, null);
         assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Object.class}), result);
     }
 	
-	public void testGetMethodRefined() throws SecurityException, NoSuchMethodException {
-        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Integer.class}, null);
-        assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Object.class}), result);
-    }
+//zoals ik het nu zie klopt dit niet - je moet dit ivm polymorphisme niet willen
+//	public void testGetMethodRefined() throws SecurityException, NoSuchMethodException {
+//        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Integer.class}, null);
+//        assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Object.class}), result);
+//    }
 	
 	public void testGetMethodUnrefined() throws SecurityException {
         Method result = MethodUtil.getDeclaredMethod(Vector.class, "addAll", new Class[]{Object.class}, null);
@@ -83,10 +77,11 @@ public class MethodUtilTest extends TestCase {
         assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Integer.TYPE, Object.class}), result);
 	}
 	
-	public void testBoxing() throws SecurityException, NoSuchMethodException {
-        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Integer.TYPE}, null);
-        assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Object.class}), result);
-	}
+//dit idee is verloren gegaan aan goede analyse
+//	public void testBoxing() throws SecurityException, NoSuchMethodException {
+//        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Integer.TYPE}, null);
+//        assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Object.class}), result);
+//	}
 	
 	public void testBoxing2() throws SecurityException, NoSuchMethodException {
         Method result = MethodUtil.getDeclaredMethod(Vector.class, "addAll", new Class[]{Integer.TYPE}, null);

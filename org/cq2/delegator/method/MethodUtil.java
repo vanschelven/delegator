@@ -27,16 +27,13 @@ public class MethodUtil {
         }
     }
 
-    //differs from class.getDeclaredMethod in the acceptance of less specific
-    // types as well
-    //TODO volgens mij pakt hij te snel algemene types boven specifieke -- vgl. java's gedrag
     public static Method getDeclaredMethod(Class clazz, String name, Class[] parameterTypes, Class[] exceptionTypes) {
         Method method = searchMethods(clazz.getMethods(), name, parameterTypes, exceptionTypes);
         return method;
     }
     
-    private static Method searchMethods(Method[] methods,
-            String name, Class[] parameterTypes, Class[] exceptionTypes) {
+    private static Method searchMethods(Method[] methods, String name,
+            Class[] parameterTypes, Class[] exceptionTypes) {
         Method res = null;
         String internedName = name.intern();
         for (int i = 0; i < methods.length; i++) {
@@ -44,10 +41,11 @@ public class MethodUtil {
             if (m.getName() == internedName
                     && parameterTypesMatch(parameterTypes, m
                             .getParameterTypes())
-                    && exceptionTypesMatch(exceptionTypes, m.getExceptionTypes())
-                    && (res == null || res.getReturnType().isAssignableFrom(
-                            m.getReturnType())))
+                    && exceptionTypesMatch(exceptionTypes, m
+                            .getExceptionTypes())) {
                 res = m;
+                break;
+            }
         }
 
         return (res == null ? res : getReflectionFactory().copyMethod(res));
@@ -113,8 +111,9 @@ public class MethodUtil {
     }
     
     private static boolean isSomeSuperclass(Class superClass, Class subClass) {
-        if ((superClass).isAssignableFrom(subClass)) return true;
-        if (subClass.isPrimitive()) return superClass.isAssignableFrom(getWrapperClass(subClass));
+       // if ((superClass).isAssignableFrom(subClass)) return true;
+        if (superClass.equals(subClass)) return true;
+   //     if (subClass.isPrimitive()) return superClass.isAssignableFrom(getWrapperClass(subClass));
         return false;
     }
 
