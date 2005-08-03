@@ -5,7 +5,7 @@ import java.util.Date;
 
 public class Report {
 
-    private final static int RUNS = 1;
+    private final static int RUNS = 5;
     
     public static void main(String[] args) {
         PrintStream out = System.out;

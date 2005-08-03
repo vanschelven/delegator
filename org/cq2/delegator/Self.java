@@ -30,7 +30,7 @@ public class Self implements MyInvocationHandler, ISelf {
 
     private Class[] equalsComponents;
 
-    private MethodsCache2 methodsCache;
+    private MethodsCache3 methodsCache;
 
     public Self(Object component) {
         this();
@@ -39,7 +39,7 @@ public class Self implements MyInvocationHandler, ISelf {
 
     public Self() {
         components = new Object[4];
-        methodsCache = new MethodsCache2();
+        methodsCache = new MethodsCache3();
     }
 
     public Self(Class firstComponentClass) {
@@ -47,10 +47,8 @@ public class Self implements MyInvocationHandler, ISelf {
         addComponent(newComponent(firstComponentClass));
     }
 
-    private Object invokeViaCache(Object proxy, int index, Object[] args)
+    private Object invokeViaCache(Object proxy, Tuple tuple, Object[] args)
             throws Throwable {
-        //een factor 100 zit hierin... (t.o.v. return niks)
-        Tuple tuple = methodsCache.getTuple(index);
         Object component = components[tuple.index];
         Method delegateMethod = tuple.method;
         //copy paste
@@ -151,20 +149,12 @@ public class Self implements MyInvocationHandler, ISelf {
 
     }
 
-    //    /**
-    //     * @see InvocationHandler#invoke(Object, Method, Object[])
-    //     */
-    //    public synchronized Object invoke(Object proxy, Method method,
-    //            Object[] args) throws Throwable {
-    //        return invoke(proxy, method.getName(), method.getParameterTypes(),
-    // method.getExceptionTypes(), method.getModifiers(), args);
-    //    }
-
     public synchronized Object invoke(Object proxy, int index, String name,
             Class[] parameterTypes, Class[] exceptionTypes, int modifiers,
             Object[] args) throws Throwable {
-        if (methodsCache.contains(index)) {
-            return invokeViaCache(proxy, index, args);
+        Tuple tuple = methodsCache.getTuple(index);
+        if (tuple != null) {
+            return invokeViaCache(proxy, tuple, args);
         }
         return invokeNewMethod(proxy, new MiniMethod(name, parameterTypes,
                 exceptionTypes, modifiers), args);

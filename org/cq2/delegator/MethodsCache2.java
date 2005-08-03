@@ -11,6 +11,7 @@ public class MethodsCache2 {
     private Map map;
 
     public Tuple getTuple(int uniqueMethodIdentifier) {
+        if (map == null) return null;
         return (Tuple) map.get(new Integer(uniqueMethodIdentifier));
     }
 
