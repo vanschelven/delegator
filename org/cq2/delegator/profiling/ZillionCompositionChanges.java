@@ -1,34 +1,36 @@
 package org.cq2.delegator.profiling;
 
+import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Vector;
 
 import org.cq2.delegator.Self;
 
-public class ZillionProxyParameterCalls implements Profilable {
+public class ZillionCompositionChanges implements Profilable {
 
-    private Vector v;
     private int numloops = 100000;
+    private Self self;
 
-    public ZillionProxyParameterCalls() {
-        Self self = new Self(Vector.class);
-        v = (Vector) self.cast(Vector.class);
+    public ZillionCompositionChanges() {
+        self = new Self();
     }
     
-    public ZillionProxyParameterCalls(int numloops) {
+    public ZillionCompositionChanges(int numloops) {
         this();
         this.numloops = numloops;
     }
     
     public static void main(String[] args) {
         System.out.println("Starting");
-        new ZillionProxyParameterCalls().runBody();
+        new ZillionCompositionChanges().runBody();
         System.out.println("Done! " + new Date());
     }
 
     public void runBody() {
+        Self component = new Self(Vector.class);
         for (int i = 0; i < numloops; i++) {
-            v.setSize(0);
+            self.add(component);
+            self.remove(Vector.class);
         }
     }
     

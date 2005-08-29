@@ -538,5 +538,5 @@ public class SelfTest extends TestCase {
         assertSame(loggingLoader, self.component(0).getClass().getClassLoader()
     .getParent());
     }
-	
+    
 }

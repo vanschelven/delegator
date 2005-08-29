@@ -1,6 +1,5 @@
 package org.cq2.delegator.profiling;
 
-import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Vector;
 
@@ -29,15 +28,8 @@ public class ZillionProxyCalls implements Profilable {
     }
 
     public void runBody() {
-//        try {
-//        Method m = v.getClass().getMethod("size", new Class[]{});
-//        Class[] a = new Class[]{};
-//        for (int i = 0; i < numloops; i++) {
-//            //v.size();
-//            self.invoke(v, m, a);
-//        } } catch (Throwable e) {}
         for (int i = 0; i < numloops; i++) {
-            v.size();
+             v.size();
         }
     }
     

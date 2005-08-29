@@ -10,6 +10,7 @@ public class ProxyMethodFilter implements MethodFilter {
 	public boolean filter(Method method) {
 		return !Modifier.isFinal(method.getModifiers())
 				&& !Modifier.isPrivate(method.getModifiers())
-				&& !Modifier.isStatic(method.getModifiers());
+				&& !Modifier.isStatic(method.getModifiers())
+				&& !method.getName().equals("finalize");
 	}
 }

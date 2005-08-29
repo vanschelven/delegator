@@ -1,0 +1,21 @@
+Start...
+Speed:
+org.cq2.delegator.profiling.ZillionCalls 5 runs 5 5 6
+org.cq2.delegator.profiling.ZillionProxyCalls 5 runs 115 116 118
+1:23
+org.cq2.delegator.profiling.ZillionCallsToComponentTwo 5 runs 114 115 117
+1:23
+org.cq2.delegator.profiling.ZillionMixedCalls 5 runs 9 10 11
+org.cq2.delegator.profiling.ZillionMixedProxyCalls 5 runs 235 236 240
+1:23
+org.cq2.delegator.profiling.ZillionParameterCalls 5 runs 8 8 9
+org.cq2.delegator.profiling.ZillionProxyParameterCalls 5 runs 3737 3755 3806
+1:469
+org.cq2.delegator.profiling.ZillionCreations 5 runs 34 34 35
+org.cq2.delegator.profiling.ZillionSelfCreations 5 runs 1270 1272 1277
+1:37
+Memory:
+org.cq2.delegator.profiling.StoreCreations 1455600
+org.cq2.delegator.profiling.StoreSelfCreations 9947504
+1:6
+Done... Wed Aug 03 15:00:32 CEST 2005

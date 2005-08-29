@@ -114,8 +114,6 @@ public abstract class ClassGenerator implements Constants {
     
     public abstract byte[] generate();
 
-    private static final ObjectType CLASS = new ObjectType("java.lang.Class");
-
     private static ClassInjector injector = ClassInjector
             .create(ClassLoader.getSystemClassLoader());
 
@@ -135,7 +133,7 @@ public abstract class ClassGenerator implements Constants {
     
     private static Cache proxyClassCache = new Cache("proxy");
 
-    public static final String SUPERCALL_POSTFIX = "__er";
+    public static final String SUPERCALL_POSTFIX = "__super";
 
     ClassGenerator(String className, Class superClass, Class marker) {
         String[] extraInterfaces = new String[] { marker.getName(), ISelf.class.getName() };
@@ -156,9 +154,18 @@ public abstract class ClassGenerator implements Constants {
         return className + "$" + marker;
     }
 
+    private static Map delegateFieldCache = new HashMap();
+
+    private boolean aaaaa;
+
     public static Field getDelegateField(Object proxy) {
         try {
-            return proxy.getClass().getDeclaredField("self");
+            Class clazz = proxy.getClass();
+            Object value = delegateFieldCache.get(clazz);
+            if (value != null) return (Field) value;
+            Field result = proxy.getClass().getDeclaredField("self");
+            delegateFieldCache.put(clazz, result);
+            return result;
         } catch (NoSuchFieldException e) {
             throw new RuntimeException(e);
         }
@@ -181,7 +188,6 @@ public abstract class ClassGenerator implements Constants {
         for (Iterator iter = methods.iterator(); iter.hasNext();) {
             Method method = (Method) iter.next();
             if (methodFilter.filter(method)) {
-                //System.out.println("Adding " + method);
                 addDelegationMethod(method, useSelf);
             }
         }
@@ -249,7 +255,7 @@ public abstract class ClassGenerator implements Constants {
     }
 
     private void addMethodTrailer(Type returnType, MethodGen methodGen) {
-        convertReturnValue(returnType);
+        if (aaaaa) convertReturnValue(returnType);
         methodGen.setMaxStack();
         methodGen.setMaxLocals();
         classGen.addMethod(methodGen.getMethod());
@@ -341,14 +347,31 @@ public abstract class ClassGenerator implements Constants {
          }
          
          createLoadThis();
-         instrList.append(new PUSH(constPool, MethodRegister.getInstance().getUnique(new MiniMethod(method.getName(), method.getParameterTypes(), method.getExceptionTypes(), method.getModifiers()))));
-         createParameterArray(method.getParameterTypes());
+         instrList.append(new PUSH(constPool, MethodRegister.getInstance().getUnique(new MiniMethod(method))));
+         if ((method.getReturnType() != int.class || method.getParameterTypes().length != 0) ||
+                 (isSpecialMethod(method.getName()))) {
+             createParameterArray(method.getParameterTypes());
 
-         // this.delegate.>invoke(...., ........, args)<;
-         instrList.append(instrFact.createInvoke(MyInvocationHandler.class.getName(), "invoke",
-                 Type.OBJECT, new Type[] { Type.OBJECT, Type.INT, new ArrayType(Type.OBJECT, 1) }, Constants.INVOKEINTERFACE));
+             // this.delegate.>invoke(...., ........, args)<;
+             instrList.append(instrFact.createInvoke(MyInvocationHandler.class.getName(), "invoke",
+                     Type.OBJECT, new Type[] { Type.OBJECT, Type.INT, new ArrayType(Type.OBJECT, 1) }, Constants.INVOKEINTERFACE));
+             aaaaa = true;
+         } else {
+             aaaaa = false;
+             instrList.append(instrFact.createInvoke(MyInvocationHandler.class.getName(), "i_invoke",
+                     Type.INT, new Type[]{ Type.OBJECT, Type.INT }, Constants.INVOKEINTERFACE));
+             instrList.append(InstructionFactory.createReturn(Type.getType(method.getReturnType())));
+         }             
     }
     
+    //TODO is dit echt nodig?
+    private boolean isSpecialMethod(String name) {
+        if (name.startsWith("__next__")) return true;
+        if (name.equals("equals")) return true;
+        if (name.equals("hashCode")) return true;
+        return false;
+    }
+
     private void createParameterArray(Class[] argTypes) {
         instrList.append(new PUSH(constPool, argTypes.length)); // array
         // size
@@ -403,50 +426,6 @@ public abstract class ClassGenerator implements Constants {
         return primitiveType.getSize();
     }
 
-    private void createParameterTypeArray(Class[] args) {
-        // ... methodName, new Class[>nrArgs<] { ... }
-        instrList.append(new PUSH(constPool, args.length));
-        // ... methodName, >new Class[nrArgs]< { ... }
-        instrList.append(instrFact.createNewArray(CLASS, (short) 1));
-        // ... new Class[nrArgs] >{ ... }< ...
-        for (int i = 0; i < args.length; i++) {
-            instrList.append(InstructionConstants.DUP); // array
-            // pointer
-            instrList.append(new PUSH(constPool, i)); // index
-            createClassReference(args[i]);
-            instrList.append(InstructionConstants.AASTORE);
-        }
-    }
-
-    private void createClassReference(Class clazz) {
-        if (clazz.equals(Integer.TYPE)) {
-            createPrimitiveClassAccess("java.lang.Integer");
-        } else if (clazz.equals(Boolean.TYPE)) {
-            createPrimitiveClassAccess("java.lang.Boolean");
-        } else if (clazz.equals(Long.TYPE)) {
-            createPrimitiveClassAccess("java.lang.Long");
-        } else if (clazz.equals(Double.TYPE)) {
-            createPrimitiveClassAccess("java.lang.Double");
-        } else if (clazz.equals(Float.TYPE)) {
-            createPrimitiveClassAccess("java.lang.Float");
-        } else if (clazz.equals(Short.TYPE)) {
-            createPrimitiveClassAccess("java.lang.Short");
-        } else if (clazz.equals(Character.TYPE)) {
-            createPrimitiveClassAccess("java.lang.Character");
-        } else if (clazz.equals(Byte.TYPE)) {
-            createPrimitiveClassAccess("java.lang.Byte");
-        } else {
-            instrList.append(new PUSH(constPool, clazz.getName()));
-            instrList.append(instrFact.createInvoke("java.lang.Class", "forName", new ObjectType(
-                    "java.lang.Class"), new Type[] { Type.STRING }, Constants.INVOKESTATIC));
-        }
-    }
-
-    private void createPrimitiveClassAccess(String className) {
-        instrList.append(instrFact.createFieldAccess(className, "TYPE", new ObjectType(
-                "java.lang.Class"), Constants.GETSTATIC));
-    }
-
     static String[] generateParameterNames(int nr) {
         String[] result = new String[nr];
         for (int i = 0; i < nr; i++) {
@@ -455,35 +434,10 @@ public abstract class ClassGenerator implements Constants {
         return result;
     }
 
-    private static void zeroAllFields(Object instance, Class clazz) {
-        if (Object.class.equals(clazz))
-            return;
-        Field[] fields = clazz.getDeclaredFields();
-        for (int i = 0; i < fields.length; i++) {
-            Field field = fields[i];
-            if (isNullable(field)) {
-                field.setAccessible(true);
-                try {
-                    field.set(instance, null);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-        zeroAllFields(instance, clazz.getSuperclass());
-    }
-
-    private static boolean isNullable(Field field) {
-        int mods = field.getModifiers();
-        return !Modifier.isStatic(mods) && !Modifier.isFinal(mods)
-                && !field.getType().isPrimitive();
-    }
-
     public static Proxy newProxyInstance(Class clazz, MyInvocationHandler handler) {
         try {
             Class proxyClass = proxyClassCache.getClass(injector, clazz);
             Object proxy = proxyClass.newInstance();
-            zeroAllFields(proxy, clazz);
             getDelegateField(proxy).set(proxy, handler);
             return (Proxy) proxy;
         } catch (Exception e) {

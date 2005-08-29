@@ -5,7 +5,7 @@ import java.util.Date;
 
 public class Report {
 
-    private final static int RUNS = 5;
+    private final static int RUNS = 1;
     
     public static void main(String[] args) {
         PrintStream out = System.out;
@@ -34,11 +34,23 @@ public class Report {
         proxyParameterCalls.run(RUNS);
         out.println("1:" + (proxyParameterCalls.getAvg() / parameterCalls.getAvg()));
         
+        Profiler newCalls = new Profiler(new ZillionNewCalls(), out);
+        newCalls.run(RUNS);
+        Profiler newProxyCalls = new Profiler(new ZillionNewProxyCalls(), out);
+        newProxyCalls.run(RUNS);
+        out.println("1:" + (newProxyCalls.getAvg() / newCalls.getAvg()));
+        
         Profiler creations = new Profiler(new ZillionCreations(), out);
         creations.run(RUNS);
         Profiler selfCreations = new Profiler(new ZillionSelfCreations(), out);
         selfCreations.run(RUNS);
         out.println("1:" + (selfCreations.getAvg() / creations.getAvg()));
+        Profiler casts = new Profiler(new ZillionCasts(), out);
+        casts.run(RUNS);
+        out.println("1:" + (casts.getAvg() / creations.getAvg()));
+        Profiler compositionChanges = new Profiler(new ZillionCompositionChanges(), out);
+        compositionChanges.run(RUNS);
+        out.println("1:" + (compositionChanges.getAvg() / creations.getAvg()));
         
         out.println("Memory:");
         MemoryProfiler creationsMemory = new MemoryProfiler(new StoreCreations(), out);

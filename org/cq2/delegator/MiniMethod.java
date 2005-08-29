@@ -6,14 +6,16 @@ public class MiniMethod {
 
     public final String name;
     public final Class[] parameterTypes;
-    final Class[] exceptionTypes;
-    final int modifiers;
+    public final Class[] exceptionTypes;
+    public final int modifiers;
+    public final Class returnType;
 
-    public MiniMethod(String name, Class[] parameterTypes, Class[] exceptionTypes, int modifiers) {
+    public MiniMethod(String name, Class[] parameterTypes, Class[] exceptionTypes, int modifiers, Class returnType) {
         this.name = name;
         this.parameterTypes = parameterTypes;
         this.exceptionTypes = exceptionTypes;
         this.modifiers = modifiers;
+        this.returnType = returnType;
     }
     
     public MiniMethod(Method method) {
@@ -21,6 +23,7 @@ public class MiniMethod {
         parameterTypes = method.getParameterTypes();
         exceptionTypes = method.getExceptionTypes();
         modifiers = method.getModifiers();
+        returnType = method.getReturnType();
     }
     
     public int hashCode() {

@@ -9,10 +9,6 @@ class SingleClassLoader extends ClassLoader {
         this.classAsBytes = classAsBytes;
     }
     
-    private Class inject(byte[] classDef) {
-        return defineClass(null, classDef, 0, classDef.length);
-    }
-
     protected Class findClass(String name) throws ClassNotFoundException {
         return defineClass(null, classAsBytes, 0, classAsBytes.length);
     }

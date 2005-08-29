@@ -12,6 +12,7 @@ public class ComponentMethodFilter implements MethodFilter {
 		return !Modifier.isFinal(method.getModifiers())
 				&& !Modifier.isPrivate(method.getModifiers())
 				&& !Modifier.isStatic(method.getModifiers())
-				&& !Object.class.equals(method.getDeclaringClass());
+				&& !Object.class.equals(method.getDeclaringClass())
+				&& !method.getName().equals("finalize");
 	}
 }
