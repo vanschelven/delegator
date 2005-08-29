@@ -156,10 +156,8 @@ public class Self implements MyInvocationHandler, ISelf {
     
     public synchronized int i_invoke(Object proxy, int uniqueIdentifier) throws Throwable {
         Tuple tuple = methodsCache.getTuple(uniqueIdentifier);
-        if (tuple != null) {
-            return methodsCache.wrappers[uniqueIdentifier].i_invoke(components[tuple.index]);
-        }
-        return ((Integer) invokeNewMethod(proxy, MethodRegister.getInstance().getMethod(uniqueIdentifier), new Class[]{})).intValue();
+        if (tuple == null) tuple = initCaches(MethodRegister.getInstance().getMethod(uniqueIdentifier));
+        return methodsCache.wrappers[uniqueIdentifier].i_invoke(components[tuple.index]);
     }
     
     //TODO wordt de stack al wel gebruikt meerdere keren achter elkaar??!
@@ -205,16 +203,6 @@ public class Self implements MyInvocationHandler, ISelf {
 
         }
         throw new NoSuchMethodError(method.toString());
-    }
-
-
-    
-    public synchronized Tuple2 getTuple2(int uniqueIdentifier) throws Throwable {
-        Tuple tuple = methodsCache.getTuple(uniqueIdentifier);
-        if (tuple == null)
-            tuple = initCaches(MethodRegister.getInstance().getMethod(uniqueIdentifier));
-        return new methodsCache.wrappers[uniqueIdentifier].i_invoke(components[tuple.index]);
-        return ((Integer) invokeNewMethod(proxy, MethodRegister.getInstance().getMethod(uniqueIdentifier), new Class[]{})).intValue();
     }
 
     public Object cast(Class clas) {
