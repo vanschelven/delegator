@@ -12,7 +12,7 @@ public class InvocationHandlerWrapper implements InvocationHandler {
     }
     
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        return forwardee.invoke(proxy, MethodRegister.getInstance().getUnique(new MiniMethod(method)), args);
+        return forwardee.invoke(proxy, MethodRegister.getInstance().getIdentifier(new MiniMethod(method)), args);
     }
 
 }

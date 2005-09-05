@@ -49,7 +49,7 @@ public class Self implements MyInvocationHandler, ISelf {
 
     private Object invokeViaCache(Tuple tuple, Object[] args)
             throws Throwable {
-        Object component = components[tuple.index];
+        Object component = components[tuple.componentIndex];
         Method delegateMethod = tuple.method;
         //copy paste
         Stack stack = ((Stack) self.get());
@@ -116,7 +116,7 @@ public class Self implements MyInvocationHandler, ISelf {
                             .isProtected(method.modifiers))
                     || !Modifier.isPublic(method.modifiers)) {
                 methodsCache.put(
-                        MethodRegister.getInstance().getUnique(method), this, i,
+                        MethodRegister.getInstance().getIdentifier(method), this, i,
                         delegateMethod);
                 delegateMethod.setAccessible(true);
                 Stack stack = ((Stack) self.get());
@@ -157,7 +157,7 @@ public class Self implements MyInvocationHandler, ISelf {
     public synchronized int i_invoke(Object proxy, int uniqueIdentifier) throws Throwable {
         Tuple tuple = methodsCache.getTuple(uniqueIdentifier);
         if (tuple == null) tuple = initCaches(MethodRegister.getInstance().getMethod(uniqueIdentifier));
-        return methodsCache.wrappers[uniqueIdentifier].i_invoke(components[tuple.index]);
+        return methodsCache.wrappers[uniqueIdentifier].i_invoke(components[tuple.componentIndex]);
     }
     
     //TODO wordt de stack al wel gebruikt meerdere keren achter elkaar??!
@@ -197,7 +197,7 @@ public class Self implements MyInvocationHandler, ISelf {
                             .isProtected(method.modifiers))
                     || !Modifier.isPublic(method.modifiers)) {
                 return methodsCache.put(
-                        MethodRegister.getInstance().getUnique(method), this,
+                        MethodRegister.getInstance().getIdentifier(method), this,
                         i, delegateMethod);
             }
 

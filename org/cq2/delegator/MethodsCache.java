@@ -7,11 +7,11 @@ import java.util.Map;
 public class MethodsCache {
 
     public static class Tuple {
-        public Tuple(int index, Method method) {
-            this.index = index;
+        public Tuple(int componentIndex, Method method) {
+            this.componentIndex = componentIndex;
             this.method = method;
         }
-        public int index;
+        public int componentIndex;
         public Method method;
     }
     
@@ -27,7 +27,7 @@ public class MethodsCache {
     }
     
     public int getIndex(MiniMethod method) {
-        return ((Tuple) map.get(method)).index;
+        return ((Tuple) map.get(method)).componentIndex;
     }
    
     public Tuple getTuple(MiniMethod method) {

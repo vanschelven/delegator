@@ -250,7 +250,7 @@ public abstract class ClassGenerator implements Constants {
         return methodGen;
     }
 
-    private Type[] getArgumentTypes(Method method) {
+    private static Type[] getArgumentTypes(Method method) {
         return Type.getArgumentTypes(Type.getSignature(method));
     }
 
@@ -347,7 +347,7 @@ public abstract class ClassGenerator implements Constants {
          }
          
          createLoadThis();
-         instrList.append(new PUSH(constPool, MethodRegister.getInstance().getUnique(new MiniMethod(method))));
+         instrList.append(new PUSH(constPool, MethodRegister.getInstance().getIdentifier(new MiniMethod(method))));
          if ((method.getReturnType() != int.class || method.getParameterTypes().length != 0) ||
                  (isSpecialMethod(method.getName()))) {
              createParameterArray(method.getParameterTypes());
