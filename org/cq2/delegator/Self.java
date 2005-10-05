@@ -14,22 +14,20 @@ import org.cq2.delegator.MethodsCache.Tuple;
 import org.cq2.delegator.classgenerator.ClassGenerator;
 import org.cq2.delegator.method.MethodUtil;
 
-public class Self implements MyInvocationHandler, ISelf {
+public class Self implements ISelf {
     public static ThreadLocal self = new ThreadLocal() {
         protected Object initialValue() {
             return new Stack();
         }
     };
 
-    Object[] components;
+    public Object[] components; //TODO (en voor andere velden) - beschikbaarheid terugschroeven naar acceptabel niveau
 
     private int nrOfComponents = 0;
 
     private Class[] equalsComponents;
-
-    private MethodsCache3 methodsCache;
     
-    private CacheNode cacheNode;
+    public ComposedClass composedClass; //hide this!
 
     public Self(Object component) {
         this();
@@ -38,8 +36,7 @@ public class Self implements MyInvocationHandler, ISelf {
 
     public Self() {
         components = new Object[4];
-        cacheNode = CacheCache.getEmptyNode();
-        methodsCache = cacheNode.methodsCache;
+        composedClass = ComposedClass.getEmptyClass();
     }
 
     public Self(Class firstComponentClass) {
@@ -47,183 +44,13 @@ public class Self implements MyInvocationHandler, ISelf {
         addComponent(newComponent(firstComponentClass));
     }
 
-    private Object invokeViaCache(Tuple tuple, Object[] args)
-            throws Throwable {
-        Object component = components[tuple.componentIndex];
-        Method delegateMethod = tuple.method;
-        //copy paste
-        Stack stack = ((Stack) self.get());
-        stack.push(this);
-        try {
-            try {
-                return delegateMethod.invoke(component, args);
-            } finally {
-                stack.pop();
-            }
-        } catch (InvocationTargetException e) {
-            throw e.getTargetException();
-        }
-    }
-
-    //TODO methods that use Proxy may not be cached! Test on this and make it work. Only become uses proxy so perhaps a different mechanism is needed there
-    //TODO synchronization noodzaak opnieuw checken.
-    public Object invokeNewMethod(Object proxy, MiniMethod method, Object[] args)
-            throws Throwable {
-        if ("equals".equals(method.name))
-            return Boolean.valueOf(equals(args[0]));
-        if ("hashCode".equals(method.name))
-            return new Integer(hashCode());
-        int i = 0;
-
-        String name = method.name;
-        if (method.name.startsWith("__next__")) {
-            while (components[i] != proxy && (i < nrOfComponents))
-                i++;
-            name = name.substring(8);
-            i++;
-            //if(!cmps.hasNext())throw new NoSuchMethodError
-        }
-
-        for (; i < nrOfComponents; i++) {
-            Object component = components[i];
-            Method delegateMethod;
-            boolean componentMethodIsProtected;
-            if (component instanceof Component) {
-                delegateMethod = MethodUtil.getDeclaredMethod(component
-                        .getClass(), name + ClassGenerator.SUPERCALL_POSTFIX, method.parameterTypes,
-                        method.exceptionTypes);
-                //De superdelegatemethod is feitelijk de methode zoals
-                // ingetiept door de programmeur
-                //deze bestaat per definitie - als die niet gevonden wordt
-                // betekent dat hij protected is
-                Method superDelegateMethod = MethodUtil.getDeclaredMethod(
-                        component.getClass().getSuperclass(), name,
-                        method.parameterTypes, method.exceptionTypes);
-
-                componentMethodIsProtected = (delegateMethod != null)
-                        && (superDelegateMethod == null);
-            } else {
-                delegateMethod = MethodUtil.getDeclaredMethod(component
-                        .getClass(), name, method.parameterTypes,
-                        method.exceptionTypes);
-                componentMethodIsProtected = Modifier
-                        .isProtected(delegateMethod.getModifiers());
-            }
-            //TODO dit is in duigen gevallen met de toevoeging van package
-            // (in forwardees) maar dat lossen we later wel weer op...
-            if (delegateMethod != null
-                    && (!componentMethodIsProtected || Modifier
-                            .isProtected(method.modifiers))
-                    || !Modifier.isPublic(method.modifiers)) {
-                methodsCache.put(
-                        MethodRegister.getInstance().getIdentifier(method), this, i,
-                        delegateMethod);
-                delegateMethod.setAccessible(true);
-                Stack stack = ((Stack) self.get());
-                stack.push(this);
-                try {
-                    try {
-                        return delegateMethod.invoke(component, args);
-                    } finally {
-                        stack.pop();
-                    }
-                } catch (InvocationTargetException e) {
-                    throw e.getTargetException();
-                }
-            }
-
-        }
-        if ("become".equals(name)) {
-            become((Class) args[0], proxy);
-            return null;
-        }
-
-        Method delegateMethod = MethodUtil.getDeclaredMethod(Self.class, name,
-                method.parameterTypes, method.exceptionTypes);
-        if (delegateMethod != null)
-            return delegateMethod.invoke(this, args);
-        throw new NoSuchMethodError(method.toString());
-
-    }
-
-    public synchronized Object invoke(Object proxy, int uniqueIdentifier, Object[] args) throws Throwable {
-        Tuple tuple = methodsCache.getTuple(uniqueIdentifier);
-        if (tuple != null) {
-            return invokeViaCache(tuple, args);
-        }
-        return invokeNewMethod(proxy, MethodRegister.getInstance().getMethod(uniqueIdentifier), args);
-    }
-    
-    public synchronized int i_invoke(Object proxy, int uniqueIdentifier) throws Throwable {
-        Tuple tuple = methodsCache.getTuple(uniqueIdentifier);
-        if (tuple == null) tuple = initCaches(MethodRegister.getInstance().getMethod(uniqueIdentifier));
-        return methodsCache.wrappers[uniqueIdentifier].i_invoke(components[tuple.componentIndex]);
-    }
-    
-    //TODO wordt de stack al wel gebruikt meerdere keren achter elkaar??!
-    //TODO onderstaand: become 2x, equals, self-calls verwijderd
-   public Tuple initCaches(MiniMethod method)
-            throws Throwable {
-        String name = method.name;
-        for (int i = 0; i < nrOfComponents; i++) {
-            Object component = components[i];
-            Method delegateMethod;
-            boolean componentMethodIsProtected;
-            if (component instanceof Component) {
-                delegateMethod = MethodUtil.getDeclaredMethod(component
-                        .getClass(), name + ClassGenerator.SUPERCALL_POSTFIX,
-                        method.parameterTypes, method.exceptionTypes);
-                //De superdelegatemethod is feitelijk de methode zoals
-                // ingetiept door de programmeur
-                //deze bestaat per definitie - als die niet gevonden wordt
-                // betekent dat hij protected is
-                Method superDelegateMethod = MethodUtil.getDeclaredMethod(
-                        component.getClass().getSuperclass(), name,
-                        method.parameterTypes, method.exceptionTypes);
-
-                componentMethodIsProtected = (delegateMethod != null)
-                        && (superDelegateMethod == null);
-            } else {
-                delegateMethod = MethodUtil.getDeclaredMethod(component
-                        .getClass(), name, method.parameterTypes,
-                        method.exceptionTypes);
-                componentMethodIsProtected = Modifier
-                        .isProtected(delegateMethod.getModifiers());
-            }
-            //TODO dit is in duigen gevallen met de toevoeging van package
-            // (in forwardees) maar dat lossen we later wel weer op...
-            if (delegateMethod != null
-                    && (!componentMethodIsProtected || Modifier
-                            .isProtected(method.modifiers))
-                    || !Modifier.isPublic(method.modifiers)) {
-                return methodsCache.put(
-                        MethodRegister.getInstance().getIdentifier(method), this,
-                        i, delegateMethod);
-            }
-
-        }
-        throw new NoSuchMethodError(method.toString());
-    }
+    //TODO wordt de stack al wel gebruikt meerdere keren achter elkaar??! als in een test?
 
     public Object cast(Class clas) {
         return Delegator.proxyFor(clas, this);
     }
 
     public void become(Class clas) throws DelegatorException {
-        throw new DelegatorException(
-                "Become may only be called from within components of self");
-    }
-
-    private void become(Class clas, Object caller) {
-        Component newComponent = newComponent(clas);
-        for (int i = 0; i < nrOfComponents; i++) {
-            if (components[i] == caller) {
-                components[i] = newComponent;
-                cacheNode = cacheNode.become(i, clas);
-                methodsCache = cacheNode.methodsCache;
-                return;
-            }
-        }
         throw new DelegatorException(
                 "Become may only be called from within components of self");
     }
@@ -272,8 +99,7 @@ public class Self implements MyInvocationHandler, ISelf {
             components = newComponents;
         }
         components[nrOfComponents++] = component;
-        cacheNode = cacheNode.add(component.getClass());
-        methodsCache = cacheNode.methodsCache;
+        composedClass = composedClass.add(component.getClass());
     }
 
     public synchronized void insert(Class componentType) {
@@ -282,8 +108,7 @@ public class Self implements MyInvocationHandler, ISelf {
         System.arraycopy(components, 0, newComponents, 1, nrOfComponents);
         components = newComponents;
         nrOfComponents++;
-        cacheNode = cacheNode.insert(componentType);
-        methodsCache = cacheNode.methodsCache;
+        composedClass = composedClass.insert(componentType);
     }
 
     private Component newComponent(Class clas) {
@@ -396,8 +221,7 @@ public class Self implements MyInvocationHandler, ISelf {
                 for (int j = i + 1; j < nrOfComponents; j++)
                     components[j - 1] = components[j];
                 nrOfComponents--;
-                cacheNode = cacheNode.remove(i);
-                methodsCache = cacheNode.methodsCache;
+                composedClass = composedClass.remove(i);
                 return;
             }
         }

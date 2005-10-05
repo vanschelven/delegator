@@ -12,7 +12,7 @@ public interface ISelf {
 	void remove(Class c);
 	Self getComponent(int component);
 	Self getComponent(Class c);
-	Self self();
+//	Self self(); TODO aanzetten maar heeft aparte fout...
 	boolean respondsTo(Method method);
 	boolean respondsTo(Class clazz);
 	void decorate(Class decorator);

@@ -1,7 +1,5 @@
 package org.cq2.delegator.test;
 
-import javax.swing.text.Document;
-
 import junit.framework.TestCase;
 
 import org.cq2.delegator.Self;

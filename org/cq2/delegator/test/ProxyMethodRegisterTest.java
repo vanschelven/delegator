@@ -6,6 +6,7 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
+import org.apache.bcel.generic.Type;
 import org.cq2.delegator.ProxyMethodRegister;
 import org.cq2.delegator.Self;
 
@@ -28,6 +29,7 @@ public class ProxyMethodRegisterTest extends TestCase {
         Class clazz = ProxyMethodRegister.getInstance().getProxyMethodClass(identifier);
         assertTrue(Modifier.isAbstract(clazz.getModifiers()));
         assertEquals("org.cq2.delegator.ProxyMethod" + identifier, clazz.getName());
+        assertEquals("Lorg/cq2/delegator/ProxyMethod" + identifier + ";", Type.getType(clazz).getSignature());
         Method classMethod = clazz.getDeclaredMethod("invoke", new Class[]{Self.class, Object.class});
         assertTrue(Modifier.isAbstract(classMethod.getModifiers()));
         

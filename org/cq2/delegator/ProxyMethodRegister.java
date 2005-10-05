@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
+import org.cq2.delegator.classgenerator.ClassGenerator;
+
 public class ProxyMethodRegister {
 
     private static ProxyMethodRegister instance;
@@ -40,10 +42,14 @@ public class ProxyMethodRegister {
     
     public Class getProxyMethodClass(int methodIdentifier) {
         if (methodIdentifier >= proxyMethodClasses.length)
-            enlargeProxyMethodClasses(proxyMethodClasses.length + 1);
+            enlargeProxyMethodClasses(methodIdentifier + 1);
         Class result = proxyMethodClasses[methodIdentifier];
         if (result == null) {
-            result = new ProxyMethodGenerator(methodIdentifier, getMethod(methodIdentifier)).generate();
+            try {
+                result = ClassGenerator.getClassLoader().loadClass("org.cq2.delegator.ProxyMethod" + methodIdentifier);
+            } catch (ClassNotFoundException e) {
+               throw new RuntimeException(e);
+            }
             proxyMethodClasses[methodIdentifier] = result;
         }
         return result;

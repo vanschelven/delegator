@@ -21,11 +21,11 @@ public class Delegator {
 	 }
 	 };
 	 */
-	public static Object proxyFor(Class theInterface, MyInvocationHandler handler) {
-		if (theInterface.isInterface()) {
-			return Proxy.newProxyInstance(ClassGenerator.getClassLoader(), new Class[]{theInterface, ISelf.class}, new InvocationHandlerWrapper(handler));
+	public static Object proxyFor(Class theInterface, Self self) {
+	    if (theInterface.isInterface()) {
+			return Proxy.newProxyInstance(ClassGenerator.getClassLoader(), new Class[]{theInterface, ISelf.class}, new InvocationHandlerWrapper(self));
 		}
-		return ClassGenerator.newProxyInstance(theInterface, handler);
+		return ClassGenerator.newProxyInstance(theInterface, self);
 	}
 
 	public static Object forInterface(Class theInterface, Object delegate) {

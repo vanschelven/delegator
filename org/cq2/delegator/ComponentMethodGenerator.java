@@ -3,15 +3,19 @@ package org.cq2.delegator;
 import java.lang.reflect.Method;
 
 import org.apache.bcel.Constants;
-import org.apache.bcel.Repository;
-import org.apache.bcel.classfile.JavaClass;
+import org.apache.bcel.generic.ArrayType;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
+import org.apache.bcel.generic.FieldGen;
+import org.apache.bcel.generic.InstructionConstants;
 import org.apache.bcel.generic.InstructionFactory;
+import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.MethodGen;
+import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.ReferenceType;
 import org.apache.bcel.generic.Type;
+import org.cq2.delegator.classgenerator.ClassGenerator;
 
 public class ComponentMethodGenerator implements Constants {
 
@@ -31,38 +35,30 @@ public class ComponentMethodGenerator implements Constants {
 
     private final Class componentClass;
 
-    private int getUnique() {
-        return unique++;
-    }
-
-    public ComponentMethodGenerator(Class superclass, Class componentClass,
-            Method delegateMethod) {
-        this.superclass = superclass;
-        this.componentClass = componentClass;
+    public ComponentMethodGenerator(int methodIdentifier, int componentIdentifier) {
+        superclass = ProxyMethodRegister.getInstance().getProxyMethodClass(methodIdentifier);
+        componentClass = ComponentClassRegister.getInstance().getComponentClass(componentIdentifier);
         String superclassName = superclass.getName();
 
-        classGen = new ClassGen(superclassName + "_" + getUnique(),
+        classGen = new ClassGen("org.cq2.delegator.ComponentMethod" +  methodIdentifier + "_" + componentIdentifier,
                 superclassName, "", ACC_PUBLIC & ~ACC_ABSTRACT, new String[] {});
         constPool = classGen.getConstantPool();
         instrFact = new InstructionFactory(classGen, constPool);
         instrList = new InstructionList();
+        addComponentIndexField();
         addDefaultConstructor();
         //classGen.addEmptyConstructor(ACC_PUBLIC);
-        add_method(delegateMethod);
+        add_method();
+    }
+    
+    private void addComponentIndexField() {
+        FieldGen fieldGen = new FieldGen(ACC_PUBLIC | ACC_TRANSIENT, Type.INT, "componentIndex", classGen.getConstantPool());
+        classGen.addField(fieldGen.getField());
     }
 
-    public Class generate() {
-        ClassLoader parentClassLoader = superclass.getClassLoader();
-        if (parentClassLoader == null)
-            parentClassLoader = ClassLoader.getSystemClassLoader();
-        try {
-            return new SingleNamedClassLoader("MethodWrapperYY", classGen
-                    .getJavaClass().getBytes(), parentClassLoader).loadClass();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
+    public byte[] generate() {
+        return classGen.getJavaClass().getBytes();
+   }
 
     private void addDefaultConstructor() {
         MethodGen methodGen = new MethodGen(ACC_PUBLIC, Type.VOID,
@@ -82,30 +78,58 @@ public class ComponentMethodGenerator implements Constants {
         instrList.append(InstructionFactory.createLoad(Type.OBJECT, 0));
     }
 
-    private void add_method(Method method) {
+    private void add_method() {
         try {
-            Type returnType = Type.getType(method.getReturnType());
-            Type[] parameterTypes = insertSelfType(getArgumentTypes(method));
+            Method superMethod = getInvokeMethod(superclass); 
 
-            Method superMethod = superclass.getDeclaredMethod("invoke",
-                    insertSelfClass(method.getParameterTypes()));
+            Type returnType = Type.getType(superMethod.getReturnType());
+            Type[] parameterTypes = getArgumentTypes(superMethod);
+
             methodGen = new MethodGen(superMethod.getModifiers()
                     & ~ACC_ABSTRACT, returnType, parameterTypes,
-                    insertSelfString(generateParameterNames(method
-                            .getParameterTypes().length)), "invoke", classGen
+                    generateParameterNames(superMethod
+                            .getParameterTypes().length), superMethod.getName(), classGen
                             .getClassName(), instrList, constPool);
+            
+//            instrList.append(instrFact.createFieldAccess("java.lang.System", "out", new ObjectType("java.io.PrintStream"),
+//	                Constants.GETSTATIC));
+//			instrList.append(InstructionFactory.createThis());
+//			instrList.append(instrFact.createInvoke(Object.class.getName(), "getClass", Type.getType(Class.class), new Type[] {}, INVOKEVIRTUAL));
+//			instrList.append(instrFact.createInvoke(Class.class.getName(), "getClassLoader", Type.getType(ClassLoader.class), new Type[] {}, INVOKEVIRTUAL));
+//			instrList.append(instrFact.createInvoke(ClassLoader.class.getName(), "getParent", Type.getType(ClassLoader.class), new Type[] {}, INVOKEVIRTUAL));
+//
+//	        instrList.append(instrFact.createInvoke("java.io.PrintStream", "println", Type.VOID, 
+//	         new Type[] { Type.OBJECT },
+//	         Constants.INVOKEVIRTUAL));
 
-//            instrList.append(InstructionFactory.createLoad(Type.OBJECT, 1));
-//            instrList.append(instrFact.createCheckCast((ReferenceType) Type
-//                    .getType(componentClass)));
-//            instrList.append(instrFact.createInvoke(componentClass.getName(),
-//                    method.getName(), returnType, parameterTypes,
-//                    Constants.INVOKEVIRTUAL));
-            instrList.append(instrFact.createConstant(new Integer(666)));
+            instrList.append(InstructionFactory.createLoad(Type.getType(Self.class), 1));
+            instrList.append(instrFact.createGetField(Self.class.getName(), "components", new ArrayType(Type.getType(Object.class), 1)));
+			instrList.append(InstructionFactory.createThis());
+			instrList.append((instrFact.createGetField(classGen.getClassName(), "componentIndex", Type.INT)));
+			instrList.append(InstructionConstants.AALOAD);
+			
+			instrList.append(instrFact.createCheckCast((ReferenceType) Type
+                    .getType(componentClass)));
+            
+            for (int i = 1; i < methodGen.getArgumentTypes().length; i++) {
+                final int SKIP_THIS_POINTER = 1;
+                instrList.append(InstructionFactory.createLoad(methodGen.getArgumentTypes()[i], i + SKIP_THIS_POINTER));
+            }
+
+            String methodName = extractOriginalMethodName(superMethod.getName());
+            if (Component.class.isAssignableFrom(componentClass) && (!methodName.equals("equals"))) //TODO uitbreiden
+                methodName += ClassGenerator.SUPERCALL_POSTFIX;
+            instrList.append(instrFact.createInvoke(componentClass.getName(),
+                    methodName, returnType, removeFirst(getArgumentTypes(superMethod)),
+                    Constants.INVOKEVIRTUAL));
+            
             instrList.append(InstructionFactory.createReturn(returnType));
 
             methodGen.setMaxStack();
             methodGen.setMaxLocals();
+            
+//            printMethod(methodGen);
+            addFakeLineNumbers(methodGen);
 
             classGen.addMethod(methodGen.getMethod());
 
@@ -114,13 +138,82 @@ public class ComponentMethodGenerator implements Constants {
             throw new RuntimeException(e);
         }
     }
-
-    private static Class[] insertSelfClass(Class[] input) {
-        Class[] result = new Class[input.length + 1];
-        result[0] = Self.class;
-        System.arraycopy(input, 0, result, 1, input.length);
+    
+    private void addFakeLineNumbers(MethodGen methodGen) {
+        InstructionHandle[] instructionHandles = methodGen.getInstructionList().getInstructionHandles();
+        for (int i = 0; i < instructionHandles.length; i++) {
+            methodGen.addLineNumber(instructionHandles[i], i);
+        }
+    }
+    
+    private void printMethod(MethodGen methodGen) {
+        System.out.println("code of " + methodGen.getName());
+        InstructionHandle[] instructionHandles = methodGen.getInstructionList().getInstructionHandles();
+        for (int i = 0; i < instructionHandles.length; i++) {
+            System.out.println(i + ": " + instructionHandles[i]);
+        }
+    }
+    
+    private Type[] removeFirst(Type[] input) {
+        Type[] result = new Type[input.length - 1];
+        System.arraycopy(input, 1, result, 0, result.length);
         return result;
     }
+
+    private String extractOriginalMethodName(String name) {
+        return name.substring("__invoke_".length());
+    }
+
+    private Method getInvokeMethod(Class clazz) {
+        Method[] methods = clazz.getDeclaredMethods();
+        for (int i = 0; i < methods.length; i++) {
+            if (methods[i].getName().startsWith("__invoke")) return methods[i];
+        }
+        return null;
+    }
+//    private void add_method() {
+//        try {
+//            Type returnType = Type.getType(method.getReturnType());
+//            Type[] parameterTypes = insertSelfType(getArgumentTypes(method));
+//
+//            Method superMethod = superclass.getDeclaredMethod("invoke",
+//                    insertSelfClass(method.getParameterTypes()));
+//            methodGen = new MethodGen(superMethod.getModifiers()
+//                    & ~ACC_ABSTRACT, returnType, parameterTypes,
+//                    insertSelfString(generateParameterNames(method
+//                            .getParameterTypes().length)), "invoke", classGen
+//                            .getClassName(), instrList, constPool);
+//            
+//            //(componentClass) self.components[componentIndex]
+//            instrList.append(InstructionFactory.createLoad(Type.getType(Self.class), 1));
+//            instrList.append(instrFact.createGetField(Self.class.getName(), "components", new ArrayType(Type.getType(Object.class), 1)));
+//			instrList.append(InstructionFactory.createThis());
+//			instrList.append((instrFact.createGetField(classGen.getClassName(), "componentIndex", Type.INT)));
+//			instrList.append(InstructionConstants.AALOAD);
+//            instrList.append(instrFact.createCheckCast((ReferenceType) Type
+//                    .getType(componentClass)));
+//            
+//            for (int i = 0; i < method.getParameterTypes().length; i++) {
+//                instrList.append(InstructionFactory.createLoad(Type.getType(method.getParameterTypes()[i]), i + 2)); //TODO dit nog door het echte lijstje vervangen
+//            }
+//
+//            instrList.append(instrFact.createInvoke(componentClass.getName(),
+//                    method.getName(), returnType, getArgumentTypes(method),
+//                    Constants.INVOKEVIRTUAL));
+//            
+//            instrList.append(InstructionFactory.createReturn(returnType));
+//
+//            methodGen.setMaxStack();
+//            methodGen.setMaxLocals();
+//
+//            classGen.addMethod(methodGen.getMethod());
+//
+//            instrList.dispose();
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+
 
     //copy paste - classGenerator
     private static String[] generateParameterNames(int nr) {
@@ -131,33 +224,8 @@ public class ComponentMethodGenerator implements Constants {
         return result;
     }
 
-    private static String[] insertSelfString(String[] input) {
-        String[] result = new String[input.length + 1];
-        result[0] = "self";
-        System.arraycopy(input, 0, result, 1, input.length);
-        return result;
-    }
-
     private static Type[] getArgumentTypes(Method method) {
         return Type.getArgumentTypes(Type.getSignature(method));
-    }
-
-    private static Type[] insertSelfType(Type[] input) {
-        Type[] result = new Type[input.length + 1];
-        result[0] = Type.getType(Self.class);
-        System.arraycopy(input, 0, result, 1, input.length);
-        return result;
-    }
-
-    public static ProxyMethod getComponentMethodInstance(Class superclass,
-            Class componentClass, Method delegateMethod, int componentIndex) {
-        Class clazz = new ComponentMethodGenerator(superclass, componentClass,
-                delegateMethod).generate();
-        try {
-            return (ProxyMethod) clazz.newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
 }

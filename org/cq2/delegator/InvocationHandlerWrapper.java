@@ -5,14 +5,15 @@ import java.lang.reflect.Method;
 
 public class InvocationHandlerWrapper implements InvocationHandler {
 
-    private final MyInvocationHandler forwardee;
+    private final Self self;
 
-    public InvocationHandlerWrapper(MyInvocationHandler forwardee) {
-        this.forwardee = forwardee;
+    public InvocationHandlerWrapper(Self self) {
+        this.self = self;
     }
     
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        return forwardee.invoke(proxy, MethodRegister.getInstance().getIdentifier(new MiniMethod(method)), args);
+        int identifier = ProxyMethodRegister.getInstance().getMethodIdentifier(method);
+        return self.composedClass.getReflectMethod(identifier).invoke(method, args); //TODO stack enzo??!
     }
 
 }

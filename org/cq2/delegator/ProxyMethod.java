@@ -1,5 +1,6 @@
 package org.cq2.delegator;
 
-public class ProxyMethod {
 
+public class ProxyMethod {
+    
 }

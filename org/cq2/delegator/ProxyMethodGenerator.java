@@ -38,17 +38,8 @@ public class ProxyMethodGenerator implements Constants {
         add_method(method);
     }
 
-    public Class generate() {
-        ClassLoader parentClassLoader = superclass.getClassLoader();
-        if (parentClassLoader == null)
-            parentClassLoader = ClassLoader.getSystemClassLoader();
-        try {
-            return new SingleNamedClassLoader("MethodWrapperXX", classGen
-                    .getJavaClass().getBytes(), parentClassLoader).loadClass();
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-
+    public byte[] generate() {
+        return classGen.getJavaClass().getBytes();
     }
 
     private void addDefaultConstructor() {
@@ -71,13 +62,12 @@ public class ProxyMethodGenerator implements Constants {
 
     private void add_method(Method method) {
         try {
-            int modifiers = method.getModifiers() | ACC_ABSTRACT;
-            //TODO type.object, parameter namen
+            int modifiers = (method.getModifiers() | ACC_ABSTRACT) & ~ACC_NATIVE;
             methodGen = new MethodGen(modifiers, Type.getType(method
                     .getReturnType()),
                     insertSelfType(getArgumentTypes(method)),
                     insertSelfString(generateParameterNames(method
-                            .getParameterTypes().length)), "invoke", classGen
+                            .getParameterTypes().length)), "__invoke_" + method.getName(), classGen
                             .getClassName(), instrList, constPool);
             for (int i = 0; i < method.getExceptionTypes().length; i++) {
                 methodGen.addException(method.getExceptionTypes()[0].getName());

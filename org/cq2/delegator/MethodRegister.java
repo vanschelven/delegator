@@ -21,7 +21,7 @@ public class MethodRegister {
         return instance;
     }
     
-    public int getUnique(MiniMethod method) {
+    public int getIdentifier(MiniMethod method) {
         Object value = map.get(method);
         if (value != null)
             return ((Integer) value).intValue();
@@ -31,8 +31,8 @@ public class MethodRegister {
         return result;
     }
     
-    public MiniMethod getMethod(int uniqueIndex) {
-        return (MiniMethod) vector.get(uniqueIndex);
+    public MiniMethod getMethod(int identifier) {
+        return (MiniMethod) vector.get(identifier);
     }
     
 }
