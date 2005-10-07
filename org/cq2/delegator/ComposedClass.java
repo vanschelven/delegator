@@ -2,6 +2,7 @@ package org.cq2.delegator;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
@@ -28,6 +29,8 @@ public class ComposedClass {
 
     private Method[] componentReflectMethods;
 
+    private int[] componentIndexes;
+
     private ComposedClass() {
         this(new Vector());
     }
@@ -39,6 +42,7 @@ public class ComposedClass {
         insertMap = new HashMap();
         componentMethods = new ProxyMethod[0];
         componentReflectMethods = new Method[0];
+        componentIndexes = new int[0];
     }
 
     public static ComposedClass getEmptyClass() {
@@ -89,6 +93,16 @@ public class ComposedClass {
         } else enlargeArrays(methodIdentifier + 1);
         setMethod(methodIdentifier);
         return componentReflectMethods[methodIdentifier];
+    }
+    
+    public int getComponentIndex(int methodIdentifier) {
+        if (methodIdentifier < componentReflectMethods.length) {
+            int result = componentIndexes[methodIdentifier];
+            if (result != -1)
+                return result;
+        } else enlargeArrays(methodIdentifier + 1);
+        setMethod(methodIdentifier);
+        return componentIndexes[methodIdentifier];
     }
     
     public ProxyMethod getMethod(int methodIdentifier) {
@@ -188,24 +202,13 @@ public class ComposedClass {
         Method delegateMethod = tuple.method;
         int componentClassIdentifier = ComponentClassRegister.getInstance().getIdentifier(componentClass);
         Class clazz = null;
-//        try {
-//            System.out.println("ComposedClass.setMethod:" + getClass().getClassLoader());
-//            clazz = getClass().getClassLoader().loadClass("org.cq2.delegator.ComponentMethod" + methodIdentifier + "_" + componentClassIdentifier);
-//        } catch (ClassNotFoundException e) {
-//            try {
-//                clazz = new MethodClassLoader(ClassLoader.getSystemClassLoader()).loadClass("org.cq2.delegator.ComponentMethod" + methodIdentifier + "_" + componentClassIdentifier);
-//            } catch (ClassNotFoundException e1) {
-//               throw new RuntimeException(e1);
-//            }
-//        }
+
 
         try {
             clazz = ClassGenerator.getClassLoader().loadClass("org.cq2.delegator.ComponentMethod" + methodIdentifier + "_" + componentClassIdentifier);
         } catch (ClassNotFoundException e) {
              throw new RuntimeException(e);
         }
-
-        
         ProxyMethod result = null;
         try {
             result = (ProxyMethod) clazz.newInstance();
@@ -216,6 +219,7 @@ public class ComposedClass {
         
         componentMethods[methodIdentifier] = result;
         componentReflectMethods[methodIdentifier] = delegateMethod;
+        componentIndexes[methodIdentifier] = componentIndex;
         return result;
     }
 
@@ -229,6 +233,14 @@ public class ComposedClass {
         componentReflectMethods = new Method[length];
         System.arraycopy(oldComponentReflectMethods, 0, componentReflectMethods, 0,
                 oldComponentReflectMethods.length);
+        
+        int[] oldComponentIndexes = componentIndexes;
+        componentIndexes = new int[length];
+        System.arraycopy(oldComponentIndexes, 0, componentIndexes, 0,
+                oldComponentIndexes.length);
+        //TODO is dit juist?
+        Arrays.fill(componentIndexes, oldComponentIndexes.length, componentIndexes.length - 1, -1);
+        
     }
 
 }
