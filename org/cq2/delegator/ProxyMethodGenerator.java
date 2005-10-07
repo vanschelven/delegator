@@ -62,7 +62,7 @@ public class ProxyMethodGenerator implements Constants {
 
     private void add_method(Method method) {
         try {
-            int modifiers = (method.getModifiers() | ACC_ABSTRACT) & ~ACC_NATIVE;
+            int modifiers = (ACC_PUBLIC | ACC_ABSTRACT);
             methodGen = new MethodGen(modifiers, Type.getType(method
                     .getReturnType()),
                     insertSelfType(getArgumentTypes(method)),

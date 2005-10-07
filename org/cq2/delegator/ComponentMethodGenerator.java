@@ -93,13 +93,10 @@ public class ComponentMethodGenerator implements Constants {
             
 //            instrList.append(instrFact.createFieldAccess("java.lang.System", "out", new ObjectType("java.io.PrintStream"),
 //	                Constants.GETSTATIC));
-//			instrList.append(InstructionFactory.createThis());
-//			instrList.append(instrFact.createInvoke(Object.class.getName(), "getClass", Type.getType(Class.class), new Type[] {}, INVOKEVIRTUAL));
-//			instrList.append(instrFact.createInvoke(Class.class.getName(), "getClassLoader", Type.getType(ClassLoader.class), new Type[] {}, INVOKEVIRTUAL));
-//			instrList.append(instrFact.createInvoke(ClassLoader.class.getName(), "getParent", Type.getType(ClassLoader.class), new Type[] {}, INVOKEVIRTUAL));
+//			instrList.append((instrFact.createGetField(classGen.getClassName(), "componentIndex", Type.INT)));
 //
 //	        instrList.append(instrFact.createInvoke("java.io.PrintStream", "println", Type.VOID, 
-//	         new Type[] { Type.OBJECT },
+//	         new Type[] { Type.INT },
 //	         Constants.INVOKEVIRTUAL));
 
             instrList.append(InstructionFactory.createLoad(Type.getType(Self.class), 1));
@@ -110,14 +107,15 @@ public class ComponentMethodGenerator implements Constants {
 			
 			instrList.append(instrFact.createCheckCast((ReferenceType) Type
                     .getType(componentClass)));
-            
-            for (int i = 1; i < methodGen.getArgumentTypes().length; i++) {
-                final int SKIP_THIS_POINTER = 1;
-                instrList.append(InstructionFactory.createLoad(methodGen.getArgumentTypes()[i], i + SKIP_THIS_POINTER));
+            final int SKIP_THIS_POINTER = 1;
+            int pointer = SKIP_THIS_POINTER + 1; //don't use self
+			for (int i = 1; i < methodGen.getArgumentTypes().length; i++) {
+                instrList.append(InstructionFactory.createLoad(methodGen.getArgumentTypes()[i], pointer));
+                pointer += methodGen.getArgumentTypes()[i].getSize();
             }
 
             String methodName = extractOriginalMethodName(superMethod.getName());
-            if (Component.class.isAssignableFrom(componentClass) && (!methodName.equals("equals"))) //TODO uitbreiden
+            if (Component.class.isAssignableFrom(componentClass) &&( (!methodName.equals("equals")) && (!methodName.equals("toString")))) //TODO uitbreiden
                 methodName += ClassGenerator.SUPERCALL_POSTFIX;
             instrList.append(instrFact.createInvoke(componentClass.getName(),
                     methodName, returnType, removeFirst(getArgumentTypes(superMethod)),
@@ -128,7 +126,7 @@ public class ComponentMethodGenerator implements Constants {
             methodGen.setMaxStack();
             methodGen.setMaxLocals();
             
-//            printMethod(methodGen);
+ //           printMethod(methodGen);
             addFakeLineNumbers(methodGen);
 
             classGen.addMethod(methodGen.getMethod());

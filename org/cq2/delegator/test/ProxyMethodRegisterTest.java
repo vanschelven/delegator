@@ -30,7 +30,7 @@ public class ProxyMethodRegisterTest extends TestCase {
         assertTrue(Modifier.isAbstract(clazz.getModifiers()));
         assertEquals("org.cq2.delegator.ProxyMethod" + identifier, clazz.getName());
         assertEquals("Lorg/cq2/delegator/ProxyMethod" + identifier + ";", Type.getType(clazz).getSignature());
-        Method classMethod = clazz.getDeclaredMethod("invoke", new Class[]{Self.class, Object.class});
+        Method classMethod = clazz.getDeclaredMethod("__invoke_add", new Class[]{Self.class, Object.class});
         assertTrue(Modifier.isAbstract(classMethod.getModifiers()));
         
         //TODO test exceptions etc., non-empty constructor
@@ -48,7 +48,7 @@ public class ProxyMethodRegisterTest extends TestCase {
         Method exceptionMethod = A.class.getDeclaredMethod("throwsException", new Class[]{});
         int identifier = ProxyMethodRegister.getInstance().getMethodIdentifier(exceptionMethod);
         Class clazz = ProxyMethodRegister.getInstance().getProxyMethodClass(identifier);
-        Method classMethod = clazz.getDeclaredMethod("invoke", new Class[]{Self.class});
+        Method classMethod = clazz.getDeclaredMethod("__invoke_throwsException", new Class[]{Self.class});
         assertEquals(1, classMethod.getExceptionTypes().length);
         assertEquals(Exception.class, classMethod.getExceptionTypes()[0]);
     }

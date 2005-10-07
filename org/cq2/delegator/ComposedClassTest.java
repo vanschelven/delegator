@@ -13,11 +13,13 @@ public class ComposedClassTest extends TestCase {
     private int identifier;
     private ComposedClass composedClass;
     private static boolean methodCalled;
+    private Self self;
     
     protected void setUp() throws Exception {
         method = A.class.getDeclaredMethod("add", new Class[]{Object.class});
         identifier = ProxyMethodRegister.getInstance().getMethodIdentifier(method);
-        composedClass = ComposedClass.getEmptyClass().add(A.class);
+        self = new Self(A.class);
+        composedClass = self.composedClass;
         methodCalled = false;
     }
     
@@ -38,13 +40,10 @@ public class ComposedClassTest extends TestCase {
     public void testGetMethod() throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
         ProxyMethod proxyMethod = composedClass.getMethod(identifier);
         assertFalse(Modifier.isAbstract(proxyMethod.getClass().getModifiers()));
-        Method proxyMethodMethod = proxyMethod.getClass().getDeclaredMethod("invoke", new Class[]{Self.class, Object.class});
+        Method proxyMethodMethod = proxyMethod.getClass().getDeclaredMethod("__invoke_add", new Class[]{Self.class, Object.class});
         assertFalse(Modifier.isAbstract(proxyMethodMethod.getModifiers()));
-        Self self = new Self(A.class);
         assertEquals(new Boolean(false), proxyMethodMethod.invoke(proxyMethod, new Object[]{self, new Integer(5)}));
         assertTrue(methodCalled);
-        //TODO field set to 0, call reaches the vector of a self
-        //TODO resolve pakt altijd 0, add
     }
     
     public void test2() throws SecurityException, NoSuchMethodException, IllegalArgumentException, IllegalAccessException, InvocationTargetException {
@@ -52,7 +51,7 @@ public class ComposedClassTest extends TestCase {
         identifier = ProxyMethodRegister.getInstance().getMethodIdentifier(method);
         
         ProxyMethod proxyMethod = composedClass.getMethod(identifier);
-        Method proxyMethodMethod = proxyMethod.getClass().getDeclaredMethod("invoke", new Class[]{Self.class});
+        Method proxyMethodMethod = proxyMethod.getClass().getDeclaredMethod("__invoke_size", new Class[]{Self.class});
         Self self = new Self(A.class);
         assertEquals(new Integer(666), proxyMethodMethod.invoke(proxyMethod, new Object[]{self}));
         assertTrue(methodCalled);

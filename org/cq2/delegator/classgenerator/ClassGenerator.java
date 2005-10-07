@@ -400,10 +400,15 @@ public abstract class ClassGenerator implements Constants {
         //load self again...
         instrList.append(InstructionFactory.createLoad(Type.OBJECT, method.getParameterTypes().length + 2));
         //load paramters
+
+        final int SKIP_THIS_POINTER = 1;
+        int pointer = SKIP_THIS_POINTER;
         for (int i = 0; i < method.getParameterTypes().length; i++) {
             instrList.append(InstructionFactory.createLoad(Type.getType(method
-                    .getParameterTypes()[i]), i + 1));
+                    .getParameterTypes()[i]), pointer));
+            pointer += Type.getType(method.getParameterTypes()[i]).getSize();
         }
+
         //call invoke
         instrList.append(instrFact.createInvoke("org.cq2.delegator.ProxyMethod" + identifier, "__invoke_" + method.getName(),
                 Type.getType(method.getReturnType()),

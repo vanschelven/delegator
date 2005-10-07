@@ -10,6 +10,8 @@ import org.cq2.delegator.MethodsCache.Tuple;
 import org.cq2.delegator.classgenerator.ClassGenerator;
 import org.cq2.delegator.method.MethodUtil;
 
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+
 public class ComposedClass {
 
     private Vector classes;
@@ -98,9 +100,20 @@ public class ComposedClass {
         return setMethod(methodIdentifier);
     }
 
+    private Method getDeclaredMethod(Class clazz, String s, Class[] classes) {
+        try {
+            return clazz.getDeclaredMethod(s, classes);
+        } catch (SecurityException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
     private Tuple resolve(int uniqueIdentifier) {
         Method method = ProxyMethodRegister.getInstance().getMethod(uniqueIdentifier);
-        
+        if ((method.getName().equals("equals")) || (method.getName().equals("toString")))
+            return new Tuple(classes.size(), getDeclaredMethod(Self.class, "equals", new Class[]{Object.class}));
         //TODO methods that use Proxy may not be cached! Test on this and make it work. Only become uses proxy so perhaps a different mechanism is needed there
         //TODO synchronization noodzaak opnieuw checken.
         //TODO equals etc.
@@ -121,52 +134,57 @@ public class ComposedClass {
 
         for (; i < classes.size(); i++) {
             Class clazz = (Class) classes.get(i);
-            Method delegateMethod;
-            boolean componentMethodIsProtected;
-            if (Component.class.isAssignableFrom(clazz)) {
-                delegateMethod = MethodUtil.getDeclaredMethod(clazz, name + ClassGenerator.SUPERCALL_POSTFIX, method.getParameterTypes(),
-                        method.getExceptionTypes());
-                //De superdelegatemethod is feitelijk de methode zoals
-                // ingetiept door de programmeur
-                //deze bestaat per definitie - als die niet gevonden wordt
-                // betekent dat hij protected is
-                Method superDelegateMethod = MethodUtil.getDeclaredMethod(
-                        clazz.getSuperclass(), name,
-                        method.getParameterTypes(), method.getExceptionTypes());
-
-                componentMethodIsProtected = (delegateMethod != null)
-                        && (superDelegateMethod == null);
-            } else {
-                delegateMethod = MethodUtil.getDeclaredMethod(clazz, name, method.getParameterTypes(),
-                        method.getExceptionTypes());
-                componentMethodIsProtected = Modifier
-                        .isProtected(delegateMethod.getModifiers());
-            }
-            //TODO dit is in duigen gevallen met de toevoeging van package
-            // (in forwardees) maar dat lossen we later wel weer op...
-            if (delegateMethod != null
-                    && (!componentMethodIsProtected || Modifier
-                            .isProtected(method.getModifiers()))
-                    || !Modifier.isPublic(method.getModifiers())) {
-                return new Tuple(i, delegateMethod);
-             }
-
+            Tuple result = xxxxxxxx(method, i, name, clazz);
+            if (result != null) return result;
         }
 
-//TODO dit...
-//        Method delegateMethod = MethodUtil.getDeclaredMethod(Self.class, name,
-//                method.parameterTypes, method.exceptionTypes);
-//        if (delegateMethod != null)
-//            return delegateMethod.invoke(this, args);
+        Tuple result = xxxxxxxx(method, classes.size(), name, Self.class);
+        if (result != null) return result;
+        
         throw new NoSuchMethodError(method.toString());
 
+    }
+
+    private Tuple xxxxxxxx(Method method, int i, String name, Class clazz) {
+        Method delegateMethod;
+        boolean componentMethodIsProtected = false;
+        if (Component.class.isAssignableFrom(clazz)) {
+            delegateMethod = MethodUtil.getDeclaredMethod(clazz, name + ClassGenerator.SUPERCALL_POSTFIX, method.getParameterTypes(),
+                    method.getExceptionTypes());
+            //De superdelegatemethod is feitelijk de methode zoals
+            // ingetiept door de programmeur
+            //deze bestaat per definitie - als die niet gevonden wordt
+            // betekent dat hij protected is
+            Method superDelegateMethod = MethodUtil.getDeclaredMethod(
+                    clazz.getSuperclass(), name,
+                    method.getParameterTypes(), method.getExceptionTypes());
+
+            componentMethodIsProtected = (delegateMethod != null)
+                    && (superDelegateMethod == null);
+        } else {
+            delegateMethod = MethodUtil.getDeclaredMethod(clazz, name, method.getParameterTypes(),
+                    method.getExceptionTypes());
+            if (delegateMethod != null)  componentMethodIsProtected = Modifier
+                    .isProtected(delegateMethod.getModifiers());
+        }
+        //TODO dit is in duigen gevallen met de toevoeging van package
+        // (in forwardees) maar dat lossen we later wel weer op...
+        if (delegateMethod != null
+                && (!componentMethodIsProtected || Modifier
+                        .isProtected(method.getModifiers()))
+                || !Modifier.isPublic(method.getModifiers())) {
+            return new Tuple(i, delegateMethod);
+         }
+        return null;
     }
 
     private ProxyMethod setMethod(int methodIdentifier) {
         Tuple tuple = resolve(methodIdentifier);
         int componentIndex = tuple.componentIndex;
-        Class superClass = ProxyMethodRegister.getInstance().getProxyMethodClass(methodIdentifier);
-        Class componentClass = (Class) classes.get(componentIndex);
+        Class componentClass;
+        if (componentIndex == classes.size()) componentClass = Self.class;
+        else componentClass = (Class) classes.get(componentIndex);
+        
         Method delegateMethod = tuple.method;
         int componentClassIdentifier = ComponentClassRegister.getInstance().getIdentifier(componentClass);
         Class clazz = null;
@@ -191,6 +209,7 @@ public class ComposedClass {
         ProxyMethod result = null;
         try {
             result = (ProxyMethod) clazz.newInstance();
+            clazz.getField("componentIndex").set(result, new Integer(componentIndex));
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

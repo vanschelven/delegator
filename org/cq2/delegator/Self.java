@@ -5,12 +5,9 @@
 package org.cq2.delegator;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Stack;
 
-import org.cq2.delegator.MethodsCache.Tuple;
 import org.cq2.delegator.classgenerator.ClassGenerator;
 import org.cq2.delegator.method.MethodUtil;
 
@@ -36,6 +33,7 @@ public class Self implements ISelf {
 
     public Self() {
         components = new Object[4];
+        components[0] = this;
         composedClass = ComposedClass.getEmptyClass();
     }
 
@@ -91,7 +89,7 @@ public class Self implements ISelf {
     }
 
     private synchronized void addComponent(Object component) {
-        if (nrOfComponents >= components.length) {
+        if (nrOfComponents + 1 >= components.length) {
             Object[] newComponents = new Object[components.length * 2];
             System
                     .arraycopy(components, 0, newComponents, 0,
@@ -99,6 +97,7 @@ public class Self implements ISelf {
             components = newComponents;
         }
         components[nrOfComponents++] = component;
+        components[nrOfComponents] = this;
         composedClass = composedClass.add(component.getClass());
     }
 
@@ -108,6 +107,7 @@ public class Self implements ISelf {
         System.arraycopy(components, 0, newComponents, 1, nrOfComponents);
         components = newComponents;
         nrOfComponents++;
+        components[nrOfComponents] = this;
         composedClass = composedClass.insert(componentType);
     }
 
@@ -121,6 +121,7 @@ public class Self implements ISelf {
         return newSelf;
     }
 
+    //TODO wat is hiervan het nut??????!
     public Self self() {
         return this;
     }
@@ -221,6 +222,7 @@ public class Self implements ISelf {
                 for (int j = i + 1; j < nrOfComponents; j++)
                     components[j - 1] = components[j];
                 nrOfComponents--;
+                components[nrOfComponents] = this;
                 composedClass = composedClass.remove(i);
                 return;
             }

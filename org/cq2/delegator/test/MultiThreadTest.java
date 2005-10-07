@@ -130,14 +130,6 @@ public class MultiThreadTest extends TestCase {
 
     }
 
-    //TODO dit moet misschien ook ergens anders heen
-    public void testBecomeUsingSingleThread() {
-        ISelf self = new Self(A1.class);
-        self.add(B.class);
-        A a = (A) self.cast(A.class);
-        a.m();
-    }
-
     public class BComponentUser extends MyThread {
 
         private ISelf self;
@@ -151,16 +143,6 @@ public class MultiThreadTest extends TestCase {
             b.n();
         }
 
-    }
-
-    public void testBecomeUsingTwoThreads() throws InterruptedException {
-        ISelf self = new Self(A1.class);
-        self.add(B.class);
-        A a = (A) self.cast(A.class);
-        BComponentUser thread = new BComponentUser(self);
-        thread.start();
-        a.m();
-        thread.waitFor();
     }
 
     public class CComponentUser extends MyThread {
@@ -192,17 +174,6 @@ public class MultiThreadTest extends TestCase {
                 n(i - 1);
         }
 
-    }
-
-    public void testBecomeUsingTwoThreads2() throws InterruptedException {
-        ISelf self = new Self(A1.class);
-        self.add(C.class);
-        A a = (A) self.cast(A.class);
-        CComponentUser thread = new CComponentUser(self);
-        thread.start();
-        a.m();
-        thread.waitFor();
-        assertNull(thread.exception);
     }
 
     //is deze manier van werken niet veel handiger dan de eerste manier?!
