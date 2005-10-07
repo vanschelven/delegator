@@ -262,6 +262,7 @@ public class MultiThreadTest extends TestCase {
 
     }
 
+   //TODO valt deze soms om?
     public void testSameMethodRemoveOne() {
         Self self = new Self(X.class);
         X x = (X) self.cast(X.class);

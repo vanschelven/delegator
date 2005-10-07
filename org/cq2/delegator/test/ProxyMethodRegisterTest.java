@@ -32,8 +32,6 @@ public class ProxyMethodRegisterTest extends TestCase {
         assertEquals("Lorg/cq2/delegator/ProxyMethod" + identifier + ";", Type.getType(clazz).getSignature());
         Method classMethod = clazz.getDeclaredMethod("__invoke_add", new Class[]{Self.class, Object.class});
         assertTrue(Modifier.isAbstract(classMethod.getModifiers()));
-        
-        //TODO test exceptions etc., non-empty constructor
     }
     
     class A {

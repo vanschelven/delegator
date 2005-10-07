@@ -319,22 +319,21 @@ public class SelfTest extends TestCase {
 		}
 	}
 
-//TODO sharable components werken niet meer...
-//	public void testCrossRefs() {
-//		Self r1 = new Self();
-//		r1.addSharableComponent(R1.class);
-//		Self r2 = new Self();
-//		r2.addSharableComponent(R2.class);
-//		Self self = new Self();
-//		self.add(r2);
-//		self.add(r1);
-//		Self other = new Self();
-//		other.add(r1);
-//		other.add(r2);
-//		R1 r = (R1) self.cast(R1.class);
-//		String result = r.f((R2) other.cast(R2.class));
-//		assertEquals(result, "R1.f()/R2.g()/R1.h()/R2.h()", result);
-//	}
+	public void testCrossRefs() {
+		Self r1 = new Self();
+		r1.addSharableComponent(R1.class);
+		Self r2 = new Self();
+		r2.addSharableComponent(R2.class);
+		Self self = new Self();
+		self.add(r2);
+		self.add(r1);
+		Self other = new Self();
+		other.add(r1);
+		other.add(r2);
+		R1 r = (R1) self.cast(R1.class);
+		String result = r.f((R2) other.cast(R2.class));
+		assertEquals(result, "R1.f()/R2.g()/R1.h()/R2.h()", result);
+	}
 
 	public abstract static class F1 {
 		public abstract String __next__method();
