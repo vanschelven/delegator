@@ -117,6 +117,8 @@ public class SelfTest extends TestCase {
 //		assertSame(self, ((ISelf) obj).self());
 //	}
 
+	//TODO (elders) optimizen van proxys voor interfaces
+	
 	public void testToString() {
 		Self self = newModifiedSelf(Object.class);
 		assertEquals("modifiedSelf", self.toString());
@@ -391,21 +393,19 @@ public class SelfTest extends TestCase {
 //		assertEquals("you're my hero!", f2.method());
 //	}
 
-	//TODO ISElf self()
-//	public void testClone() {
-//		Self original = new Self(F2.class);
-//		original.add(HashMap.class);
-//		original.add(ArrayList.class);
-//		ISelf base = (ISelf) original.cast(ArrayList.class);
-//		ISelf clone = Self.clone(base);
-//		assertTrue(clone instanceof ArrayList);
-////		assertSame(clone.component(0), original.component(0));
-////		assertSame(clone.component(1), original.component(1));
-////		assertSame(clone.component(2), original.component(2));
-//		assertEquals(clone, original);
-//		//TODO wat is er met self() gebeurd??
-////		assertNotSame(clone.self(), original.self());
-//	}
+	public void testClone() {
+		Self original = new Self(F2.class);
+		original.add(HashMap.class);
+		original.add(ArrayList.class);
+		ISelf base = (ISelf) original.cast(ArrayList.class);
+		ISelf clone = Self.clone(base);
+		assertTrue(clone instanceof ArrayList);
+//		assertSame(clone.component(0), original.component(0));
+//		assertSame(clone.component(1), original.component(1));
+//		assertSame(clone.component(2), original.component(2));
+		assertEquals(clone, original);
+//		assertNotSame(clone.self(), original.self());
+	}
 	
 	private static int originalAddCalled;
 	private static int subClassAddCalled;

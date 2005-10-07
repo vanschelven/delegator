@@ -70,7 +70,7 @@ public class Self implements ISelf {
         return new Self(result);
     }
 
-    Object component(int i) {
+    public Object component(int i) {
         return components[i];
     }
 
@@ -120,7 +120,6 @@ public class Self implements ISelf {
         return newSelf;
     }
 
-    //TODO wat is hiervan het nut??????!
     public Self self() {
         return this;
     }
@@ -211,7 +210,6 @@ public class Self implements ISelf {
 
     public static ISelf clone(Object object) {
         Self clone = new Self();
-        //TODO wat is er met serf() gebeurd???
         clone.add(((ISelf) object).self());
         return (ISelf) clone.cast(object.getClass().getSuperclass());
     }

@@ -441,7 +441,7 @@ public class ScopeTest extends InvocationHandlerTest {
         
     }
     
-    //TODO blijft dit opgaan? of moet je alles saven?
+    //TODO (low prio) dit werkt niet meer omdat e.e.a. nu via een andere classLoader wordt opgehaald. Daardoor moeten alle relevante files gesaved worden zodat deze allemaal worden gevonden, of er moet een slim trukkje worden verzonnen met de classLoader
 //    public void testPackageMethodWithSavedClass() {
 //        generateProxyClassFile(PackageMethod2.class);
 //        generateComponentClassFile(PackageMethod2.class);

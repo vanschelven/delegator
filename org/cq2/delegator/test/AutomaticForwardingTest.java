@@ -73,14 +73,12 @@ public class AutomaticForwardingTest extends TestCase {
         public int length();
     }
     
-//  TODO dit werkt inderdaad nog niet - op meerdere plaatsen moet een aanroep komen zonder self argument
     public void testFinalTypesCanBeUsed() {
         String string = "String is a final class";
         Self self = new Self(string);
         assertEquals(string.length(), ((IString) self.cast(IString.class)).length());
     }
     
-    //TODO dit werkt inderdaad nog niet - op meerdere plaatsen moet een aanro
     public void testLiveObjectsCanBeWrapped() {
         Vector existingVector = new Vector();
         existingVector.add("0");

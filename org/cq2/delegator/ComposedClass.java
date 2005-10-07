@@ -128,7 +128,6 @@ public class ComposedClass {
         Method method = ProxyMethodRegister.getInstance().getMethod(uniqueIdentifier);
         if ((method.getName().equals("equals")) || (method.getName().equals("toString")))
             return new Tuple(classes.size(), getDeclaredMethod(Self.class, "equals", new Class[]{Object.class}));
-        //TODO methods that use Proxy may not be cached! Test on this and make it work. Only become uses proxy so perhaps a different mechanism is needed there
         //TODO synchronization noodzaak opnieuw checken.
         //TODO equals etc.
         //if ("equals".equals(method.getName()))
@@ -238,7 +237,6 @@ public class ComposedClass {
         componentIndexes = new int[length];
         System.arraycopy(oldComponentIndexes, 0, componentIndexes, 0,
                 oldComponentIndexes.length);
-        //TODO is dit juist?
         Arrays.fill(componentIndexes, oldComponentIndexes.length, componentIndexes.length - 1, -1);
         
     }

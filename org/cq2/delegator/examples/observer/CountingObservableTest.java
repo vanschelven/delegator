@@ -37,16 +37,15 @@ public class CountingObservableTest extends TestCase implements Observer {
 		assertEquals(2, observer.count);
 	}
 
-	//TODO gesloopte test aanzetten
-//	public void testSecondObservableClass() {
-//		CountingObservable obs2 = createObservable();
-//		obs2.addDependent(this);
-//		notifier = null;
-//		obs2.increment();
-//		assertFalse(notifier instanceof Component);
-//		assertTrue(notifier instanceof Proxy);
-//		assertSame(((ISelf) obs2).self(), ((ISelf) notifier).self());
-//	}
+	public void testSecondObservableClass() {
+		CountingObservable obs2 = createObservable();
+		obs2.addDependent(this);
+		notifier = null;
+		obs2.increment();
+		assertFalse(notifier instanceof Component);
+		assertTrue(notifier instanceof Proxy);
+		assertSame(((ISelf) obs2).self(), ((ISelf) notifier).self());
+	}
 
 	private CountingObservable createObservable() {
 		Self self = new Self(ObservableImpl.class);

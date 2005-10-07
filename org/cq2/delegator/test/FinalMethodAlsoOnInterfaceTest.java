@@ -47,7 +47,6 @@ public class FinalMethodAlsoOnInterfaceTest extends TestCase {
 		new Self(B.class);
 	}
 	
-	//TODO vermoedelijk moet hier een access modifier wat opener: die van __invoke_... op een ProxyMethod
 	public void testC(){
 		Self self = new Self(C.class);
 		C c = (C) self.cast(C.class);

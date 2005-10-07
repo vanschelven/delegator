@@ -63,7 +63,7 @@ public class PolymorphismTest extends TestCase {
     }
     
     public void testDelegation2() {
-        //TODO idem als bovenstaand
+        //TODO idem als bovenstaand - dit heeft te maken met de volgorde waarin getDeclaredMethods werkt
         ThreeMethods m = (ThreeMethods) new Self(ThreeMethodsReverse.class).cast(ThreeMethodsReverse.class);
     }
 
@@ -89,7 +89,7 @@ public class PolymorphismTest extends TestCase {
    private static String SET_IO = "set(int position, Object value)";
    private static String GET_I = "get(int position)";
 
-   //TODO (ergens anders) waarom moeten inner classes static zijn? En wat is de foutmelding?
+   //TODO (ergens anders) waarom moeten inner classes static zijn? Omdat ze een extra thispointer genereren. En wat is de foutmelding?
    
    public static class PHPArray {
        

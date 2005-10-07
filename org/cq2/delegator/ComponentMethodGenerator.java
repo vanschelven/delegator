@@ -91,14 +91,6 @@ public class ComponentMethodGenerator implements Constants {
                             .getParameterTypes().length), superMethod.getName(), classGen
                             .getClassName(), instrList, constPool);
             
-//            instrList.append(instrFact.createFieldAccess("java.lang.System", "out", new ObjectType("java.io.PrintStream"),
-//	                Constants.GETSTATIC));
-//			instrList.append((instrFact.createGetField(classGen.getClassName(), "componentIndex", Type.INT)));
-//
-//	        instrList.append(instrFact.createInvoke("java.io.PrintStream", "println", Type.VOID, 
-//	         new Type[] { Type.INT },
-//	         Constants.INVOKEVIRTUAL));
-
             instrList.append(InstructionFactory.createLoad(Type.getType(Self.class), 1));
             instrList.append(instrFact.createGetField(Self.class.getName(), "components", new ArrayType(Type.getType(Object.class), 1)));
 			instrList.append(InstructionFactory.createThis());
@@ -115,7 +107,7 @@ public class ComponentMethodGenerator implements Constants {
             }
 
             String methodName = extractOriginalMethodName(superMethod.getName());
-            if (Component.class.isAssignableFrom(componentClass) &&( (!methodName.equals("equals")) && (!methodName.equals("toString")))) //TODO uitbreiden
+            if (Component.class.isAssignableFrom(componentClass) &&( (!methodName.equals("equals")) && (!methodName.equals("toString")))) //TODO uitbreiden??
                 methodName += ClassGenerator.SUPERCALL_POSTFIX;
             instrList.append(instrFact.createInvoke(componentClass.getName(),
                     methodName, returnType, removeFirst(getArgumentTypes(superMethod)),
@@ -169,49 +161,6 @@ public class ComponentMethodGenerator implements Constants {
         }
         return null;
     }
-//    private void add_method() {
-//        try {
-//            Type returnType = Type.getType(method.getReturnType());
-//            Type[] parameterTypes = insertSelfType(getArgumentTypes(method));
-//
-//            Method superMethod = superclass.getDeclaredMethod("invoke",
-//                    insertSelfClass(method.getParameterTypes()));
-//            methodGen = new MethodGen(superMethod.getModifiers()
-//                    & ~ACC_ABSTRACT, returnType, parameterTypes,
-//                    insertSelfString(generateParameterNames(method
-//                            .getParameterTypes().length)), "invoke", classGen
-//                            .getClassName(), instrList, constPool);
-//            
-//            //(componentClass) self.components[componentIndex]
-//            instrList.append(InstructionFactory.createLoad(Type.getType(Self.class), 1));
-//            instrList.append(instrFact.createGetField(Self.class.getName(), "components", new ArrayType(Type.getType(Object.class), 1)));
-//			instrList.append(InstructionFactory.createThis());
-//			instrList.append((instrFact.createGetField(classGen.getClassName(), "componentIndex", Type.INT)));
-//			instrList.append(InstructionConstants.AALOAD);
-//            instrList.append(instrFact.createCheckCast((ReferenceType) Type
-//                    .getType(componentClass)));
-//            
-//            for (int i = 0; i < method.getParameterTypes().length; i++) {
-//                instrList.append(InstructionFactory.createLoad(Type.getType(method.getParameterTypes()[i]), i + 2)); //TODO dit nog door het echte lijstje vervangen
-//            }
-//
-//            instrList.append(instrFact.createInvoke(componentClass.getName(),
-//                    method.getName(), returnType, getArgumentTypes(method),
-//                    Constants.INVOKEVIRTUAL));
-//            
-//            instrList.append(InstructionFactory.createReturn(returnType));
-//
-//            methodGen.setMaxStack();
-//            methodGen.setMaxLocals();
-//
-//            classGen.addMethod(methodGen.getMethod());
-//
-//            instrList.dispose();
-//        } catch (Exception e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
-
 
     //copy paste - classGenerator
     private static String[] generateParameterNames(int nr) {
