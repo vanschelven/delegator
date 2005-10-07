@@ -102,12 +102,11 @@ public class Self implements ISelf {
     }
 
     public synchronized void insert(Class componentType) {
-        Component[] newComponents = new Component[components.length + 1];
+        Object[] newComponents = new Object[components.length + 1];
         newComponents[0] = newComponent(componentType);
-        System.arraycopy(components, 0, newComponents, 1, nrOfComponents);
+        System.arraycopy(components, 0, newComponents, 1, nrOfComponents + 1);
         components = newComponents;
         nrOfComponents++;
-        components[nrOfComponents] = this;
         composedClass = composedClass.insert(componentType);
     }
 
@@ -212,6 +211,7 @@ public class Self implements ISelf {
 
     public static ISelf clone(Object object) {
         Self clone = new Self();
+        //TODO wat is er met serf() gebeurd???
         clone.add(((ISelf) object).self());
         return (ISelf) clone.cast(object.getClass().getSuperclass());
     }
