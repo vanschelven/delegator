@@ -10,7 +10,7 @@ public class ProxyGenerator extends ClassGenerator {
     
     public byte[] generate() {
         addSelfField();
-        addDelegationMethods(proxyMethodFilter, true);
+        addDelegationMethods(forwardingMethodFilter, true);
         return classGen.getJavaClass().getBytes();
     }
 

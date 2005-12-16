@@ -17,8 +17,6 @@ import java.util.Stack;
 import java.util.TreeSet;
 
 import org.apache.bcel.Constants;
-import org.apache.bcel.generic.ArrayType;
-import org.apache.bcel.generic.BasicType;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.FieldGen;
@@ -33,27 +31,23 @@ import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.ReferenceType;
 import org.apache.bcel.generic.Type;
 import org.cq2.delegator.Component;
-import org.cq2.delegator.ComponentMethodFilter;
-import org.cq2.delegator.ComponentMethodGenerator;
-import org.cq2.delegator.ComposedClass;
 import org.cq2.delegator.ISelf;
-import org.cq2.delegator.MethodRegister;
-import org.cq2.delegator.MiniMethod;
 import org.cq2.delegator.Proxy;
-import org.cq2.delegator.ProxyMethod;
-import org.cq2.delegator.ProxyMethodGenerator;
-import org.cq2.delegator.ProxyMethodRegister;
 import org.cq2.delegator.Self;
+import org.cq2.delegator.internal.ComponentMethodFilter;
+import org.cq2.delegator.internal.ComposedClass;
+import org.cq2.delegator.internal.ForwardingMethod;
+import org.cq2.delegator.internal.ForwardingMethodGenerator;
+import org.cq2.delegator.internal.ForwardingMethodRegister;
+import org.cq2.delegator.internal.ImplementingMethodGenerator;
+import org.cq2.delegator.method.ForwardingMethodFilter;
 import org.cq2.delegator.method.MethodComparator;
 import org.cq2.delegator.method.MethodFilter;
 import org.cq2.delegator.method.MethodUtil;
-import org.cq2.delegator.method.ProxyMethodFilter;
-
-import com.sun.org.apache.bcel.internal.generic.LoadInstruction;
 
 public abstract class ClassGenerator implements Constants {
 
-    protected static final MethodFilter proxyMethodFilter = new ProxyMethodFilter();
+    protected static final MethodFilter forwardingMethodFilter = new ForwardingMethodFilter();
 
     protected static final MethodFilter componentMethodFilter = new ComponentMethodFilter();
 
@@ -98,12 +92,12 @@ public abstract class ClassGenerator implements Constants {
             } else if (classname.startsWith("proxy$")) {
                 return injectProxyClass(loadClass(classname.substring(6)));
             }
-            String prefix = "org.cq2.delegator.ProxyMethod";
+            String prefix = ForwardingMethod.class.getName();
             if (classname.startsWith(prefix) && !classname.equals(prefix)) {
                 String postfix = classname.substring(prefix.length());
                 int identifier = Integer.parseInt(postfix);
-                byte[] bytes = new ProxyMethodGenerator(identifier,
-                        ProxyMethodRegister.getInstance().getMethod(identifier))
+                byte[] bytes = new ForwardingMethodGenerator(identifier,
+                        ForwardingMethodRegister.getInstance().getMethod(identifier))
                         .generate();
                 return defineClass(classname, bytes, 0, bytes.length);
             }
@@ -114,7 +108,7 @@ public abstract class ClassGenerator implements Constants {
                         postfix.indexOf('_')));
                 int componentIdentifier = Integer.parseInt(postfix.substring(
                         postfix.indexOf('_') + 1, postfix.length()));
-                byte[] bytes = new ComponentMethodGenerator(methodIdentifier,
+                byte[] bytes = new ImplementingMethodGenerator(methodIdentifier,
                         componentIdentifier).generate();
                 return defineClass(classname, bytes, 0, bytes.length);
             }
@@ -448,19 +442,19 @@ public abstract class ClassGenerator implements Constants {
             instrList.append(instrFact.createInvoke(ComposedClass.class.getName(), "getSuffix", Type.getType(ComposedClass.class), new Type[]{Type.INT}, INVOKEVIRTUAL));
         }
         //load identifier
-        int identifier = ProxyMethodRegister.getInstance().getMethodIdentifier(
+        int identifier = ForwardingMethodRegister.getInstance().getMethodIdentifier(
                 method);
         instrList.append(new PUSH(constPool, identifier));
         //call method "getMethod"
         instrList.append(instrFact.createInvoke(ComposedClass.class.getName(),
-                "getMethod", Type.getType(ProxyMethod.class),
+                "getMethod", Type.getType(ForwardingMethod.class),
                 new Type[] { Type.INT }, Constants.INVOKEVIRTUAL));
-        //cast to ProxyMethod_[identifier]
+        //cast to ForwardingMethod_[identifier]
 
-        String proxyMethodSignature = "Lorg/cq2/delegator/ProxyMethod"
+        String forwardingMethodSignature = "Lorg/cq2/delegator/internal/ForwardingMethod"
                 + identifier + ";";
         instrList.append(instrFact.createCheckCast((ReferenceType) Type
-                .getType(proxyMethodSignature)));
+                .getType(forwardingMethodSignature)));
         //load self again...
         instrList.append(InstructionFactory.createLoad(Type.OBJECT, selfLocal
                 .getIndex()));
@@ -476,13 +470,13 @@ public abstract class ClassGenerator implements Constants {
 
         //call invoke
         if (!nextMethod) {
-            instrList.append(instrFact.createInvoke("org.cq2.delegator.ProxyMethod"
+            instrList.append(instrFact.createInvoke("org.cq2.delegator.internal.ForwardingMethod"
                 + identifier, "__invoke_" + name, Type.getType(method
                 .getReturnType()), insertSelfType(getArgumentTypes(method)),
                 Constants.INVOKEVIRTUAL));
         } else {
 	        instrList.append(InstructionFactory.createLoad(Type.INT, nextMethodComponentOffset.getIndex()));
-            instrList.append(instrFact.createInvoke("org.cq2.delegator.ProxyMethod"
+            instrList.append(instrFact.createInvoke("org.cq2.delegator.internal.ForwardingMethod"
 	                + identifier, "__offset_" + name, Type.getType(method
 	                .getReturnType()), appendIntType(insertSelfType(getArgumentTypes(method))),
 	                Constants.INVOKEVIRTUAL));

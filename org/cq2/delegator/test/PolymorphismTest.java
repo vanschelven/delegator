@@ -1,12 +1,8 @@
-//TODO schrijf: polymorphism in de scriptie opnemen...
-
 package org.cq2.delegator.test;
 
 import junit.framework.TestCase;
 
 import org.cq2.delegator.Self;
-
-import sun.security.krb5.internal.ccache.as;
 
 public class PolymorphismTest extends TestCase {
 

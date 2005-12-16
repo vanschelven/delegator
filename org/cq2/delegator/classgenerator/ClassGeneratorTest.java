@@ -3,14 +3,12 @@
  */
 package org.cq2.delegator.classgenerator;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.util.HashMap;
 
 import junit.framework.TestCase;
 
 import org.cq2.delegator.Component;
-import org.cq2.delegator.MyInvocationHandler;
 import org.cq2.delegator.Proxy;
 import org.cq2.delegator.Self;
 

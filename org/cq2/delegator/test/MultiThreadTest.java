@@ -5,11 +5,11 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.IMonitor;
 import org.cq2.delegator.ISelf;
-import org.cq2.delegator.ISemaphore;
-import org.cq2.delegator.Monitor;
 import org.cq2.delegator.Self;
+import org.cq2.delegator.concurrent.IMonitor;
+import org.cq2.delegator.concurrent.ISemaphore;
+import org.cq2.delegator.concurrent.Monitor;
 
 public class MultiThreadTest extends TestCase {
 
@@ -143,8 +143,6 @@ public class MultiThreadTest extends TestCase {
 
         private ISelf self;
 
-        private Exception exception;
-
         public CComponentUser(ISelf self) {
             this.self = self;
         }
@@ -154,7 +152,7 @@ public class MultiThreadTest extends TestCase {
                 C c = (C) self.cast(C.class);
                 c.n(20);
             } catch (Exception e) {
-                exception = e;
+                throw new RuntimeException(e);
             }
             releaseLocks();
         }
@@ -231,6 +229,7 @@ public class MultiThreadTest extends TestCase {
 
     }
 
+    //TODO valt deze soms om?
     public void testManipulatedSelf2() {
         Self self = new Self(HashMap.class);
         HashMap map = (HashMap) self.cast(HashMap.class);
@@ -278,7 +277,7 @@ public class MultiThreadTest extends TestCase {
         semaphore.release();
     }
 
-    private void n(org.cq2.delegator.Semaphore s, int i)
+    private void n(org.cq2.delegator.concurrent.Semaphore s, int i)
             throws InterruptedException {
         s.acquire();
         if (i > 0)
@@ -288,11 +287,11 @@ public class MultiThreadTest extends TestCase {
 
     public void testDelegatorSemaphoreCanDealWithRecursiveStuff()
             throws InterruptedException {
-        org.cq2.delegator.Semaphore semaphore = new org.cq2.delegator.Semaphore();
+        org.cq2.delegator.concurrent.Semaphore semaphore = new org.cq2.delegator.concurrent.Semaphore();
         n(semaphore, 10);
     }
 
-    private org.cq2.delegator.Semaphore semaphore;
+    private org.cq2.delegator.concurrent.Semaphore semaphore;
 
     private boolean b = false;
 
@@ -321,7 +320,7 @@ public class MultiThreadTest extends TestCase {
     }
 
     public void testDelegatorSemaphoreReallyIsASemaphore() {
-        semaphore = new org.cq2.delegator.Semaphore();
+        semaphore = new org.cq2.delegator.concurrent.Semaphore();
         BlaaaaThread thread1 = new BlaaaaThread();
         thread1.start();
         BlaaaaThread thread2 = new BlaaaaThread();
@@ -393,7 +392,7 @@ public class MultiThreadTest extends TestCase {
     public void testExampleFromProposal1() throws InterruptedException {
         list = new Vector();
         Self self = new Self(Counter.class);
-        self.add(org.cq2.delegator.Semaphore.class);
+        self.add(org.cq2.delegator.concurrent.Semaphore.class);
         counter = (Counter) self.cast(Counter.class);
         CounterThread thread1 = new CounterThread();
         thread1.start();
@@ -410,7 +409,7 @@ public class MultiThreadTest extends TestCase {
 
         private int value = 0;
 
-        public int inc() throws InterruptedException {
+        public int inc() {
             synchronized (getMonitor()) {
                 value++;
                 return value;
@@ -432,11 +431,7 @@ public class MultiThreadTest extends TestCase {
     public class MonitorCounterThread extends MyThread {
 
         protected void interestingBit() {
-            try {
-                list.add(new Integer(monitorCounter.inc()));
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            list.add(new Integer(monitorCounter.inc()));
         }
 
     }

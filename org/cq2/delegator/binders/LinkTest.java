@@ -22,7 +22,7 @@ public class LinkTest extends TestCase {
 	private String ikNieBegrijpNieA;
 	private boolean ikNieBegrijpNieCalled;
 
-	public LinkTest(String name) throws SecurityException, NoSuchMethodException {
+	public LinkTest(String name) throws SecurityException {
 		super(name);
 	}
 

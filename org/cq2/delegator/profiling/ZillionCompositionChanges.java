@@ -1,6 +1,5 @@
 package org.cq2.delegator.profiling;
 
-import java.lang.reflect.Method;
 import java.util.Date;
 import java.util.Vector;
 

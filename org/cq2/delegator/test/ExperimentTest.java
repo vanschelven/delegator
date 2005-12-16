@@ -16,7 +16,7 @@ public class ExperimentTest extends TestCase {
     
     public void testFinalClass() {
         try {
-            Self self = new Self(FinalClass.class);
+            new Self(FinalClass.class);
             fail();
         } catch (VerifyError e) {}
     }

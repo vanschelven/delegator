@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.cq2.delegator.internal.MethodRegister;
+import org.cq2.delegator.internal.MyInvocationHandler;
+
 import junit.framework.TestCase;
 
 public class DelegatorTest extends TestCase implements MyInvocationHandler {

@@ -13,9 +13,6 @@ The equals method implements an equivalence relation on non-null object referenc
 	- For any non-null reference value x, x.equals(null) should return false.
 */
 
-import java.util.HashMap;
-import java.util.Vector;
-
 import junit.framework.TestCase;
 
 import org.cq2.delegator.Self;

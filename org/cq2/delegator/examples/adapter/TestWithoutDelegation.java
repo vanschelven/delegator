@@ -33,19 +33,19 @@ public class TestWithoutDelegation extends TestCase {
         assertEquals("b1", wrappedNode.getDistinctB1());
     }
     
-    public void testA() {
-        FrameworkAContainer frameworkAContainer = new FrameworkAContainer();
-        ANode node = frameworkAContainer.getNode();
-        node.setA1("1");
-        node.setDistinctA1("a1");
-        FrameworkBContainer frameworkBContainer = new FrameworkBContainer();
-        TwoWayAdapter adapter = TwoWayAdapter.create(node);
-        frameworkBContainer.setNode(adapter.asBNode());
-        assertEquals("1", node.getA1());
-        assertEquals("a1", node.getDistinctA1());
-        assertEquals("1", adapter.asANode().getA1());
-        assertEquals("a1", wrappedNode.getDelegate().getDistinctA1());
-    }
+//    public void testA() {
+//        FrameworkAContainer frameworkAContainer = new FrameworkAContainer();
+//        ANode node = frameworkAContainer.getNode();
+//        node.setA1("1");
+//        node.setDistinctA1("a1");
+//        FrameworkBContainer frameworkBContainer = new FrameworkBContainer();
+//        TwoWayAdapter adapter = TwoWayAdapter.create(node);
+//        frameworkBContainer.setNode(adapter.asBNode());
+//        assertEquals("1", node.getA1());
+//        assertEquals("a1", node.getDistinctA1());
+//        assertEquals("1", adapter.asANode().getA1());
+//        assertEquals("a1", wrappedNode.getDelegate().getDistinctA1());
+//    }
     
     //TODO afmaken
     //TODO: het voordeel onstaat pas zodra je de nodes niet zelf aan kan maken

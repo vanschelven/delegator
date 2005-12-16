@@ -5,7 +5,7 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.ComposedClass;
+import org.cq2.delegator.internal.ComposedClass;
 
 public class ComposedClassTransfersTest extends TestCase {
 

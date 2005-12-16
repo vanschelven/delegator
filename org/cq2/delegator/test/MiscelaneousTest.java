@@ -4,7 +4,6 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.Delegator;
 import org.cq2.delegator.DelegatorException;
 import org.cq2.delegator.Self;
 

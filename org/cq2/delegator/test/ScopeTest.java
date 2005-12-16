@@ -3,17 +3,9 @@
  */
 package org.cq2.delegator.test;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
-import java.util.StringTokenizer;
-
 import org.cq2.delegator.Delegator;
 import org.cq2.delegator.ISelf;
 import org.cq2.delegator.Self;
-import org.cq2.delegator.classgenerator.ClassGenerator;
-import org.cq2.delegator.classgenerator.ProxyGenerator;
-import org.cq2.delegator.classgenerator.SingleSelfComponentGenerator;
 
 public class ScopeTest extends InvocationHandlerTest {
 
@@ -379,71 +371,12 @@ public class ScopeTest extends InvocationHandlerTest {
         
     }
     
-    //TODO (low prio) dit werkt niet meer omdat e.e.a. nu via een andere classLoader wordt opgehaald. Daardoor moeten alle relevante files gesaved worden zodat deze allemaal worden gevonden, of er moet een slim trukkje worden verzonnen met de classLoader
-//    public void testPackageMethodWithSavedClass() {
-//        generateProxyClassFile(PackageMethod2.class);
-//        generateComponentClassFile(PackageMethod2.class);
-//        PackageMethod2 m = (PackageMethod2) new Self(PackageMethod2.class)
-//          .cast(PackageMethod2.class);
-//        m.method();
-//        assertTrue(m.isCalled());
-//        assertTrue(packageMethodCalled);
-//        assertFalse(m.called);
-//    }
-    
     private String packageToPath(String packageName) {
         return packageName.replaceAll("\\.", getSeparator())  + getSeparator();
     }
     
     private String getSeparator() {
         return System.getProperty("file.separator");
-    }
-
-    private void generateClassFile(Class clazz, String postfix, byte[] generate) {
-        byte[] classDef = generate;
-        String classLocation = guessClassLocation(clazz);
-        if (classLocation == null) throw new RuntimeException("No location found for " + clazz);
-        saveToFile(classDef, classLocation + classNameOnly(clazz) + "$" + postfix + ".class");
-    }
-
-    private void generateProxyClassFile(Class clazz) {
-        String className = clazz.getName() + "$proxy";
-        byte[] classDef = new ProxyGenerator(className, clazz).generate();
-        generateClassFile(clazz, "proxy", classDef);
-    }
-
-    private void generateComponentClassFile(Class clazz) {
-        String className = clazz.getName() + "$component";
-        byte[] classDef = new SingleSelfComponentGenerator(className, clazz).generate();
-        generateClassFile(clazz, "component", classDef);
-    }
-
-    private String classNameOnly(Class clazz) {
-        return clazz.getName().substring(clazz.getPackage().getName().length() + 1);
-    }
-
-    private String guessClassLocation(Class clazz) {
-        String classPath = System.getProperty("java.class.path");
-        StringTokenizer tokenizer = new StringTokenizer(classPath, ":");
-        while (tokenizer.hasMoreTokens()) {
-            String token = tokenizer.nextToken();
-            String possiblePath = token + getSeparator() + packageToPath(clazz.getPackage().getName());
-            File file = new File(token);
-            if (file.exists() && file.isDirectory())
-                return possiblePath;
-        }
-        return null;
-    }
-
-    private void saveToFile(byte[] bytes, String fileName) {
-        OutputStream o;
-        try {
-            o = new FileOutputStream(fileName);
-            o.write(bytes);
-            o.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public static class ProtectedSelfCallingClass {
@@ -502,8 +435,7 @@ public class ScopeTest extends InvocationHandlerTest {
 
     public void testPrivateInterface() {
         try {
-            PrivateInterface o = (PrivateInterface) new Self()
-                    .cast(PrivateInterface.class);
+            new Self().cast(PrivateInterface.class);
             fail();
         } catch (IllegalAccessError e) {
         }
@@ -514,8 +446,7 @@ public class ScopeTest extends InvocationHandlerTest {
 
     public void testPackageInterface() {
         try {
-            PackageInterface o = (PackageInterface) new Self()
-                    .cast(PackageInterface.class);
+            new Self().cast(PackageInterface.class);
             fail();
         } catch (IllegalAccessError e) {
         }
@@ -526,8 +457,7 @@ public class ScopeTest extends InvocationHandlerTest {
     }
 
     public void testProtectedInterface() {
-        ProtectedInterface o = (ProtectedInterface) new Self()
-                .cast(ProtectedInterface.class);
+        new Self().cast(ProtectedInterface.class);
     }
 
     public interface PublicInterface {
@@ -535,9 +465,7 @@ public class ScopeTest extends InvocationHandlerTest {
     }
 
     public void testPublicInterface() {
-        PublicInterface o = (PublicInterface) new Self()
-                .cast(PublicInterface.class);
+        new Self().cast(PublicInterface.class);
     }
     
-    //TODO schrijf: write documentation on interfaces
 }

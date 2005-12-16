@@ -21,12 +21,10 @@ public class SelfTest extends TestCase {
 	private Object keyRef = null;
 	private Object valueRef = null;
 	private Object returnVal = new Object();
-	private static boolean component2MethodCalled;
 
 	protected void setUp() throws Exception {
 	    originalAddCalled = 0;
 	    subClassAddCalled = 0;
-	    component2MethodCalled = false;
     }
 	
 	public Object put(Object key, Object value) {
@@ -230,7 +228,7 @@ public class SelfTest extends TestCase {
 	public static class MyMap {
 		public Object put(Object key, Object value) {
 			mymap_key = key;
-			return null;//TODO (schrijf) dit probleem is dus opgelost met put -> Object return type = hier moet wel nog eea over beschreven ind e scriptei
+			return null;
 		}
 	}
 
@@ -240,7 +238,6 @@ public class SelfTest extends TestCase {
 		self.add(HashMap.class);
 		self.add(MyMap.class);
 		MyMap mymap = (MyMap) self.cast(MyMap.class);
-		Method x = self.components[0].getClass().getDeclaredMethod("put__super", new Class[]{Object.class, Object.class});
 		mymap.put("duck", "erik");
 		assertNull(mymap_key);
 		Map map = (Map) self.cast(Map.class);
@@ -439,23 +436,6 @@ public class SelfTest extends TestCase {
 	    assertEquals(0, originalAddCalled);
 	}
 	
-	public abstract static class Component1 implements ISelf {
-	    
-	    public void method() {
-	        become(Component2.class);
-	        method();
-	    }
-	    
-	}
-	
-	public static class Component2 {
-	    
-	    public void method() {
-	        component2MethodCalled = true;
-	    }
-	    
-	}
-
 	public void testRemove() {
 	    Self self = new Self();
 	    self.add(Vector.class);

@@ -2,8 +2,8 @@ package org.cq2.delegator.test;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.MethodRegister;
-import org.cq2.delegator.MyInvocationHandler;
+import org.cq2.delegator.internal.MethodRegister;
+import org.cq2.delegator.internal.MyInvocationHandler;
 
 public class InvocationHandlerTest extends TestCase implements
         MyInvocationHandler {

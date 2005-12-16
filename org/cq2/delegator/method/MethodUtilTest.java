@@ -7,7 +7,6 @@ package org.cq2.delegator.method;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.sql.SQLException;
-import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.Vector;
@@ -77,17 +76,6 @@ public class MethodUtilTest extends TestCase {
         assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Integer.TYPE, Object.class}), result);
 	}
 	
-//dit idee is verloren gegaan aan goede analyse
-//	public void testBoxing() throws SecurityException, NoSuchMethodException {
-//        Method result = MethodUtil.getDeclaredMethod(Vector.class, "add", new Class[]{Integer.TYPE}, null);
-//        assertEquals(Vector.class.getDeclaredMethod("add", new Class[]{Object.class}), result);
-//	}
-	
-	public void testBoxing2() throws SecurityException, NoSuchMethodException {
-        Method result = MethodUtil.getDeclaredMethod(Vector.class, "addAll", new Class[]{Integer.TYPE}, null);
-        assertNull(result);
-	}
-	
 	public class X {
 	    
 	    public void m() throws DelegatorException {
@@ -121,7 +109,7 @@ public class MethodUtilTest extends TestCase {
 	    
 	}
 	
-	public void testGetPrivateMethod() throws SecurityException, NoSuchMethodException {
+	public void testGetPrivateMethod() throws SecurityException {
         Method result = MethodUtil.getDeclaredMethod(A.class, "privateMethod", new Class[]{}, null);
         assertNull(result);
     }
