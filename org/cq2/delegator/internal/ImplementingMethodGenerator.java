@@ -45,8 +45,8 @@ public class ImplementingMethodGenerator implements Constants {
         instrFact = new InstructionFactory(classGen, constPool);
         instrList = new InstructionList();
         addComponentIndexField();
-        addDefaultConstructor();
-        //classGen.addEmptyConstructor(ACC_PUBLIC);
+        //addDefaultConstructor();
+        classGen.addEmptyConstructor(ACC_PUBLIC);
         add_method();
         add_method2();
     }
@@ -107,7 +107,7 @@ public class ImplementingMethodGenerator implements Constants {
             }
 
             String methodName = extractOriginalMethodName(superMethod.getName());
-            if (Component.class.isAssignableFrom(componentClass) &&( (!methodName.equals("equals")))) //TODO uitbreiden??
+            if (Component.class.isAssignableFrom(componentClass) &&( (!methodName.equals("equals"))))
                 methodName += ClassGenerator.SUPERCALL_POSTFIX;
             instrList.append(instrFact.createInvoke(componentClass.getName(),
                     methodName, returnType, removeFirst(getArgumentTypes(superMethod)),

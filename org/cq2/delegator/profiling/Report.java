@@ -68,5 +68,4 @@ public class Report {
         out.println("Done... " + new Date());
     }
 
-    //TODO dit neemt nog niet mee: class creation times en class memory overhead...
 }

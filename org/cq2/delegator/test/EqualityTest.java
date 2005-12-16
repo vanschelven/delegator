@@ -249,6 +249,3 @@ public class EqualityTest extends TestCase {
     }
     
 }
-
-
-//TODO heeeeeel ergens anders opnemen: hoe zit het met classes zonder defaultconstructor als component??
