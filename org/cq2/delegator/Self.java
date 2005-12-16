@@ -19,13 +19,13 @@ public class Self implements ISelf {
         }
     };
 
-    public Object[] components; //TODO (en voor andere velden) - beschikbaarheid terugschroeven naar acceptabel niveau
-
     private int nrOfComponents = 0;
 
     private Class[] equalsComponents;
-    
-    public ComposedClass composedClass; //hide this!
+
+    //both these fields are exposed for reasons of optimization and should NOT be used directly by clients of Self
+    public ComposedClass composedClass;
+    public Object[] components;
 
     public Self(Object component) {
         this();
@@ -47,11 +47,6 @@ public class Self implements ISelf {
 
     public Object cast(Class clas) {
         return Delegator.proxyFor(clas, this);
-    }
-
-    public void become(Class clas) throws DelegatorException {
-        throw new DelegatorException(
-                "Become may only be called from within components of self");
     }
 
     public void add(Self object) {
@@ -269,6 +264,3 @@ public class Self implements ISelf {
     }
     
 }
-    
-    //TODO (HEEL ergens anders, finalize documenteren)
-

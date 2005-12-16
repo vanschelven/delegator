@@ -49,7 +49,7 @@ public class ComposedClass {
 
     public static ComposedClass getEmptyClass() {
         if (emptyClass == null) {
-            emptyClass = ComposedClassCache.get(new Vector()); // TODO Vectors vervangen door Lists/ArrayList waar mogelijk
+            emptyClass = ComposedClassCache.get(new ArrayList());
         }
         return emptyClass;
     }
@@ -57,7 +57,7 @@ public class ComposedClass {
     public ComposedClass remove(int i) {
         ComposedClass result = removeReferences[i];
         if (result == null) {
-            Vector smallerClasses = new Vector(classes);
+            List smallerClasses = new ArrayList(classes);
             smallerClasses.remove(i);
             result = ComposedClassCache.get(smallerClasses);
             removeReferences[i] = result;
@@ -68,7 +68,7 @@ public class ComposedClass {
     public ComposedClass add(Class clazz) {
         ComposedClass result = (ComposedClass) addMap.get(clazz);
         if (result == null) {
-            Vector largerClasses = new Vector(classes);
+            List largerClasses = new ArrayList(classes);
             largerClasses.add(clazz);
             result = ComposedClassCache.get(largerClasses);
             addMap.put(clazz, result);
@@ -79,7 +79,7 @@ public class ComposedClass {
     public ComposedClass insert(Class clazz) {
         ComposedClass result = (ComposedClass) insertMap.get(clazz);
         if (result == null) {
-            Vector largerClasses = new Vector(classes);
+            List largerClasses = new ArrayList(classes);
             largerClasses.add(0, clazz);
             result = ComposedClassCache.get(largerClasses);
             insertMap.put(clazz, result);

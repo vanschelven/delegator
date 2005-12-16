@@ -8,8 +8,6 @@ import junit.framework.TestCase;
 import org.cq2.delegator.Delegator;
 import org.cq2.delegator.ISelf;
 import org.cq2.delegator.Self;
-import org.cq2.delegator.examples.state.OutsideTable;
-import org.cq2.delegator.examples.state.XMLRenderer;
 
 public class MixinTest extends TestCase {
 	public static abstract class Counter implements ISelf{
@@ -96,12 +94,5 @@ public class MixinTest extends TestCase {
 		MyClass a = (MyClass) self.cast(MyClass.class);
 		assertEquals("bbbbbb", a.bla());
 	}
-
-	public void testMultiCast() {
-		OutsideTable table = (OutsideTable) (Delegator.extend(OutsideTable.class, new Class[]{
-				XMLRenderer.class, MyClass.class}));
-		assertNotNull(table);
-	}
-	
 	
 }

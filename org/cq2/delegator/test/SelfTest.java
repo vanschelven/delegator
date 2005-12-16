@@ -2,8 +2,9 @@
  Copyright (C) 2001 Erik J. Groeneveld, http://www.ejgroeneveld.com
  Copyright (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl 
  */
-package org.cq2.delegator;
+package org.cq2.delegator.test;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,6 +15,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
+
+import org.cq2.delegator.Delegator;
+import org.cq2.delegator.DelegatorException;
+import org.cq2.delegator.ISelf;
+import org.cq2.delegator.Self;
 
 import junit.framework.TestCase;
 
@@ -483,6 +489,19 @@ public class SelfTest extends TestCase {
         Self self = new Self(Object.class);
         assertSame(loggingLoader, self.component(0).getClass().getClassLoader()
     .getParent());
+    }
+    
+    public class NonStaticInnerClass {
+        
+        public NonStaticInnerClass() {}
+        
+    }
+    
+    public void testInnerClassesMustBeStatic() {
+        try {
+            new Self(NonStaticInnerClass.class);
+            fail();
+        } catch (Exception e) { }
     }
     
 }

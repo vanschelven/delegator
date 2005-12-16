@@ -1,14 +1,14 @@
 package org.cq2.delegator.internal;
 
 import java.util.HashMap;
-import java.util.Vector;
+import java.util.List;
 
 
 public class ComposedClassCache {
 
     static HashMap map = new HashMap();
 
-    static ComposedClass get(Vector classes) {
+    static ComposedClass get(List classes) {
         ComposedClass result = (ComposedClass) map.get(classes);
         if (result != null)
             return result;

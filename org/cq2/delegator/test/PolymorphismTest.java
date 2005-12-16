@@ -85,8 +85,6 @@ public class PolymorphismTest extends TestCase {
    private static String SET_IO = "set(int position, Object value)";
    private static String GET_I = "get(int position)";
 
-   //TODO (ergens anders) waarom moeten inner classes static zijn? Omdat ze een extra thispointer genereren. En wat is de foutmelding?
-   
    public static class PHPArray {
        
        private String invokedMethod = "";

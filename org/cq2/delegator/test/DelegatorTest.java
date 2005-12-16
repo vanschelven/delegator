@@ -2,13 +2,15 @@
  Copyright (C) 2001 Erik J. Groeneveld, http://www.ejgroeneveld.com
  Copyright (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl 
  */
-package org.cq2.delegator;
+package org.cq2.delegator.test;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.cq2.delegator.Delegator;
+import org.cq2.delegator.Self;
 import org.cq2.delegator.internal.MethodRegister;
 import org.cq2.delegator.internal.MyInvocationHandler;
 

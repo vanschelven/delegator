@@ -8,11 +8,11 @@ import java.util.Vector;
 import junit.framework.TestCase;
 
 import org.cq2.delegator.Self;
-import org.cq2.delegator.SelfTest.F1;
-import org.cq2.delegator.SelfTest.F2;
 import org.cq2.delegator.internal.ComposedClass;
 import org.cq2.delegator.internal.ForwardingMethod;
 import org.cq2.delegator.internal.ForwardingMethodRegister;
+import org.cq2.delegator.test.SelfTest.F1;
+import org.cq2.delegator.test.SelfTest.F2;
 
 public class ComposedClassTest extends TestCase {
 

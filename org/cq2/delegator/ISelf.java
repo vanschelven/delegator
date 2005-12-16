@@ -5,7 +5,6 @@ import java.lang.reflect.Method;
 
 public interface ISelf {
 	Object cast(Class type);
-	void become(Class componentType) throws DelegatorException;
 	void add(Self self);
 	void add(Class componentType);
 	void insert(Class componentType);

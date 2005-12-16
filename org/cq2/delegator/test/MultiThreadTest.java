@@ -13,12 +13,6 @@ import org.cq2.delegator.concurrent.Monitor;
 
 public class MultiThreadTest extends TestCase {
 
-    private final static int MAXBECOMES = 200;
-
-    protected void setUp() throws Exception {
-        becomeCounter = 0;
-    }
-
     public class MyThread extends Thread {
 
         private int counter;
@@ -91,30 +85,6 @@ public class MultiThreadTest extends TestCase {
 
         public void m();
 
-    }
-
-    private static int becomeCounter;
-
-    public abstract static class A1 implements A, ISelf {
-
-        public void m() {
-            becomeCounter++;
-            if (becomeCounter < MAXBECOMES) {
-                become(A2.class);
-                m();
-            }
-        }
-    }
-
-    public abstract static class A2 implements A, ISelf {
-
-        public void m() {
-            becomeCounter++;
-            if (becomeCounter < MAXBECOMES) {
-                become(A1.class);
-                m();
-            }
-        }
     }
 
     public static class B {

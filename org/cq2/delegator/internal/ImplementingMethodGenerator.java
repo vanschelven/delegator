@@ -118,9 +118,6 @@ public class ImplementingMethodGenerator implements Constants {
             methodGen.setMaxStack();
             methodGen.setMaxLocals();
             
- //           printMethod(methodGen);
-            addFakeLineNumbers(methodGen);
-
             classGen.addMethod(methodGen.getMethod());
 
             instrList.dispose();
@@ -128,10 +125,7 @@ public class ImplementingMethodGenerator implements Constants {
             throw new RuntimeException(e);
         }
     }
-    
-    
-    
-    
+ 
     //Copy/paste with modifications
     private void add_method2() {
         try {
@@ -164,7 +158,7 @@ public class ImplementingMethodGenerator implements Constants {
             }
 
             String methodName = extractOriginalMethodName(superMethod.getName());
-            if (Component.class.isAssignableFrom(componentClass) &&( (!methodName.equals("equals")))) //TODO uitbreiden??
+            if (Component.class.isAssignableFrom(componentClass) &&( (!methodName.equals("equals"))))
                 methodName += ClassGenerator.SUPERCALL_POSTFIX;
             instrList.append(instrFact.createInvoke(componentClass.getName(),
                     methodName, returnType, removeLast(removeFirst(getArgumentTypes(superMethod))),
@@ -175,21 +169,11 @@ public class ImplementingMethodGenerator implements Constants {
             methodGen.setMaxStack();
             methodGen.setMaxLocals();
             
- //           printMethod(methodGen);
-            addFakeLineNumbers(methodGen);
-
             classGen.addMethod(methodGen.getMethod());
 
             instrList.dispose();
         } catch (Exception e) {
             throw new RuntimeException(e);
-        }
-    }
-    
-    private void addFakeLineNumbers(MethodGen methodGen) {
-        InstructionHandle[] instructionHandles = methodGen.getInstructionList().getInstructionHandles();
-        for (int i = 0; i < instructionHandles.length; i++) {
-            methodGen.addLineNumber(instructionHandles[i], i);
         }
     }
     

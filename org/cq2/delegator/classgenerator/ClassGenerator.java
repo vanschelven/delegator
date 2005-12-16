@@ -31,6 +31,7 @@ import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.ReferenceType;
 import org.apache.bcel.generic.Type;
 import org.cq2.delegator.Component;
+import org.cq2.delegator.DelegatorException;
 import org.cq2.delegator.ISelf;
 import org.cq2.delegator.Proxy;
 import org.cq2.delegator.Self;
@@ -546,7 +547,12 @@ public abstract class ClassGenerator implements Constants {
         try {
             Class componentClass = componentsClassCache.getClass(injector,
                     clazz);
-            Component result = (Component) componentClass.newInstance();
+            Component result;
+            try {
+                result = (Component) componentClass.newInstance();
+            } catch (NoSuchMethodError e) {
+                throw new DelegatorException("Class " + componentClass + " cannot be instantiated, for lack of an empty constructor", e);
+            }
             getDelegateField(result).set(result, self);
             return result;
         } catch (Exception e) {
