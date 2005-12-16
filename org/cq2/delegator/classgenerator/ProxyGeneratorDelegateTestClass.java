@@ -56,7 +56,7 @@ public abstract class ProxyGeneratorDelegateTestClass {
 		int i,
 		boolean b,
 		long l,
-//		double d,  TODO het lukt me niet met allebei de lange opties aan
+		double d,
 		float f,
 		byte b1,
 		short s,

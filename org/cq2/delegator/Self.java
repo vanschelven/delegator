@@ -75,13 +75,19 @@ public class Self implements ISelf {
     }
 
     Object component(Class clazz) {
+        int index = componentIndex(clazz);
+        if (index == -1) return null;
+        return components[index];
+    }
+
+    private int componentIndex(Class clazz) {
         for (int i = 0; i < nrOfComponents; i++) {
             if ((components[i] instanceof Component && components[i].getClass()
                     .getSuperclass().equals(clazz))
                     || components[i].getClass().equals(clazz))
-                return components[i];
+                return i;
         }
-        return null;
+        return -1;
     }
 
     public void add(Class clas) {
@@ -107,7 +113,7 @@ public class Self implements ISelf {
         System.arraycopy(components, 0, newComponents, 1, nrOfComponents + 1);
         components = newComponents;
         nrOfComponents++;
-        composedClass = composedClass.insert(componentType);
+        composedClass = composedClass.insert(newComponents[0].getClass());
     }
 
     private Component newComponent(Class clas) {
@@ -257,6 +263,11 @@ public class Self implements ISelf {
         addComponent(forwardee);
     }
     
+    public int getComponentIndex(Object afterThisComponent) {
+        return componentIndex(afterThisComponent.getClass()) + 1;
+    }
+    
+}
+    
     //TODO (HEEL ergens anders, finalize documenteren)
 
-}

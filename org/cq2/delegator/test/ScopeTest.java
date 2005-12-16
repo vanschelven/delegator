@@ -39,23 +39,6 @@ public class ScopeTest extends InvocationHandlerTest {
     }
 
     /**
-     * Test showing a limitation of Delegator: The fact that proxies don't work
-     * with private methods. Generates a proxy for PrivateMethod and calls
-     * method(). This test shows that firstly the proxy has not acted as a
-     * proxy. If it had invokedMethod would not have been null. Secondly
-     * privateMethodCalled is true. This means the proxy has indeed executed the
-     * code it semantically could be expected to override.
-     */
-//TODO invocationHandler
-    //    public void testPrivateMethodProxy() {
-//        PrivateMethod m = (PrivateMethod) ClassGenerator.newProxyInstance(
-//                PrivateMethod.class, this);
-//        m.method();
-//        assertNull(invokedMethod);
-//        assertTrue(privateMethodCalled);
-//    }
-
-    /**
      * Test showing a limitation of Delegator: The fact that Delegator doesn't
      * work with private methods (because proxies don't work with private
      * methods). If a private method is called on a proxy the proxy doesn't
@@ -219,24 +202,6 @@ public class ScopeTest extends InvocationHandlerTest {
         assertTrue(packageMethodCalled);
         assertTrue(m.called);
     }
-
-    /**
-     * Test showing a limitation of Delegator: The fact that proxies don't work
-     * with package methods. Generates a proxy for PackageMethod and calls
-     * method(). This test shows that firstly the proxy has not acted as a
-     * proxy. If it had invokedMethod would not have been null. Secondly
-     * packageMethodCalled is true. This means the proxy has indeed executed the
-     * code it semantically could be expected to override.
-     */
-    
-    //TODO INvocationHandler
-//    public void testPackageMethodProxy() {
-//        PackageMethod m = (PackageMethod) ClassGenerator.newProxyInstance(
-//                PackageMethod.class, this);
-//        m.method();
-//        assertNull(invokedMethod);
-//        assertTrue(packageMethodCalled);
-//    }
    
     /**
      * Test showing a limitation of Delegator: The fact that Delegator doesn't
@@ -256,7 +221,7 @@ public class ScopeTest extends InvocationHandlerTest {
     
     /**
      * Shows that Self's method lookup cannot find a package method although it exists. 
-     * This is fine because the method actually called on the proxy is public.
+     * This is intentional because the method actually called on the proxy is public.
      */
     public void testPackageMethodsArentCalled() {
         ISelf result = new Self(PackageMethod.class);
@@ -326,27 +291,11 @@ public class ScopeTest extends InvocationHandlerTest {
 
     }
 
-    /**
-     * Shows that proxies work fine with protected methods. Generates a proxy for 
-     * ProtectedMethod and calls method(). This test shows that firstly the proxy 
-     * has acted as a proxy, because invokedMethod is "method". Secondly
-     * protectedMethodCalled is false. This means the proxy has not executed the
-     * code it semantically is expected to override.
-     */
-    //TODO probleem met proxy instances
-//    public void testProtectedMethodProxy() {
-//        ProtectedMethod m = (ProtectedMethod) ClassGenerator.newProxyInstance(
-//                ProtectedMethod.class, this);
-//        m.method();
-//        assertEquals("method", invokedMethod);
-//        assertFalse(protectedMethodCalled);
-//    }
-
     //some other analogyous tests have been left out.
     
     /**
      * Shows that Self's method lookup cannot find a protected method although it exists. 
-     * This is fine because the method actually called on the proxy is public.
+     * This is intentional because the method actually called on the proxy is public.
      */
     public void testProtectedMethodsArentCalled() {
         ISelf result = new Self(ProtectedMethod.class);
@@ -365,17 +314,6 @@ public class ScopeTest extends InvocationHandlerTest {
         }
 
     }
-
-    //TODO invocationHandler
-//    public void testPublicMethodProxy() {
-//        PublicMethod m = (PublicMethod) ClassGenerator.newProxyInstance(
-//                PublicMethod.class, this);
-//        m.method();
-//        assertEquals("method", invokedMethod);
-//        assertFalse(publicMethodCalled);
-//    }
-
-    
     
     public void testPublicMethodExtendsProtectedMethod() {
         PublicMethod m = (PublicMethod) Delegator.extend(PublicMethod.class,

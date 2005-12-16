@@ -1,7 +1,6 @@
 package org.cq2.delegator.test;
 
 import org.cq2.delegator.Delegator;
-import org.cq2.delegator.classgenerator.ClassGenerator;
 
 public class AbstractMethodsTest extends InvocationHandlerTest {
 
@@ -16,26 +15,6 @@ public class AbstractMethodsTest extends InvocationHandlerTest {
             called = true;
         }
     }
-
-//TODO workaround met nieuwe werking verzinnen
-    //    public void testAbstractPublicMethod() throws Exception {
-//        AbstractPublicMethod m = (AbstractPublicMethod) ClassGenerator
-//                .newProxyInstance(AbstractPublicMethod.class, this);
-//        m.method();
-//        assertEquals("method", invokedMethod);
-//    }
-
-    public abstract static class AbstractProtectedMethod {
-        protected abstract void method();
-    }
-
-    //TODO workaround met nieuwe werking verzinnen
-//    public void testAbstractProtectedMethod() throws Exception {
-//        AbstractProtectedMethod m = (AbstractProtectedMethod) ClassGenerator
-//                .newProxyInstance(AbstractProtectedMethod.class, this);
-//        m.method();
-//        assertEquals("method", invokedMethod);
-//    }
     
     public void testAbstractMethodsAreSkipped() {
         AbstractPublicMethod m = (AbstractPublicMethod) Delegator.extend(AbstractPublicMethod.class, PublicMethod.class);

@@ -108,14 +108,13 @@ public class SelfTest extends TestCase {
 		}
 	}
 
-	//TODO dit snap ik niet
-//	public void testCastISelf() {
-//		Self self = new Self(TestCastISelf.class);
-//		TestCastISelf obj = (TestCastISelf) self.cast(TestCastISelf.class);
-//		assertSame(self, obj.testCast());
-//		// or:
-//		assertSame(self, ((ISelf) obj).self());
-//	}
+	public void testCastISelf() {
+		Self self = new Self(TestCastISelf.class);
+		TestCastISelf obj = (TestCastISelf) self.cast(TestCastISelf.class);
+		assertSame(self, obj.testCast());
+		// or:
+		assertSame(self, ((ISelf) obj).self());
+	}
 
 	//TODO (elders) optimizen van proxys voor interfaces
 	
@@ -156,42 +155,22 @@ public class SelfTest extends TestCase {
 	public static class B extends A {}
 	public static class C {}
 
-	//TODO string & hashcode
-//	public void testToString2() {
-//		Object objA = newModifiedSelf(A.class).cast(Object.class);
-//		assertEquals("A", objA.toString());
-//		Object objB = newModifiedSelf(B.class).cast(Object.class);
-//		assertEquals("A", objB.toString());
-//		Object objC = newModifiedSelf(C.class).cast(Object.class);
-//		assertEquals("modifiedSelf", objC.toString());
-//	}
-//	
-//	public void testHashCodeCannotBeRedefined() {
-//		Object objA = newModifiedSelf(A.class).cast(Object.class);
-//		assertEquals(99, objA.hashCode());
-//		Object objB = newModifiedSelf(B.class).cast(Object.class);
-//		assertEquals(99, objB.hashCode());
-//		Object objC = newModifiedSelf(C.class).cast(Object.class);
-//		assertEquals(99, objC.hashCode());
-//	}
-
-	public void testEqualsCannotBeRedefined() {
-//		Self self1 = new Self();
-//		Self self2 = new Self();
-//		assertFalse(self1.equals(self2));
-//		assertTrue(self1.equals(self1));
-//		self1.add(A.class);
-//		self2.add(A.class);
-//		assertFalse(self1.equals(self2));
-//		assertTrue(self1.equals(self1));
-//		A a1 = (A) self1.cast(A.class);
-//		A a2 = (A) self2.cast(A.class);
-//		assertFalse(a1.equals(a2));
-//		assertTrue(a1.equals(a1));
-//		assertFalse(a1.equals(null));
-//		assertFalse(a1.equals(new Object()));
-//		assertFalse(new Object().equals(a1));
-//		assertTrue(a1.equals(self1.cast(HashMap.class)));
+	public void testToString2() {
+		Object objA = newModifiedSelf(A.class).cast(Object.class);
+		assertEquals("A", objA.toString());
+		Object objB = newModifiedSelf(B.class).cast(Object.class);
+		assertEquals("A", objB.toString());
+		Object objC = newModifiedSelf(C.class).cast(Object.class);
+		assertEquals("modifiedSelf", objC.toString());
+	}
+	
+	public void testHashCodeCannotBeRedefined() {
+		Object objA = newModifiedSelf(A.class).cast(Object.class);
+		assertEquals(99, objA.hashCode());
+		Object objB = newModifiedSelf(B.class).cast(Object.class);
+		assertEquals(99, objB.hashCode());
+		Object objC = newModifiedSelf(C.class).cast(Object.class);
+		assertEquals(99, objC.hashCode());
 	}
 
 	public static class Nr1 {
@@ -251,7 +230,7 @@ public class SelfTest extends TestCase {
 	public static class MyMap {
 		public Object put(Object key, Object value) {
 			mymap_key = key;
-			return null;//TODO dit probleem is dus opgelost met put -> Object return type = hier moet wel nog eea over beschreven ind e scriptei
+			return null;//TODO (schrijf) dit probleem is dus opgelost met put -> Object return type = hier moet wel nog eea over beschreven ind e scriptei
 		}
 	}
 
@@ -365,34 +344,37 @@ public class SelfTest extends TestCase {
 		}
 	}
 
+	public void testForward() {
+		F2 f = (F2) new Self(F1.class).cast(F2.class);
+		f.add(F2.class);
+		f.add(F3.class);
+		assertEquals("you're my hero!", f.method());
+		assertEquals(16, f.calc());
+	}
 
-//TODO next_method werkt niet meer	
-//	public void testForward() {
-//		F2 f = (F2) new Self(F1.class).cast(F2.class);
-//		f.add(F2.class);
-//		f.add(F3.class);
-//		assertEquals("you're my hero!", f.method());
-//		assertEquals(16, f.calc());
-//	}
+	public void testDecorate() {
+		ISelf self = new Self(F2.class);
+		F2 f2 = (F2) self.cast(F2.class);
+		assertEquals("hero!", f2.method());
+		self.decorate(F1.class);
+		assertEquals("you're my hero!", f2.method());
+	}
 
-	//TODO hangt af van __next__method
-//	public void testDecorate() {
-//		ISelf self = new Self(F2.class);
-//		F2 f2 = (F2) self.cast(F2.class);
-//		assertEquals("hero!", f2.method());
-//		self.decorate(F1.class);
-//		assertEquals("you're my hero!", f2.method());
-//	}
-
-	//TODO next_method
-//	public void testDecorateAlias() {
-//		F2 f2 = (F2) new Self(F2.class).cast(F2.class);
-//		assertEquals("hero!", f2.method());
-//		Self.decorate(f2, F1.class);
-//		assertEquals("you're my hero!", f2.method());
-//	}
-
-	public void testClone() {
+	public void testDecorateAlias() {
+		F2 f2 = (F2) new Self(F2.class).cast(F2.class);
+		assertEquals("hero!", f2.method());
+		Self.decorate(f2, F1.class);
+		assertEquals("you're my hero!", f2.method());
+	}
+	
+	public void testGetComponentIndex() {
+	    Self self = new Self(F1.class);
+	    self.add(F2.class);
+	    self.add(Vector.class);
+        assertEquals(2, self.getComponentIndex(self.components[1]));
+	}
+	
+		public void testClone() {
 		Self original = new Self(F2.class);
 		original.add(HashMap.class);
 		original.add(ArrayList.class);

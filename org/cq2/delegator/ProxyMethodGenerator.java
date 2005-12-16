@@ -36,6 +36,7 @@ public class ProxyMethodGenerator implements Constants {
         instrList = new InstructionList();
         addDefaultConstructor();
         add_method(method);
+        add_method2(method);
     }
 
     public byte[] generate() {
@@ -78,7 +79,32 @@ public class ProxyMethodGenerator implements Constants {
         }
     }
 
-    //copy paste - classGenerator
+    private void add_method2(Method method) {
+        try {
+            int modifiers = (ACC_PUBLIC | ACC_ABSTRACT);
+            methodGen = new MethodGen(modifiers, Type.getType(method
+                    .getReturnType()),
+                    appendIntType(insertSelfType(getArgumentTypes(method))),
+                    insertSelfString(generateParameterNames(method
+                            .getParameterTypes().length + 1)), "__offset_" + method.getName(), classGen
+                            .getClassName(), instrList, constPool);
+            for (int i = 0; i < method.getExceptionTypes().length; i++) {
+                methodGen.addException(method.getExceptionTypes()[0].getName());
+            }
+            classGen.addMethod(methodGen.getMethod());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Type[] appendIntType(Type[] input) {
+        Type[] result = new Type[input.length + 1];
+        result[result.length - 1] = Type.INT;
+        System.arraycopy(input, 0, result, 0, input.length);
+        return result;
+    }
+
+   //copy paste - classGenerator
     private static String[] generateParameterNames(int nr) {
         String[] result = new String[nr];
         for (int i = 0; i < nr; i++) {

@@ -5,17 +5,23 @@ import java.util.Date;
 
 public class Report {
 
-    private final static int RUNS = 1;
+    private final static int RUNS = 5;
     
     public static void main(String[] args) {
         PrintStream out = System.out;
         
         out.println("Start...");
-        out.println("Speed:");
+        out.println("Looptime & Speed:");
+        Profiler looptime = new Profiler(new LoopTime(), out);
+        looptime.run(RUNS);
+        
         Profiler calls = new Profiler(new ZillionCalls(), out);
         calls.run(RUNS);
+        out.println("1:" + (calls.getAvg() / looptime.getAvg()));
+
         Profiler proxyCalls = new Profiler(new ZillionProxyCalls(), out);
         proxyCalls.run(RUNS);
+        out.println(":");
         out.println("1:" + (proxyCalls.getAvg() / calls.getAvg()));
         
         Profiler callsToComponentTwo = new Profiler(new ZillionCallsToComponentTwo(), out);

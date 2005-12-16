@@ -11,12 +11,6 @@ import org.cq2.delegator.ISemaphore;
 import org.cq2.delegator.Monitor;
 import org.cq2.delegator.Self;
 
-/**
- * @author klaas
- * 
- * De tests voor Become zijn in feite bugtests voor hoe het eerst was...
- */
-//TODO refactoren
 public class MultiThreadTest extends TestCase {
 
     private final static int MAXBECOMES = 200;

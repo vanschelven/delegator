@@ -5,6 +5,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Vector;
 
+import org.cq2.delegator.SelfTest.F1;
+import org.cq2.delegator.SelfTest.F2;
+
 import junit.framework.TestCase;
 
 public class ComposedClassTest extends TestCase {
@@ -57,5 +60,10 @@ public class ComposedClassTest extends TestCase {
         assertTrue(methodCalled);
     }
     
-    
+	public void testGetSuffix() {
+	    ComposedClass expected = ComposedClass.getEmptyClass().add(Vector.class);
+	    ComposedClass larger = ComposedClass.getEmptyClass().add(F1.class).add(F2.class).add(Vector.class);
+	    assertEquals(expected, larger.getSuffix(2));
+	}
+
 }

@@ -57,13 +57,13 @@ public class PolymorphismTest extends TestCase {
     }
 
     public void testDelegation() {
-        //TODO deze test slaagt in sommige situaties ook als self.invoke slecht is geimplementeerd... zie mijn bookmark thuis
+        //deze test slaagt in sommige situaties ook als self.invoke slecht is geimplementeerd... zie mijn bookmark thuis
         ThreeMethods m = (ThreeMethods) new Self(ThreeMethods.class).cast(ThreeMethods.class);
         doTests(m);
     }
     
     public void testDelegation2() {
-        //TODO idem als bovenstaand - dit heeft te maken met de volgorde waarin getDeclaredMethods werkt
+        //idem als bovenstaand - dit heeft te maken met de volgorde waarin getDeclaredMethods werkt
         ThreeMethods m = (ThreeMethods) new Self(ThreeMethodsReverse.class).cast(ThreeMethodsReverse.class);
     }
 
@@ -121,7 +121,6 @@ public class PolymorphismTest extends TestCase {
    
    public void testBoxingProblems() {
        PHPArray array = (PHPArray) new Self(PHPArray.class).cast(PHPArray.class);
-       //TODO ook dit is weer eens onmogelijk om te testen ;-)
        array.set(0, "value");
        assertEquals(SET_IO, array.getInvokedMethod());
        array.set("key", "value");

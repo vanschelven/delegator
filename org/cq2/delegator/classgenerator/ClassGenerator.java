@@ -110,12 +110,15 @@ public abstract class ClassGenerator implements Constants {
             prefix = "org.cq2.delegator.ComponentMethod";
             if (classname.startsWith(prefix) && !classname.equals(prefix)) {
                 String postfix = classname.substring(prefix.length());
-                int methodIdentifier = Integer.parseInt(postfix.substring(0, postfix.indexOf('_')));
-                int componentIdentifier = Integer.parseInt(postfix.substring(postfix.indexOf('_') + 1, postfix.length()));
-                byte[] bytes =  new ComponentMethodGenerator(methodIdentifier, componentIdentifier).generate();
+                int methodIdentifier = Integer.parseInt(postfix.substring(0,
+                        postfix.indexOf('_')));
+                int componentIdentifier = Integer.parseInt(postfix.substring(
+                        postfix.indexOf('_') + 1, postfix.length()));
+                byte[] bytes = new ComponentMethodGenerator(methodIdentifier,
+                        componentIdentifier).generate();
                 return defineClass(classname, bytes, 0, bytes.length);
             }
-         //   System.out.println("fail");
+            //   System.out.println("fail");
             throw new ClassNotFoundException(classname);
         }
 
@@ -173,7 +176,10 @@ public abstract class ClassGenerator implements Constants {
 
     public static final String SUPERCALL_POSTFIX = "__super";
 
+    private Class superClass;
+
     ClassGenerator(String className, Class superClass, Class marker) {
+        this.superClass = superClass;
         String[] extraInterfaces = new String[] { marker.getName(),
                 ISelf.class.getName() };
         int modifiers = (Modifier.isPublic(superClass.getModifiers()) ? ACC_PUBLIC
@@ -257,9 +263,9 @@ public abstract class ClassGenerator implements Constants {
     }
 
     private void addDefaultConstructor() {
-        methodGen = new MethodGen(ACC_PUBLIC, Type.VOID,
-                Type.NO_ARGS, new String[] {}, "<init>", classGen
-                        .getClassName(), instrList, constPool);
+        methodGen = new MethodGen(ACC_PUBLIC, Type.VOID, Type.NO_ARGS,
+                new String[] {}, "<init>", classGen.getClassName(), instrList,
+                constPool);
         createLoadThis();
         instrList.append(instrFact.createInvoke(classGen.getSuperclassName(),
                 "<init>", Type.VOID, Type.NO_ARGS, Constants.INVOKESPECIAL));
@@ -279,8 +285,7 @@ public abstract class ClassGenerator implements Constants {
 
     private void addSuperCallMethod(Method method) {
         Type returnType = Type.getType(method.getReturnType());
-        addMethodHeader(method, returnType,
-                SUPERCALL_POSTFIX, true);
+        addMethodHeader(method, returnType, SUPERCALL_POSTFIX, true);
         createCallToSuper(method, returnType, 1);
         addMethodTrailer(returnType);
     }
@@ -311,22 +316,24 @@ public abstract class ClassGenerator implements Constants {
     private void addMethodTrailer(Type returnType) {
         methodGen.setMaxStack();
         methodGen.setMaxLocals();
-     //   printMethod(methodGen);
+        //   printMethod(methodGen);
         addFakeLineNumbers();
         classGen.addMethod(methodGen.getMethod());
         instrList.dispose();
     }
-    
+
     private void printMethod() {
         System.out.println("code of " + methodGen.getName());
-        InstructionHandle[] instructionHandles = methodGen.getInstructionList().getInstructionHandles();
+        InstructionHandle[] instructionHandles = methodGen.getInstructionList()
+                .getInstructionHandles();
         for (int i = 0; i < instructionHandles.length; i++) {
             System.out.println(i + ": " + instructionHandles[i]);
         }
     }
-    
+
     private void addFakeLineNumbers() {
-        InstructionHandle[] instructionHandles = methodGen.getInstructionList().getInstructionHandles();
+        InstructionHandle[] instructionHandles = methodGen.getInstructionList()
+                .getInstructionHandles();
         for (int i = 0; i < instructionHandles.length; i++) {
             methodGen.addLineNumber(instructionHandles[i], i);
         }
@@ -354,14 +361,28 @@ public abstract class ClassGenerator implements Constants {
 
     //TODO refactor gelijkenissen tussen de verschillende code generators
     private void createCallToInvocationHandler(Method method, boolean useSelf) {
-       // this.self.composedClass.getMethod(identifier)).invoke(self,
+        // this.self.composedClass.getMethod(identifier)).invoke(self,
         // [...args...]);
-        boolean useStack = true; //TODO implementaties waarbij dit false is.(hoeft nl. alleen voor bepaalde soorten targets van de method
-        
+        boolean useStack = true; //TODO implementaties waarbij dit false
+                                 // is.(hoeft nl. alleen voor bepaalde soorten
+                                 // targets van de method
+        LocalVariableGen nextMethodComponentOffset = methodGen.addLocalVariable("nextMethodOffset", Type.INT, null, null);
+        boolean nextMethod = false;
+        String name = method.getName();
+        if (name.startsWith("__next__")) {
+            nextMethod = true;
+            name = name.substring(8);
+            try {
+                method = superClass.getDeclaredMethod(name, method.getParameterTypes());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         LocalVariableGen stackLocal = null;
-        
+
         createLoadThis();
-        
+
         if ((useStack) || (!useSelf)) {
             // ((Stack)(org.cq2.delegator.Self.self.get())
             instrList.append(instrFact.createFieldAccess(
@@ -372,55 +393,77 @@ public abstract class ClassGenerator implements Constants {
             instrList.append(instrFact.createCheckCast(new ObjectType(
                     "java.util.Stack")));
 
-            stackLocal = methodGen.addLocalVariable("stack", Type.getType(Stack.class), null, null); 
-            instrList.append(InstructionFactory.createStore(Type.OBJECT, stackLocal.getIndex()));
+            stackLocal = methodGen.addLocalVariable("stack", Type
+                    .getType(Stack.class), null, null);
+            instrList.append(InstructionFactory.createStore(Type.OBJECT,
+                    stackLocal.getIndex()));
         }
-        
+
         if (useSelf) {
             // this.>delegate<.invoke( ...
             instrList.append(instrFact.createFieldAccess(classGen
                     .getClassName(), "self", new ObjectType(Self.class
                     .getName()), Constants.GETFIELD));
         } else {
-            instrList.append(InstructionFactory.createLoad(Type.getType(Stack.class), stackLocal.getIndex()));
+            instrList.append(InstructionFactory.createLoad(Type
+                    .getType(Stack.class), stackLocal.getIndex()));
             instrList.append(instrFact.createInvoke("java.util.Stack", "peek",
                     Type.OBJECT, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
-            instrList.append(instrFact.createCheckCast(new ObjectType(Self.class.getName())));
+            instrList.append(instrFact.createCheckCast(new ObjectType(
+                    Self.class.getName())));
         }
         //store self locally
-        LocalVariableGen selfLocal = methodGen.addLocalVariable("self", new ObjectType(Self.class.getName()), null, null);
-        
+        LocalVariableGen selfLocal = methodGen.addLocalVariable("self",
+                new ObjectType(Self.class.getName()), null, null);
+
         instrList.append(InstructionFactory.createDup(1));
-        instrList.append(InstructionFactory.createStore(Type.OBJECT, selfLocal.getIndex()));
+        instrList.append(InstructionFactory.createStore(Type.OBJECT, selfLocal
+                .getIndex()));
 
         if (useStack) {
             //stack.push(self);
-            instrList.append(InstructionFactory.createLoad(Type.getType(Stack.class), stackLocal.getIndex()));
-            instrList.append(InstructionFactory.createLoad(Type.getType(Self.class), selfLocal.getIndex()));
+            instrList.append(InstructionFactory.createLoad(Type
+                    .getType(Stack.class), stackLocal.getIndex()));
+            instrList.append(InstructionFactory.createLoad(Type
+                    .getType(Self.class), selfLocal.getIndex()));
             instrList.append(instrFact.createInvoke("java.util.Stack", "push",
-                    Type.OBJECT, new Type[]{Type.OBJECT}, Constants.INVOKEVIRTUAL));
+                    Type.OBJECT, new Type[] { Type.OBJECT },
+                    Constants.INVOKEVIRTUAL));
             instrList.append(InstructionConstants.POP);
         }
-        
-        //get composedClass Field 
+
+        //get composedClass
         instrList.append(instrFact.createGetField(Self.class.getName(),
                 "composedClass", Type.getType(ComposedClass.class)));
+        if (nextMethod) {
+            instrList.append(InstructionFactory.createLoad(Type
+                    .getType(Self.class), selfLocal.getIndex()));
+           
+            instrList.append(InstructionFactory.createThis());
+            instrList.append(instrFact.createInvoke(Self.class.getName(),
+                    "getComponentIndex", Type.INT,
+                    new Type[] { Type.OBJECT }, INVOKEVIRTUAL));
+            instrList.append(InstructionFactory.createDup(1));
+            instrList.append(InstructionFactory.createStore(Type.INT, nextMethodComponentOffset.getIndex()));
+            instrList.append(instrFact.createInvoke(ComposedClass.class.getName(), "getSuffix", Type.getType(ComposedClass.class), new Type[]{Type.INT}, INVOKEVIRTUAL));
+        }
         //load identifier
         int identifier = ProxyMethodRegister.getInstance().getMethodIdentifier(
                 method);
         instrList.append(new PUSH(constPool, identifier));
-        //call method "getMethod" 
+        //call method "getMethod"
         instrList.append(instrFact.createInvoke(ComposedClass.class.getName(),
-                "getMethod", Type.getType(ProxyMethod.class), new Type[] { Type.INT },
-                Constants.INVOKEVIRTUAL));
-        //cast to ProxyMethod_[identifier] 
+                "getMethod", Type.getType(ProxyMethod.class),
+                new Type[] { Type.INT }, Constants.INVOKEVIRTUAL));
+        //cast to ProxyMethod_[identifier]
 
         String proxyMethodSignature = "Lorg/cq2/delegator/ProxyMethod"
                 + identifier + ";";
         instrList.append(instrFact.createCheckCast((ReferenceType) Type
                 .getType(proxyMethodSignature)));
         //load self again...
-        instrList.append(InstructionFactory.createLoad(Type.OBJECT, selfLocal.getIndex()));
+        instrList.append(InstructionFactory.createLoad(Type.OBJECT, selfLocal
+                .getIndex()));
         //load paramters
 
         final int SKIP_THIS_POINTER = 1;
@@ -432,36 +475,51 @@ public abstract class ClassGenerator implements Constants {
         }
 
         //call invoke
-        instrList.append(instrFact.createInvoke("org.cq2.delegator.ProxyMethod" + identifier, "__invoke_" + method.getName(),
-                Type.getType(method.getReturnType()),
-                insertSelfType(getArgumentTypes(method)),
+        if (!nextMethod) {
+            instrList.append(instrFact.createInvoke("org.cq2.delegator.ProxyMethod"
+                + identifier, "__invoke_" + name, Type.getType(method
+                .getReturnType()), insertSelfType(getArgumentTypes(method)),
                 Constants.INVOKEVIRTUAL));
-        
+        } else {
+	        instrList.append(InstructionFactory.createLoad(Type.INT, nextMethodComponentOffset.getIndex()));
+            instrList.append(instrFact.createInvoke("org.cq2.delegator.ProxyMethod"
+	                + identifier, "__offset_" + name, Type.getType(method
+	                .getReturnType()), appendIntType(insertSelfType(getArgumentTypes(method))),
+	                Constants.INVOKEVIRTUAL));
+        }
         if (useStack) {
             //stack.pop();
-            instrList.append(InstructionFactory.createLoad(Type.getType(Stack.class), stackLocal.getIndex()));
+            instrList.append(InstructionFactory.createLoad(Type
+                    .getType(Stack.class), stackLocal.getIndex()));
             instrList.append(instrFact.createInvoke("java.util.Stack", "pop",
-                    Type.OBJECT, new Type[]{}, Constants.INVOKEVIRTUAL));
+                    Type.OBJECT, new Type[] {}, Constants.INVOKEVIRTUAL));
             instrList.append(InstructionConstants.POP);
         }
-        
+
         //return
         instrList.append(InstructionFactory.createReturn(Type.getType(method
                 .getReturnType())));
-        
 
-        //Stack stack = ((Stack) self.get()); die hadden we al - dup wellicht noodzakelijk
-//        stack.push(self);
-      //  try { TODO dit kan later nog wel
-       //     try { TODO ook dit kan nog later...
-                //... method call
-       //     } finally {
-  //              stack.pop();
-       //     }
-//        } catch (InvocationTargetException e) {
-//            throw e.getTargetException();
-//        }
-        
+        //Stack stack = ((Stack) self.get()); die hadden we al - dup wellicht
+        // noodzakelijk
+        //        stack.push(self);
+        //  try { TODO dit kan later nog wel
+        //     try { TODO ook dit kan nog later...
+        //... method call
+        //     } finally {
+        //              stack.pop();
+        //     }
+        //        } catch (InvocationTargetException e) {
+        //            throw e.getTargetException();
+        //        }
+
+    }
+
+    private Type[] appendIntType(Type[] input) {
+        Type[] result = new Type[input.length + 1];
+        result[result.length - 1] = Type.INT;
+        System.arraycopy(input, 0, result, 0, input.length);
+        return result;
     }
 
     private static Type[] insertSelfType(Type[] input) {

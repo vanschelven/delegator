@@ -11,8 +11,6 @@ import org.cq2.delegator.MethodsCache.Tuple;
 import org.cq2.delegator.classgenerator.ClassGenerator;
 import org.cq2.delegator.method.MethodUtil;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 public class ComposedClass {
 
     private Vector classes;
@@ -126,56 +124,42 @@ public class ComposedClass {
     
     private Tuple resolve(int uniqueIdentifier) {
         Method method = ProxyMethodRegister.getInstance().getMethod(uniqueIdentifier);
-        if ((method.getName().equals("equals")) || (method.getName().equals("toString")))
-            return new Tuple(classes.size(), getDeclaredMethod(Self.class, "equals", new Class[]{Object.class}));
         //TODO synchronization noodzaak opnieuw checken.
-        //TODO equals etc.
-        //if ("equals".equals(method.getName()))
-       //     return Boolean.valueOf(equals(args[0]));
-      //  if ("hashCode".equals(method.getName))
-      //      return new Integer(hashCode());
+        if ("hashCode".equals(method.getName()) || "equals".equals(method.getName()))
+            return xxxxxxxx(method, classes.size(), Self.class);
         int i = 0;
-
-        String name = method.getName();
-//        if (method.getName().startsWith("__next__")) {
-//            while (components[i] != proxy && (i < nrOfComponents))
-//                i++;
-//            name = name.substring(8);
-//            i++;
-//            //if(!cmps.hasNext())throw new NoSuchMethodError
-//        }
 
         for (; i < classes.size(); i++) {
             Class clazz = (Class) classes.get(i);
-            Tuple result = xxxxxxxx(method, i, name, clazz);
+            Tuple result = xxxxxxxx(method, i, clazz);
             if (result != null) return result;
         }
 
-        Tuple result = xxxxxxxx(method, classes.size(), name, Self.class);
+        Tuple result = xxxxxxxx(method, classes.size(), Self.class);
         if (result != null) return result;
         
         throw new NoSuchMethodError(method.toString());
 
     }
 
-    private Tuple xxxxxxxx(Method method, int i, String name, Class clazz) {
+    private Tuple xxxxxxxx(Method method, int i, Class clazz) {
         Method delegateMethod;
         boolean componentMethodIsProtected = false;
         if (Component.class.isAssignableFrom(clazz)) {
-            delegateMethod = MethodUtil.getDeclaredMethod(clazz, name + ClassGenerator.SUPERCALL_POSTFIX, method.getParameterTypes(),
+            delegateMethod = MethodUtil.getDeclaredMethod(clazz, method.getName() + ClassGenerator.SUPERCALL_POSTFIX, method.getParameterTypes(),
                     method.getExceptionTypes());
             //De superdelegatemethod is feitelijk de methode zoals
             // ingetiept door de programmeur
             //deze bestaat per definitie - als die niet gevonden wordt
             // betekent dat hij protected is
             Method superDelegateMethod = MethodUtil.getDeclaredMethod(
-                    clazz.getSuperclass(), name,
+                    clazz.getSuperclass(), method.getName(),
                     method.getParameterTypes(), method.getExceptionTypes());
 
             componentMethodIsProtected = (delegateMethod != null)
                     && (superDelegateMethod == null);
         } else {
-            delegateMethod = MethodUtil.getDeclaredMethod(clazz, name, method.getParameterTypes(),
+            delegateMethod = MethodUtil.getDeclaredMethod(clazz, method.getName(), method.getParameterTypes(),
                     method.getExceptionTypes());
             if (delegateMethod != null)  componentMethodIsProtected = Modifier
                     .isProtected(delegateMethod.getModifiers());
@@ -239,6 +223,15 @@ public class ComposedClass {
                 oldComponentIndexes.length);
         Arrays.fill(componentIndexes, oldComponentIndexes.length, componentIndexes.length - 1, -1);
         
+    }
+    
+    public String toString() {
+        return "ComposedClass: " + classes.toString();
+    }
+    
+    public ComposedClass getSuffix(int i) {
+        if (i == 0) return this;
+        return remove(0).getSuffix(i - 1);
     }
 
 }
