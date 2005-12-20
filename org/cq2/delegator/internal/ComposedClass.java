@@ -145,7 +145,7 @@ public class ComposedClass {
             //De superdelegatemethod is feitelijk de methode zoals
             // ingetiept door de programmeur
             //deze bestaat per definitie - als die niet gevonden wordt
-            // betekent dat hij protected is
+            // betekent dat hij protected of package is
             Method superDelegateMethod = MethodUtil.getDeclaredMethod(
                     clazz.getSuperclass(), method.getName(),
                     method.getParameterTypes(), method.getExceptionTypes());
@@ -158,8 +158,7 @@ public class ComposedClass {
             if (delegateMethod != null)  componentMethodIsProtected = Modifier
                     .isProtected(delegateMethod.getModifiers());
         }
-        //TODO dit is in duigen gevallen met de toevoeging van package
-        // (in forwardees) maar dat lossen we later wel weer op...
+
         if (delegateMethod != null
                 && (!componentMethodIsProtected || Modifier
                         .isProtected(method.getModifiers()))

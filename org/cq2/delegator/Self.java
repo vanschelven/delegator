@@ -43,8 +43,6 @@ public class Self implements ISelf {
         addComponent(newComponent(firstComponentClass));
     }
 
-    //TODO wordt de stack al wel gebruikt meerdere keren achter elkaar??! als in een test?
-
     public Object cast(Class clas) {
         return Delegator.proxyFor(clas, this);
     }

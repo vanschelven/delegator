@@ -120,8 +120,6 @@ public class SelfTest extends TestCase {
 		assertSame(self, ((ISelf) obj).self());
 	}
 
-	//TODO (elders) optimizen van proxys voor interfaces
-	
 	public void testToString() {
 		Self self = newModifiedSelf(Object.class);
 		assertEquals("modifiedSelf", self.toString());

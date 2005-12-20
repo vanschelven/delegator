@@ -321,9 +321,6 @@ public abstract class ClassGenerator extends Generator {
     private void createCallToInvocationHandler(Method method, boolean useSelf) {
         // this.self.composedClass.getMethod(identifier)).invoke(self,
         // [...args...]);
-        boolean useStack = true; //TODO implementaties waarbij dit false
-                                 // is.(hoeft nl. alleen voor bepaalde soorten
-                                 // targets van de method
         LocalVariableGen nextMethodComponentOffset = methodGen.addLocalVariable("nextMethodOffset", Type.INT, null, null);
         boolean nextMethod = false;
         String name = method.getName();
@@ -341,21 +338,19 @@ public abstract class ClassGenerator extends Generator {
 
         createLoadThis();
 
-        if ((useStack) || (!useSelf)) {
-            // ((Stack)(org.cq2.delegator.Self.self.get())
-            instrList.append(instrFact.createFieldAccess(
-                    "org.cq2.delegator.Self", "self", new ObjectType(
-                            "java.lang.ThreadLocal"), Constants.GETSTATIC));
-            instrList.append(instrFact.createInvoke("java.lang.ThreadLocal",
-                    "get", Type.OBJECT, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
-            instrList.append(instrFact.createCheckCast(new ObjectType(
-                    "java.util.Stack")));
+        // ((Stack)(org.cq2.delegator.Self.self.get())
+        instrList.append(instrFact.createFieldAccess(
+                "org.cq2.delegator.Self", "self", new ObjectType(
+                        "java.lang.ThreadLocal"), Constants.GETSTATIC));
+        instrList.append(instrFact.createInvoke("java.lang.ThreadLocal",
+                "get", Type.OBJECT, Type.NO_ARGS, Constants.INVOKEVIRTUAL));
+        instrList.append(instrFact.createCheckCast(new ObjectType(
+                "java.util.Stack")));
 
-            stackLocal = methodGen.addLocalVariable("stack", Type
-                    .getType(Stack.class), null, null);
-            instrList.append(InstructionFactory.createStore(Type.OBJECT,
-                    stackLocal.getIndex()));
-        }
+        stackLocal = methodGen.addLocalVariable("stack", Type
+                .getType(Stack.class), null, null);
+        instrList.append(InstructionFactory.createStore(Type.OBJECT,
+                stackLocal.getIndex()));
 
         if (useSelf) {
             // this.>delegate<.invoke( ...
@@ -378,17 +373,15 @@ public abstract class ClassGenerator extends Generator {
         instrList.append(InstructionFactory.createStore(Type.OBJECT, selfLocal
                 .getIndex()));
 
-        if (useStack) {
-            //stack.push(self);
-            instrList.append(InstructionFactory.createLoad(Type
-                    .getType(Stack.class), stackLocal.getIndex()));
-            instrList.append(InstructionFactory.createLoad(Type
-                    .getType(Self.class), selfLocal.getIndex()));
-            instrList.append(instrFact.createInvoke("java.util.Stack", "push",
-                    Type.OBJECT, new Type[] { Type.OBJECT },
-                    Constants.INVOKEVIRTUAL));
-            instrList.append(InstructionConstants.POP);
-        }
+        //stack.push(self);
+        instrList.append(InstructionFactory.createLoad(Type
+                .getType(Stack.class), stackLocal.getIndex()));
+        instrList.append(InstructionFactory.createLoad(Type
+                .getType(Self.class), selfLocal.getIndex()));
+        instrList.append(instrFact.createInvoke("java.util.Stack", "push",
+                Type.OBJECT, new Type[] { Type.OBJECT },
+                Constants.INVOKEVIRTUAL));
+        instrList.append(InstructionConstants.POP);
 
         //get composedClass
         instrList.append(instrFact.createGetField(Self.class.getName(),
@@ -445,32 +438,19 @@ public abstract class ClassGenerator extends Generator {
 	                .getReturnType()), appendIntType(insertSelfType(getArgumentTypes(method))),
 	                Constants.INVOKEVIRTUAL));
         }
-        if (useStack) {
-            //stack.pop();
-            instrList.append(InstructionFactory.createLoad(Type
-                    .getType(Stack.class), stackLocal.getIndex()));
-            instrList.append(instrFact.createInvoke("java.util.Stack", "pop",
-                    Type.OBJECT, new Type[] {}, Constants.INVOKEVIRTUAL));
-            instrList.append(InstructionConstants.POP);
-        }
+
+	    //stack.pop();
+        instrList.append(InstructionFactory.createLoad(Type
+                .getType(Stack.class), stackLocal.getIndex()));
+        instrList.append(instrFact.createInvoke("java.util.Stack", "pop",
+                Type.OBJECT, new Type[] {}, Constants.INVOKEVIRTUAL));
+        instrList.append(InstructionConstants.POP);
 
         //return
         instrList.append(InstructionFactory.createReturn(Type.getType(method
                 .getReturnType())));
 
-        //Stack stack = ((Stack) self.get()); die hadden we al - dup wellicht
-        // noodzakelijk
-        //        stack.push(self);
-        //  try { TODO dit kan later nog wel
-        //     try { TODO ook dit kan nog later...
-        //... method call
-        //     } finally {
-        //              stack.pop();
-        //     }
-        //        } catch (InvocationTargetException e) {
-        //            throw e.getTargetException();
-        //        }
-
+        //Het is de vraag wat er gebeurt met de stack als je een exceptie krijgt hier - door het ontbreken van een finally is dit een memoryleak, maar heeft verder geen desastreuse gevolgen.
     }
 
     public static Proxy newProxyInstance(Class clazz, Self self) {
