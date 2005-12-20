@@ -1,7 +1,7 @@
 /*
  * Created on Jun 3, 2004
  */
-package org.cq2.delegator.classgenerator;
+package org.cq2.delegator.internal;
 
 import java.lang.reflect.InvocationHandler;
 import java.util.HashMap;
@@ -38,7 +38,7 @@ public class ClassGeneratorTest extends TestCase {
 	public void testCreateProxyClass() throws Exception {
 		ClassLoader loader = ClassGenerator.configureClassLoader(ClassLoader.getSystemClassLoader());
 		Class c = loader
-				.loadClass("org.cq2.delegator.classgenerator.ClassGeneratorTest$A$component");
+				.loadClass("org.cq2.delegator.internal.ClassGeneratorTest$A$component");
 		assertTrue(Component.class.isAssignableFrom(c));
 		assertTrue(A.class.isAssignableFrom(c));
 	}

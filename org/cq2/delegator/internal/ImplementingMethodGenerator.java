@@ -16,7 +16,6 @@ import org.apache.bcel.generic.ReferenceType;
 import org.apache.bcel.generic.Type;
 import org.cq2.delegator.Component;
 import org.cq2.delegator.Self;
-import org.cq2.delegator.classgenerator.ClassGenerator;
 
 public class ImplementingMethodGenerator extends Generator implements Constants {
 

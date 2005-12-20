@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
-import org.cq2.delegator.classgenerator.ClassGenerator;
 
 public class ForwardingMethodRegister {
 

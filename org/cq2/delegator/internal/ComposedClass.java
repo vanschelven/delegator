@@ -11,7 +11,6 @@ import java.util.Vector;
 
 import org.cq2.delegator.Component;
 import org.cq2.delegator.Self;
-import org.cq2.delegator.classgenerator.ClassGenerator;
 import org.cq2.delegator.internal.MethodsCache.Tuple;
 import org.cq2.delegator.method.MethodUtil;
 

@@ -2,41 +2,42 @@
  Copyright (C) 2001 Erik J. Groeneveld, http://www.ejgroeneveld.com
  Copyright (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl 
  */
-package org.cq2.delegator.classgenerator;
+package org.cq2.delegator.internal;
 
 import java.io.IOException;
 
-public abstract class ProxyGeneratorSelfTestClass {
-	public boolean voidVoidCalled = false;
-	public void voidVoid() {
-		voidVoidCalled = true;
+public abstract class ProxyGeneratorDelegateTestClass {
+
+	public Object objectString(String name) {
+		return "WRONG objectString() called!";
 	}
 	public Object objectVoid() {
-		return "TestClass2";
+		return "WRONG objectVoid() called!";
 	}
+	public void voidVoid() {}
 	public int hashCode() {
-		return 87654;
+		return 123;
 	}
 	public long longVoid() {
-		return 98765678;
+		return 0;
 	}
 	public float floatVoid() {
-		return 123.987F;
+		return 0;
 	}
 	public double doubleVoid() {
-		return 765.890;
+		return 0;
 	}
 	public byte byteVoid() {
-		return 87;
+		return 0;
 	}
 	public short shortVoid() {
-		return 789;
+		return 0;
 	}
 	public char charVoid() {
-		return 'B';
+		return 0;
 	}
 	public String stringVoid() {
-		return "Are you there?";
+		return null;
 	}
 	public void throwException() throws IOException, RuntimeException {}
 	public void voidString(String string) {}

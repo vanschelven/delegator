@@ -8,7 +8,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Stack;
 
-import org.cq2.delegator.classgenerator.ClassGenerator;
+import org.cq2.delegator.internal.ClassGenerator;
 import org.cq2.delegator.internal.ComposedClass;
 import org.cq2.delegator.method.MethodUtil;
 

@@ -8,7 +8,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
 import org.cq2.delegator.binders.Link;
-import org.cq2.delegator.classgenerator.ClassGenerator;
+import org.cq2.delegator.internal.ClassGenerator;
 import org.cq2.delegator.internal.InvocationHandlerWrapper;
 
 /**

@@ -1,8 +1,5 @@
-package org.cq2.delegator.classgenerator;
+package org.cq2.delegator.internal;
 
-import org.cq2.delegator.internal.ForwardingMethodGenerator;
-import org.cq2.delegator.internal.ForwardingMethodRegister;
-import org.cq2.delegator.internal.ImplementingMethodGenerator;
 
 public class MethodClassLoader extends ClassLoader {
 

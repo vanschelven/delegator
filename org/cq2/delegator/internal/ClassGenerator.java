@@ -3,7 +3,7 @@
  * (C) 2002, 2003, 2004 Seek You Too B.V. the Netherlands. http://www.cq2.nl
  */
 
-package org.cq2.delegator.classgenerator;
+package org.cq2.delegator.internal;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -35,13 +35,6 @@ import org.cq2.delegator.DelegatorException;
 import org.cq2.delegator.ISelf;
 import org.cq2.delegator.Proxy;
 import org.cq2.delegator.Self;
-import org.cq2.delegator.internal.ComponentMethodFilter;
-import org.cq2.delegator.internal.ComposedClass;
-import org.cq2.delegator.internal.ForwardingMethod;
-import org.cq2.delegator.internal.ForwardingMethodGenerator;
-import org.cq2.delegator.internal.ForwardingMethodRegister;
-import org.cq2.delegator.internal.Generator;
-import org.cq2.delegator.internal.ImplementingMethodGenerator;
 import org.cq2.delegator.method.ForwardingMethodFilter;
 import org.cq2.delegator.method.MethodComparator;
 import org.cq2.delegator.method.MethodFilter;

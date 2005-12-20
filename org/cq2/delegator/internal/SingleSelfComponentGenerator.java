@@ -1,4 +1,4 @@
-package org.cq2.delegator.classgenerator;
+package org.cq2.delegator.internal;
 
 import org.cq2.delegator.SingleSelfComponent;
 
