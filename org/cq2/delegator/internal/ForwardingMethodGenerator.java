@@ -34,31 +34,13 @@ public class ForwardingMethodGenerator implements Constants {
         constPool = classGen.getConstantPool();
         instrFact = new InstructionFactory(classGen, constPool);
         instrList = new InstructionList();
-        addDefaultConstructor();
+        classGen.addEmptyConstructor(ACC_PUBLIC);
         add_method(method);
         add_method2(method);
     }
 
     public byte[] generate() {
         return classGen.getJavaClass().getBytes();
-    }
-
-    private void addDefaultConstructor() {
-        MethodGen methodGen = new MethodGen(ACC_PUBLIC, Type.VOID,
-                Type.NO_ARGS, new String[] {}, "<init>", classGen
-                        .getClassName(), instrList, constPool);
-        createLoadThis();
-        instrList.append(instrFact.createInvoke(classGen.getSuperclassName(),
-                "<init>", Type.VOID, Type.NO_ARGS, Constants.INVOKESPECIAL));
-        instrList.append(InstructionFactory.createReturn(Type.VOID));
-        methodGen.setMaxStack();
-        methodGen.setMaxLocals();
-        classGen.addMethod(methodGen.getMethod());
-        instrList.dispose();
-    }
-
-    private void createLoadThis() {
-        instrList.append(InstructionFactory.createLoad(Type.OBJECT, 0));
     }
 
     private void add_method(Method method) {

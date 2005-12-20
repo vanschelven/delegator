@@ -185,7 +185,7 @@ public abstract class ClassGenerator implements Constants {
         constPool = classGen.getConstantPool();
         instrFact = new InstructionFactory(classGen, constPool);
         instrList = new InstructionList();
-        addDefaultConstructor();
+        classGen.addEmptyConstructor(ACC_PUBLIC);
         methods = collectMethods(superClass, extraInterfaces);
     }
 
@@ -255,20 +255,6 @@ public abstract class ClassGenerator implements Constants {
                 new ObjectType(Self.class.getName()), "self", classGen
                         .getConstantPool());
         classGen.addField(fieldGen.getField());
-    }
-
-    private void addDefaultConstructor() {
-        methodGen = new MethodGen(ACC_PUBLIC, Type.VOID, Type.NO_ARGS,
-                new String[] {}, "<init>", classGen.getClassName(), instrList,
-                constPool);
-        createLoadThis();
-        instrList.append(instrFact.createInvoke(classGen.getSuperclassName(),
-                "<init>", Type.VOID, Type.NO_ARGS, Constants.INVOKESPECIAL));
-        instrList.append(InstructionFactory.createReturn(Type.VOID));
-        methodGen.setMaxStack();
-        methodGen.setMaxLocals();
-        classGen.addMethod(methodGen.getMethod());
-        instrList.dispose();
     }
 
     private void addDelegationMethod(Method method, boolean useSelf) {

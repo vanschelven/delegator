@@ -370,6 +370,35 @@ public class SelfTest extends TestCase {
 		assertEquals("you're my hero!", f2.method());
 	}
 	
+	public abstract static class DoubleCall {
+
+	    public int doubleCall(int aDouble, int bDouble) {
+	        return aDouble  + bDouble;
+	    }
+	
+	}
+	
+	public abstract static class LongParamsNext {
+	    
+	    public abstract int __next__doubleCall(int aDouble, int bDouble);
+	    
+	    public int doubleCall(int aDouble, int bDouble) {
+	        return 0;
+	    }
+
+	    public int entryPoint() {
+	        return __next__doubleCall(2, 3);
+	    }
+	    
+	}
+	
+	//bugtest - werkt gewoon hoor!:
+	public void testNextWithLongParams() {
+        Self self = new Self(LongParamsNext.class);
+        self.add(DoubleCall.class);
+	    assertEquals(5, ((LongParamsNext) self.cast(LongParamsNext.class)).entryPoint(), 0);
+    }
+	
 	public void testGetComponentIndex() {
 	    Self self = new Self(F1.class);
 	    self.add(F2.class);

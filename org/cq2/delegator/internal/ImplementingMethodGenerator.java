@@ -45,10 +45,9 @@ public class ImplementingMethodGenerator implements Constants {
         instrFact = new InstructionFactory(classGen, constPool);
         instrList = new InstructionList();
         addComponentIndexField();
-        //addDefaultConstructor();
         classGen.addEmptyConstructor(ACC_PUBLIC);
-        add_method();
-        add_method2();
+        add_method("__invoke", false);
+        add_method("__offset", true);
     }
     
     private void addComponentIndexField() {
@@ -60,108 +59,46 @@ public class ImplementingMethodGenerator implements Constants {
         return classGen.getJavaClass().getBytes();
    }
 
-    private void addDefaultConstructor() {
-        MethodGen methodGen = new MethodGen(ACC_PUBLIC, Type.VOID,
-                Type.NO_ARGS, new String[] {}, "<init>", classGen
-                        .getClassName(), instrList, constPool);
-        createLoadThis();
-        instrList.append(instrFact.createInvoke(classGen.getSuperclassName(),
-                "<init>", Type.VOID, Type.NO_ARGS, Constants.INVOKESPECIAL));
-        instrList.append(InstructionFactory.createReturn(Type.VOID));
-        methodGen.setMaxStack();
-        methodGen.setMaxLocals();
-        classGen.addMethod(methodGen.getMethod());
-        instrList.dispose();
-    }
-
-    private void createLoadThis() {
-        instrList.append(InstructionFactory.createLoad(Type.OBJECT, 0));
-    }
-
-    private void add_method() {
+    private void add_method(String prefix, boolean hasOffset) {
         try {
-            Method superMethod = getInvokeMethod(superclass); 
+            Method superMethod = getSuperMethod(prefix); 
 
             Type returnType = Type.getType(superMethod.getReturnType());
-            Type[] parameterTypes = getArgumentTypes(superMethod);
+            Type[] argumentTypes = getArgumentTypes(superMethod);
 
             methodGen = new MethodGen(superMethod.getModifiers()
-                    & ~ACC_ABSTRACT, returnType, parameterTypes,
+                    & ~ACC_ABSTRACT, returnType, argumentTypes,
                     generateParameterNames(superMethod
                             .getParameterTypes().length), superMethod.getName(), classGen
                             .getClassName(), instrList, constPool);
-            
+             
             instrList.append(InstructionFactory.createLoad(Type.getType(Self.class), 1));
             instrList.append(instrFact.createGetField(Self.class.getName(), "components", new ArrayType(Type.getType(Object.class), 1)));
 			instrList.append(InstructionFactory.createThis());
 			instrList.append((instrFact.createGetField(classGen.getClassName(), "componentIndex", Type.INT)));
+			if (hasOffset) {
+				argumentTypes = removeLast(argumentTypes);
+				instrList.append(InstructionFactory.createLoad(Type.INT, superMethod.getParameterTypes().length));
+				instrList.append(InstructionConstants.IADD);
+			}
 			instrList.append(InstructionConstants.AALOAD);
 			
 			instrList.append(instrFact.createCheckCast((ReferenceType) Type
                     .getType(componentClass)));
-            final int SKIP_THIS_POINTER = 1;
-            int pointer = SKIP_THIS_POINTER + 1; //don't use self
-			for (int i = 1; i < methodGen.getArgumentTypes().length; i++) {
-                instrList.append(InstructionFactory.createLoad(methodGen.getArgumentTypes()[i], pointer));
-                pointer += methodGen.getArgumentTypes()[i].getSize();
+
+			final int SKIP_THIS_POINTER = 1;
+			final int SKIP_SELF_POINTER = 1;
+            int pointer = SKIP_THIS_POINTER + SKIP_SELF_POINTER;
+            for (int i = 1; i < argumentTypes.length; i++) {
+                instrList.append(InstructionFactory.createLoad(argumentTypes[i], pointer));
+                pointer += argumentTypes[i].getSize();
             }
 
             String methodName = extractOriginalMethodName(superMethod.getName());
             if (Component.class.isAssignableFrom(componentClass) &&( (!methodName.equals("equals"))))
                 methodName += ClassGenerator.SUPERCALL_POSTFIX;
             instrList.append(instrFact.createInvoke(componentClass.getName(),
-                    methodName, returnType, removeFirst(getArgumentTypes(superMethod)),
-                    Constants.INVOKEVIRTUAL));
-            
-            instrList.append(InstructionFactory.createReturn(returnType));
-
-            methodGen.setMaxStack();
-            methodGen.setMaxLocals();
-            
-            classGen.addMethod(methodGen.getMethod());
-
-            instrList.dispose();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
- 
-    //Copy/paste with modifications
-    private void add_method2() {
-        try {
-            Method superMethod = getOffsetMethod(superclass); 
-
-            Type returnType = Type.getType(superMethod.getReturnType());
-            Type[] parameterTypes = getArgumentTypes(superMethod);
-
-            methodGen = new MethodGen(superMethod.getModifiers()
-                    & ~ACC_ABSTRACT, returnType, parameterTypes,
-                    generateParameterNames(superMethod
-                            .getParameterTypes().length), superMethod.getName(), classGen
-                            .getClassName(), instrList, constPool);
-            
-            instrList.append(InstructionFactory.createLoad(Type.getType(Self.class), 1));
-            instrList.append(instrFact.createGetField(Self.class.getName(), "components", new ArrayType(Type.getType(Object.class), 1)));
-			instrList.append(InstructionFactory.createThis());
-			instrList.append((instrFact.createGetField(classGen.getClassName(), "componentIndex", Type.INT)));
-			instrList.append(InstructionFactory.createLoad(Type.INT, superMethod.getParameterTypes().length)); //TODO werkt niet bij parameter.size != 1
-			instrList.append(InstructionConstants.IADD);
-			instrList.append(InstructionConstants.AALOAD);
-			
-			instrList.append(instrFact.createCheckCast((ReferenceType) Type
-                    .getType(componentClass)));
-            final int SKIP_THIS_POINTER = 1;
-            int pointer = SKIP_THIS_POINTER + 1; //don't use self
-			for (int i = 1; i < methodGen.getArgumentTypes().length - 1; i++) { //dont use int either
-                instrList.append(InstructionFactory.createLoad(methodGen.getArgumentTypes()[i], pointer));
-                pointer += methodGen.getArgumentTypes()[i].getSize();
-            }
-
-            String methodName = extractOriginalMethodName(superMethod.getName());
-            if (Component.class.isAssignableFrom(componentClass) &&( (!methodName.equals("equals"))))
-                methodName += ClassGenerator.SUPERCALL_POSTFIX;
-            instrList.append(instrFact.createInvoke(componentClass.getName(),
-                    methodName, returnType, removeLast(removeFirst(getArgumentTypes(superMethod))),
+                    methodName, returnType, removeFirst(argumentTypes),
                     Constants.INVOKEVIRTUAL));
             
             instrList.append(InstructionFactory.createReturn(returnType));
@@ -193,18 +130,10 @@ public class ImplementingMethodGenerator implements Constants {
         return name.substring("__invoke_".length());
     }
 
-    private Method getInvokeMethod(Class clazz) {
-        Method[] methods = clazz.getDeclaredMethods();
+    private Method getSuperMethod(String prefix) {
+        Method[] methods = superclass.getDeclaredMethods();
         for (int i = 0; i < methods.length; i++) {
-            if (methods[i].getName().startsWith("__invoke")) return methods[i];
-        }
-        return null;
-    }
-
-    private Method getOffsetMethod(Class clazz) {
-        Method[] methods = clazz.getDeclaredMethods();
-        for (int i = 0; i < methods.length; i++) {
-            if (methods[i].getName().startsWith("__offset")) return methods[i];
+            if (methods[i].getName().startsWith(prefix)) return methods[i];
         }
         return null;
     }
