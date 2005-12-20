@@ -40,13 +40,14 @@ import org.cq2.delegator.internal.ComposedClass;
 import org.cq2.delegator.internal.ForwardingMethod;
 import org.cq2.delegator.internal.ForwardingMethodGenerator;
 import org.cq2.delegator.internal.ForwardingMethodRegister;
+import org.cq2.delegator.internal.Generator;
 import org.cq2.delegator.internal.ImplementingMethodGenerator;
 import org.cq2.delegator.method.ForwardingMethodFilter;
 import org.cq2.delegator.method.MethodComparator;
 import org.cq2.delegator.method.MethodFilter;
 import org.cq2.delegator.method.MethodUtil;
 
-public abstract class ClassGenerator implements Constants {
+public abstract class ClassGenerator extends Generator {
 
     protected static final MethodFilter forwardingMethodFilter = new ForwardingMethodFilter();
 
@@ -290,34 +291,11 @@ public abstract class ClassGenerator implements Constants {
         }
     }
 
-    private static Type[] getArgumentTypes(Method method) {
-        return Type.getArgumentTypes(Type.getSignature(method));
-    }
-
     private void addMethodTrailer(Type returnType) {
         methodGen.setMaxStack();
         methodGen.setMaxLocals();
-        //   printMethod(methodGen);
-        addFakeLineNumbers();
         classGen.addMethod(methodGen.getMethod());
         instrList.dispose();
-    }
-
-    private void printMethod() {
-        System.out.println("code of " + methodGen.getName());
-        InstructionHandle[] instructionHandles = methodGen.getInstructionList()
-                .getInstructionHandles();
-        for (int i = 0; i < instructionHandles.length; i++) {
-            System.out.println(i + ": " + instructionHandles[i]);
-        }
-    }
-
-    private void addFakeLineNumbers() {
-        InstructionHandle[] instructionHandles = methodGen.getInstructionList()
-                .getInstructionHandles();
-        for (int i = 0; i < instructionHandles.length; i++) {
-            methodGen.addLineNumber(instructionHandles[i], i);
-        }
     }
 
     private void createCallToSuper(Method method, Type returnType,
@@ -340,7 +318,6 @@ public abstract class ClassGenerator implements Constants {
         instrList.append(InstructionFactory.createLoad(Type.OBJECT, 0));
     }
 
-    //TODO refactor gelijkenissen tussen de verschillende code generators
     private void createCallToInvocationHandler(Method method, boolean useSelf) {
         // this.self.composedClass.getMethod(identifier)).invoke(self,
         // [...args...]);
@@ -494,28 +471,6 @@ public abstract class ClassGenerator implements Constants {
         //            throw e.getTargetException();
         //        }
 
-    }
-
-    private Type[] appendIntType(Type[] input) {
-        Type[] result = new Type[input.length + 1];
-        result[result.length - 1] = Type.INT;
-        System.arraycopy(input, 0, result, 0, input.length);
-        return result;
-    }
-
-    private static Type[] insertSelfType(Type[] input) {
-        Type[] result = new Type[input.length + 1];
-        result[0] = Type.getType(Self.class);
-        System.arraycopy(input, 0, result, 1, input.length);
-        return result;
-    }
-
-    static String[] generateParameterNames(int nr) {
-        String[] result = new String[nr];
-        for (int i = 0; i < nr; i++) {
-            result[i] = "arg" + i;
-        }
-        return result;
     }
 
     public static Proxy newProxyInstance(Class clazz, Self self) {

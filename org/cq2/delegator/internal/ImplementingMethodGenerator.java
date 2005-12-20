@@ -18,7 +18,7 @@ import org.cq2.delegator.Component;
 import org.cq2.delegator.Self;
 import org.cq2.delegator.classgenerator.ClassGenerator;
 
-public class ImplementingMethodGenerator implements Constants {
+public class ImplementingMethodGenerator extends Generator implements Constants {
 
     protected final ClassGen classGen;
 
@@ -46,8 +46,8 @@ public class ImplementingMethodGenerator implements Constants {
         instrList = new InstructionList();
         addComponentIndexField();
         classGen.addEmptyConstructor(ACC_PUBLIC);
-        add_method("__invoke", false);
-        add_method("__offset", true);
+        add_method("__invoke_", false);
+        add_method("__offset_", true);
     }
     
     private void addComponentIndexField() {
@@ -94,7 +94,7 @@ public class ImplementingMethodGenerator implements Constants {
                 pointer += argumentTypes[i].getSize();
             }
 
-            String methodName = extractOriginalMethodName(superMethod.getName());
+            String methodName = extractOriginalMethodName(superMethod.getName(), prefix);
             if (Component.class.isAssignableFrom(componentClass) &&( (!methodName.equals("equals"))))
                 methodName += ClassGenerator.SUPERCALL_POSTFIX;
             instrList.append(instrFact.createInvoke(componentClass.getName(),
@@ -126,8 +126,8 @@ public class ImplementingMethodGenerator implements Constants {
         return result;
     }
 
-    private String extractOriginalMethodName(String name) {
-        return name.substring("__invoke_".length());
+    private String extractOriginalMethodName(String name, String prefix) {
+        return name.substring(prefix.length());
     }
 
     private Method getSuperMethod(String prefix) {
@@ -136,19 +136,6 @@ public class ImplementingMethodGenerator implements Constants {
             if (methods[i].getName().startsWith(prefix)) return methods[i];
         }
         return null;
-    }
-
-    //copy paste - classGenerator
-    private static String[] generateParameterNames(int nr) {
-        String[] result = new String[nr];
-        for (int i = 0; i < nr; i++) {
-            result[i] = "arg" + i;
-        }
-        return result;
-    }
-
-    private static Type[] getArgumentTypes(Method method) {
-        return Type.getArgumentTypes(Type.getSignature(method));
     }
 
 }

@@ -53,8 +53,6 @@ public class ClassGeneratorTest extends TestCase {
 		assertNotNull(c.getClass().getMethod("size" + ClassGenerator.SUPERCALL_POSTFIX, new Class[]{}));
 	}
 	
-	//TODO (ergens anders) uitfactoren van gelijkheden tussen de 3 soorten gegenereerde classes en hun beheer
-
 	public static class C {
 		Object k = new Object();
 		static String aap = "aap";
@@ -67,19 +65,6 @@ public class ClassGeneratorTest extends TestCase {
 		private Object r = new Object();
 		Object p = r;
 	}
-
-//Dit is niet echt nodig - zero is as good as anything else... en kost wel veel tijd.
-//	public void testDirtyProxyFieldZerod() throws Exception {
-//		P p = (P) ClassGenerator.newProxyInstance(P.class, null);
-//		assertNull(p.o);
-//		assertNull(p.p);
-//		Field f = P.class.getDeclaredField("r");
-//		f.setAccessible(true);
-//		assertNull(f.get(p));
-//		assertEquals("aap", C.aap);
-//		assertEquals("mies", p.mies);
-//		assertEquals("noot", C.noot);
-//	}
 
 	public void testCachingOfClasses() {
 		Self self = new Self();
