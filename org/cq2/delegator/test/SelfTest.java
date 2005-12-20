@@ -24,33 +24,46 @@ import org.cq2.delegator.Self;
 import junit.framework.TestCase;
 
 public class SelfTest extends TestCase {
-	private Object keyRef = null;
-	private Object valueRef = null;
-	private Object returnVal = new Object();
 
+	private static int originalAddCalled;
+	private static int subClassAddCalled;
+    private Self self;
+    private ImplementationMock implementationMock;
+	
+	public static abstract class ImplementationMock {
+
+	    private Object keyRef = null;
+		private Object valueRef = null;
+		private Object returnVal = new Object();
+	    
+		public Object put(Object key, Object value) {
+			keyRef = key;
+			valueRef = value;
+			return returnVal;
+		}
+
+	    
+	}
+	
 	protected void setUp() throws Exception {
+	    self = new Self(ImplementationMock.class);
+		implementationMock = ((ImplementationMock)self.components[0]);
 	    originalAddCalled = 0;
 	    subClassAddCalled = 0;
     }
 	
-	public Object put(Object key, Object value) {
-		keyRef = key;
-		valueRef = value;
-		return returnVal;
-	}
-
 	public void testMapDelegator() {
-		Map map = (Map) Delegator.forInterface(Map.class, this);
+		Map map = (Map) Delegator.proxyFor(Map.class, self);
 		Object key = new Object();
 		Object value = new Object();
 		Object result = map.put(key, value);
-		assertEquals(key, keyRef);
-		assertEquals(value, valueRef);
-		assertEquals(result, returnVal);
+        assertEquals(key, implementationMock.keyRef);
+		assertEquals(value, implementationMock.valueRef);
+		assertEquals(result, implementationMock.returnVal);
 	}
 
 	public void testNoSuchMethod() {
-		Set set = (Set) Delegator.forInterface(Set.class, this);
+		Set set = (Set) Delegator.proxyFor(Set.class, self);
 		try {
 			set.clear();
 			fail("Should throw NoSuchMethodError()");
@@ -58,7 +71,7 @@ public class SelfTest extends TestCase {
 	}
 
 	public void testFouteReturnType() {
-		Comparator comp = (Comparator) Delegator.forInterface(Comparator.class, this);
+		Comparator comp = (Comparator) Delegator.proxyFor(Comparator.class, self);
 		try {
 			comp.compare(null, null);
 			fail();
@@ -73,7 +86,7 @@ public class SelfTest extends TestCase {
 	}
 
 	public void testPublicOnly() {
-		List list = (List) Delegator.forInterface(List.class, this);
+		List list = (List) Delegator.proxyFor(List.class, self);
 		try {
 			list.add(new Object());
 			fail();
@@ -88,7 +101,7 @@ public class SelfTest extends TestCase {
 	}
 
 	public void testListHasNoHashCode() {
-		List list = (List) Delegator.forInterface(List.class, this);
+		List list = (List) Delegator.proxyFor(List.class, self);
 		try {
 			list.hashCode();
 			fail();
@@ -417,9 +430,6 @@ public class SelfTest extends TestCase {
 		assertEquals(clone, original);
 //		assertNotSame(clone.self(), original.self());
 	}
-	
-	private static int originalAddCalled;
-	private static int subClassAddCalled;
 	
 	public static abstract class OriginalList {
 	    

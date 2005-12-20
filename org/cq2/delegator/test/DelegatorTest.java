@@ -6,43 +6,17 @@ package org.cq2.delegator.test;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+
+import junit.framework.TestCase;
 
 import org.cq2.delegator.Delegator;
 import org.cq2.delegator.Self;
 import org.cq2.delegator.internal.MethodRegister;
 import org.cq2.delegator.internal.MyInvocationHandler;
 
-import junit.framework.TestCase;
-
-public class DelegatorTest extends TestCase implements MyInvocationHandler {
+public class DelegatorTest extends TestCase {
 	public DelegatorTest(String arg0) {
 		super(arg0);
-	}
-
-	private String invokedMethod;
-
-	public void clear() {
-		invokedMethod = "clear";
-	}
-
-	public void testDelegateInterfaceWithImplementationArray() {
-		Map map = (Map) Delegator.forInterface(Map.class, new Object[]{new Object(), "", this});
-		assertNotNull(map);
-		map.clear();
-		assertEquals("clear", invokedMethod);
-	}
-
-	public void testDelegateInterfaceWithImplementationArray2() {
-		Map realMap = new HashMap();
-		realMap.put("something", "that is cleared");
-		Map map = (Map) Delegator.forInterface(Map.class, new Object[]{new Object(), "", realMap,
-				this});
-		assertNotNull(map);
-		map.clear();
-		assertNull(invokedMethod);
-		assertTrue(realMap.isEmpty());
 	}
 
 	public static abstract class A1 {
@@ -84,20 +58,4 @@ public class DelegatorTest extends TestCase implements MyInvocationHandler {
 		void hello();
 	}
 
-	public void testListProblemFromRobWestgeest2() {
-		try {
-			Delegator.extend(Object.class, new Class[]{AnInterface.class});
-			fail();
-		}
-		catch (RuntimeException e) {
-			assertTrue(e.getCause()instanceof IllegalArgumentException);
-			assertEquals("Interfaces are not supported, use java.lang.reflect.Proxy.", e.getCause().getMessage());
-		}
-	}
-
-    public Object invoke(Object proxy, int uniqueIdentifier, Object[] args) throws Throwable {
-        invokedMethod = MethodRegister.getInstance().getMethod(uniqueIdentifier).name;
-        return null;
-    }
-	
 }

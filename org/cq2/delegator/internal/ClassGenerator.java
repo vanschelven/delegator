@@ -107,7 +107,6 @@ public abstract class ClassGenerator extends Generator {
                         componentIdentifier).generate();
                 return defineClass(classname, bytes, 0, bytes.length);
             }
-            //   System.out.println("fail");
             throw new ClassNotFoundException(classname);
         }
 
@@ -132,10 +131,6 @@ public abstract class ClassGenerator extends Generator {
 
         private Class injectClass(ClassGenerator generator, Class clazz,
                 String className) {
-            if (clazz.isInterface()) {
-                throw new IllegalArgumentException(
-                        "Interfaces are not supported, use java.lang.reflect.Proxy.");
-            }
             byte[] classDef = generator.generate();
             return inject(className, classDef, clazz.getProtectionDomain());
         }
@@ -168,19 +163,27 @@ public abstract class ClassGenerator extends Generator {
     private Class superClass;
 
     ClassGenerator(String className, Class superClass, Class marker) {
-        this.superClass = superClass;
-        String[] extraInterfaces = new String[] { marker.getName(),
-                ISelf.class.getName() };
-        int modifiers = (Modifier.isPublic(superClass.getModifiers()) ? ACC_PUBLIC
+        String[] extraInterfaces;
+        if (superClass.isInterface()) {
+            this.superClass = Object.class;
+            extraInterfaces = new String[] { superClass.getName(), marker.getName(),
+                    ISelf.class.getName() };
+        } else {
+            this.superClass = superClass;
+            extraInterfaces = new String[] { marker.getName(),
+                    ISelf.class.getName() };
+        }
+        
+        int modifiers = (Modifier.isPublic(this.superClass.getModifiers()) ? ACC_PUBLIC
                 : 0)
                 | ACC_SUPER;
-        classGen = new ClassGen(className, superClass.getName(), "", modifiers,
+        classGen = new ClassGen(className, this.superClass.getName(), "", modifiers,
                 extraInterfaces);
         constPool = classGen.getConstantPool();
         instrFact = new InstructionFactory(classGen, constPool);
         instrList = new InstructionList();
         classGen.addEmptyConstructor(ACC_PUBLIC);
-        methods = collectMethods(superClass, extraInterfaces);
+        methods = collectMethods(this.superClass, extraInterfaces);
     }
 
     static String getClassName(Class superClass, String marker) {

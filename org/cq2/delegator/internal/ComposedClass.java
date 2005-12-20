@@ -28,8 +28,6 @@ public class ComposedClass {
 
     private static ComposedClass emptyClass;
 
-    private Method[] componentReflectMethods;
-
     private int[] componentIndexes;
 
     private ComposedClass() {
@@ -42,7 +40,6 @@ public class ComposedClass {
         addMap = new HashMap();
         insertMap = new HashMap();
         implementingMethods = new ForwardingMethod[0];
-        componentReflectMethods = new Method[0];
         componentIndexes = new int[0];
     }
 
@@ -86,18 +83,8 @@ public class ComposedClass {
         return result;
     }
 
-    public Method getReflectMethod(int methodIdentifier) {
-        if (methodIdentifier < componentReflectMethods.length) {
-            Method result = componentReflectMethods[methodIdentifier];
-            if (result != null)
-                return result;
-        } else enlargeArrays(methodIdentifier + 1);
-        setMethod(methodIdentifier);
-        return componentReflectMethods[methodIdentifier];
-    }
-    
     public int getComponentIndex(int methodIdentifier) {
-        if (methodIdentifier < componentReflectMethods.length) {
+        if (methodIdentifier < componentIndexes.length) {
             int result = componentIndexes[methodIdentifier];
             if (result != -1)
                 return result;
@@ -193,7 +180,6 @@ public class ComposedClass {
         }
         
         implementingMethods[methodIdentifier] = result;
-        componentReflectMethods[methodIdentifier] = delegateMethod;
         componentIndexes[methodIdentifier] = componentIndex;
         return result;
     }
@@ -204,11 +190,6 @@ public class ComposedClass {
         System.arraycopy(oldComponentMethods, 0, implementingMethods, 0,
                 oldComponentMethods.length);
 
-        Method[] oldComponentReflectMethods = componentReflectMethods;
-        componentReflectMethods = new Method[length];
-        System.arraycopy(oldComponentReflectMethods, 0, componentReflectMethods, 0,
-                oldComponentReflectMethods.length);
-        
         int[] oldComponentIndexes = componentIndexes;
         componentIndexes = new int[length];
         System.arraycopy(oldComponentIndexes, 0, componentIndexes, 0,

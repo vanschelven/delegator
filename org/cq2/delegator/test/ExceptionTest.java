@@ -5,7 +5,6 @@ import java.sql.Statement;
 
 import junit.framework.TestCase;
 
-import org.cq2.delegator.Delegator;
 import org.cq2.delegator.DelegatorException;
 import org.cq2.delegator.Self;
 
@@ -139,12 +138,16 @@ public class ExceptionTest extends TestCase {
         x.method();
 	}
     
-	public boolean execute(String query) throws SQLException {
-		throw new SQLException();
-	}
+	public static abstract class ImplementationMock {
 
-	public void testExceptionsArePassedOnCorrectly() throws SQLException {
-		Statement statement = (Statement) Delegator.forInterface(Statement.class, this);
+	    public boolean execute(String query) throws SQLException {
+			throw new SQLException();
+		}
+
+	}
+	
+	public void testExceptionsArePassedOnCorrectly() {
+		Statement statement = (Statement) new Self(ImplementationMock.class).cast(Statement.class);
 		try {
 			statement.execute("force SQLException");
 			fail();
@@ -157,7 +160,5 @@ public class ExceptionTest extends TestCase {
 	    NoException noException = (NoException) new Self(UncheckedException.class).cast(NoException.class);
 	    noException.method();
 	}
-
-    
     
 }

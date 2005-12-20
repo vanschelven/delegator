@@ -4,12 +4,7 @@
  */
 package org.cq2.delegator;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
-
-import org.cq2.delegator.binders.Link;
 import org.cq2.delegator.internal.ClassGenerator;
-import org.cq2.delegator.internal.InvocationHandlerWrapper;
 
 /**
  * @author ejgroene
@@ -23,23 +18,7 @@ public class Delegator {
 	 };
 	 */
 	public static Object proxyFor(Class theInterface, Self self) {
-	    if (theInterface.isInterface()) {
-			return Proxy.newProxyInstance(ClassGenerator.getClassLoader(), new Class[]{theInterface, ISelf.class}, new InvocationHandlerWrapper(self));
-		}
 		return ClassGenerator.newProxyInstance(theInterface, self);
-	}
-
-	public static Object forInterface(Class theInterface, Object delegate) {
-		return forInterface(theInterface, new Object[]{delegate});
-	}
-
-	public static Object forInterface(Class theInterface, Object[] delegates) {
-		InvocationHandler newDynImpl = Link.noSuchMethodInvocationHandler();
-		for (int i = delegates.length - 1; i >= 0; i--)
-			newDynImpl = new Link(delegates[i], newDynImpl);
-		ClassLoader classLoader = ClassGenerator.getClassLoader();
-        return Proxy.newProxyInstance(classLoader, new Class[]{theInterface},
-				newDynImpl);
 	}
 
 	public static Object extend(Class subclass, Class[] superclasses) {
