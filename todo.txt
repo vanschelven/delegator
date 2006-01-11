@@ -1,0 +1,7 @@
+Scriptie:
+Literatuurlijst
+Code die buiten beeld valt
+UML Diagrammen
+
+Code:
+Alle TODO's uit de code

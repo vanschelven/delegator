@@ -48,7 +48,7 @@ public class ScopeTest extends InvocationHandlerTest {
 
     /**
      * Shows that Self's method lookup cannot find a private method although it exists. 
-     * This is fine because the method actually called on the proxy is public.
+     * This is intentional because the method actually called on the proxy is public.
      */
     public void testPrivateMethodsArentCalled() {
         ISelf result = new Self(PrivateMethod.class);

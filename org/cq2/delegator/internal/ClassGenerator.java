@@ -368,6 +368,10 @@ public abstract class ClassGenerator extends Generator {
         instrList.append(InstructionFactory.createDup(1));
         instrList.append(InstructionFactory.createStore(Type.OBJECT, selfLocal
                 .getIndex()));
+        
+        //obtain monitor on self
+        instrList.append(InstructionFactory.createDup(1));
+        instrList.append(InstructionConstants.MONITORENTER);
 
         //stack.push(self);
         instrList.append(InstructionFactory.createLoad(Type
@@ -411,6 +415,10 @@ public abstract class ClassGenerator extends Generator {
         //load self again...
         instrList.append(InstructionFactory.createLoad(Type.OBJECT, selfLocal
                 .getIndex()));
+        
+        //exit monitor
+        instrList.append(InstructionFactory.createDup(1));
+        instrList.append(InstructionConstants.MONITOREXIT);
         //load paramters
 
         final int SKIP_THIS_POINTER = 1;
